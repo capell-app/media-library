@@ -544,11 +544,37 @@ it('keeps media library docs and screenshots aligned with committed package asse
     expect($marketplaceScreenshotPaths)->toBe([
         'docs/screenshots/media-health-page.png',
         'docs/screenshots/curator-media-field-inside-a-form.png',
-    ])->and($shippedScreenshotPaths)->toBe([
-        'docs/screenshots/curator-media-field-inside-a-form.png',
-        'docs/screenshots/media-health-page.png',
-        'docs/screenshots/media-health-table.png',
-    ])->and($screenshotContract['requiredEvidencePolicy'] ?? null)->toBe('distinct-required-surfaces');
+    ]);
+
+    // Every shipped screenshot must be declared by the package screenshot contract;
+    // new captures are added by declaring them, not by editing this test.
+    // Mirrors screenshotOutputPaths() in scripts/validate-screenshot-manifests.js:
+    // explicit light and dark paths, plus a derived -dark variant for entries
+    // captured in more than one colour scheme including dark.
+    $declaredScreenshotPaths = [];
+    $defaultSchemes = is_array($screenshotContract['colorSchemes'] ?? null) ? $screenshotContract['colorSchemes'] : ['light', 'dark'];
+    foreach ($contractEntries as $contractEntry) {
+        if (! is_array($contractEntry)) {
+            continue;
+        }
+
+        foreach (['screenshotPath', 'darkScreenshotPath'] as $field) {
+            if (is_string($contractEntry[$field] ?? null) && $contractEntry[$field] !== '') {
+                $declaredScreenshotPaths[] = 'docs/screenshots/' . basename($contractEntry[$field]);
+            }
+        }
+
+        $schemes = is_array($contractEntry['colorSchemes'] ?? null) ? $contractEntry['colorSchemes'] : $defaultSchemes;
+        $lightPath = $contractEntry['screenshotPath'] ?? null;
+        if (count($schemes) > 1 && in_array('dark', $schemes, true) && is_string($lightPath) && $lightPath !== ''
+            && ! (is_string($contractEntry['darkScreenshotPath'] ?? null) && $contractEntry['darkScreenshotPath'] !== '')) {
+            $declaredScreenshotPaths[] = 'docs/screenshots/' . (string) preg_replace('/(\.[a-z0-9]+)$/i', '-dark$1', basename($lightPath));
+        }
+    }
+
+    expect($shippedScreenshotPaths)->not->toBeEmpty()
+        ->and(array_values(array_diff($shippedScreenshotPaths, $declaredScreenshotPaths)))->toBe([])
+        ->and($screenshotContract['requiredEvidencePolicy'] ?? null)->toBe('distinct-required-surfaces');
 
     $contractTargets = [];
 
