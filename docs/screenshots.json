@@ -33,12 +33,16 @@
             "url": "/media-library/media-health",
             "waitFor": "table",
             "required": true,
-            "notes": "Cropped from the seeded MediaHealthPage capture to prove filename, size, usage count, issue, media type, and last-used columns for three distinct health states.",
+            "notes": "The complete seeded Media Health page shows filename, size, usage count, issue, media type and last-used columns for three health states. This intentionally shares the page capture; do not crop it.",
             "useCase": "An administrator scans individual media health rows and remediation state.",
             "screenshotPath": "packages/media-library/docs/screenshots/media-health-table.png",
             "covers": [
                 "packages/media-library/src/Filament/Pages/Tables/MediaHealthTable.php"
-            ]
+            ],
+            "intentionalVariant": {
+                "of": "media-health-page",
+                "reason": "The media health page is the table surface; page and component documentation intentionally show the same complete capture without cropping."
+            }
         },
         {
             "id": "curator-media-field-inside-a-form",

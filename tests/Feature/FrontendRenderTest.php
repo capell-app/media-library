@@ -122,8 +122,9 @@ test('getFirstMedia memoizes repeated collection lookups on the owner instance',
     $owner->getFirstMediaUrl('image');
     $owner->getMedia('image');
 
+    $curatorTable = strtolower(DB::connection()->getQueryGrammar()->wrapTable('curator'));
     $curatorSelectQueries = collect(DB::getQueryLog())
-        ->filter(static fn (array $query): bool => str_contains(strtolower((string) ($query['query'] ?? '')), 'from "curator"'))
+        ->filter(static fn (array $query): bool => str_contains(strtolower((string) ($query['query'] ?? '')), 'from ' . $curatorTable))
         ->values();
 
     expect($curatorSelectQueries)->toHaveCount(1);
