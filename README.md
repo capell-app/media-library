@@ -45,18 +45,86 @@ Screenshot contract: `docs/screenshots.json`.
 
 ## Technical Shape
 
-- Service providers: `Capell\MediaLibrary\MediaLibraryServiceProvider`.
-- Config files: `packages/media-library/config/media-library.php`.
-- Models: `CuratorMedia`.
-- Filament classes: `CuratorMediaFieldFactory`, `MediaHealthPage`, `MediaHealthTable`.
-- Events: `MediaMissingAltDetected`.
-- Actions: `BuildDuplicateMediaQueryAction`, `BuildMediaHealthQueryAction`, `BuildMediaHealthTotalsAction`, `BuildMediaUsageDrilldownAction`, `BuildMissingAltMediaQueryAction`, `BuildMissingRightsMetadataQueryAction`, `BuildOrphanMediaQueryAction`, `DeleteOrphanMediaRecordsAction`, `DiscoverOwnerForeignKeysAction`, `ResolveOwnerForeignKeysAction`, `DispatchMissingAltMediaSignalsAction`, `EnsureMediaLibraryPermissionsAction`, `and 2 more`.
-- Data objects: `MediaHealthIssuesData`, `MediaHealthTotalsData`, `MediaOwnerForeignKeyData`, `MediaUsageReferenceData`, `MigrateSpatieMediaInput`, `MigrateSpatieMediaResult`.
-- Jobs: `CalculateMediaChecksumJob`.
-- Manifest action API: `buildDuplicateMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction`, `buildMediaHealthQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction`, `buildMediaHealthTotals: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthTotalsAction`, `buildMediaUsageDrilldown: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaUsageDrilldownAction`, `buildMissingAltMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction`, `buildMissingRightsMetadataQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction`, `buildOrphanMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction`, `deleteOrphanMediaRecords: Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction`, `dispatchMissingAltMediaSignals: Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction`, `migrateSpatieMediaToCurator: Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction`.
-- Console command classes: `MigrateSpatieToCuratorCommand`.
-- Manifest contributions: `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`, `configurator: Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution`, `health-check: Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution`, `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`.
-- Health checks: `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`.
+### Service providers
+
+- `Capell\MediaLibrary\MediaLibraryServiceProvider`
+
+### Config files
+
+- `packages/media-library/config/media-library.php`
+
+### Models
+
+- `CuratorMedia`
+
+### Filament classes
+
+- `CuratorMediaFieldFactory`
+- `MediaHealthPage`
+- `MediaHealthTable`
+
+### Events
+
+- `MediaMissingAltDetected`
+
+### Actions
+
+- `BuildDuplicateMediaQueryAction`
+- `BuildMediaHealthQueryAction`
+- `BuildMediaHealthTotalsAction`
+- `BuildMediaUsageDrilldownAction`
+- `BuildMissingAltMediaQueryAction`
+- `BuildMissingRightsMetadataQueryAction`
+- `BuildOrphanMediaQueryAction`
+- `DeleteOrphanMediaRecordsAction`
+- `DiscoverOwnerForeignKeysAction`
+- `ResolveOwnerForeignKeysAction`
+- `DispatchMissingAltMediaSignalsAction`
+- `EnsureMediaLibraryPermissionsAction`
+- `MigrateSpatieMediaToCuratorAction`
+- `SanitizeSvgUploadAction`
+
+### Data objects
+
+- `MediaHealthIssuesData`
+- `MediaHealthTotalsData`
+- `MediaOwnerForeignKeyData`
+- `MediaUsageReferenceData`
+- `MigrateSpatieMediaInput`
+- `MigrateSpatieMediaResult`
+
+### Jobs
+
+- `CalculateMediaChecksumJob`
+
+### Manifest action API
+
+- `buildDuplicateMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction`
+- `buildMediaHealthQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction`
+- `buildMediaHealthTotals: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthTotalsAction`
+- `buildMediaUsageDrilldown: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaUsageDrilldownAction`
+- `buildMissingAltMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction`
+- `buildMissingRightsMetadataQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction`
+- `buildOrphanMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction`
+- `deleteOrphanMediaRecords: Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction`
+- `dispatchMissingAltMediaSignals: Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction`
+- `migrateSpatieMediaToCurator: Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction`
+
+### Console command classes
+
+- `MigrateSpatieToCuratorCommand`
+
+### Manifest contributions
+
+- `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`
+- `configurator: Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution`
+- `health-check: Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution`
+- `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`
+
+### Health checks
+
+- `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`
+
 
 ## Media Handling Contract
 
@@ -102,8 +170,7 @@ This package has no schema impact. It extends Capell through `admin-page` contri
 ## Quick Start
 
 1. Install the package: `composer require capell-app/media-library`.
-2. Review `config/media-library.php` before enabling the package.
-3. Open the package admin surface at `/media-library/media-health` and confirm Media Library is available.
+2. Open the package admin surface at `/media-library/media-health` and confirm Media Library is available.
 
 ## Next Steps
 

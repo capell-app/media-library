@@ -43,7 +43,7 @@ test('passes the owner foreign keys check when conventional columns are discover
 
     $check = new MediaLibraryHealthCheck;
 
-    expect($check->validOwnerForeignKeys())->toHaveCount(2)
+    expect($check->validOwnerForeignKeys())->toHaveCount(4)
         ->and($check->hasOwnerForeignKeysConfigured())->toBeTrue()
         ->and($check->ownerForeignKeysConfiguredCheck()->passed)->toBeTrue();
 });

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\MediaLibrary\Support;
 
+use Capell\Admin\Support\SiteScope;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Gate;
 
@@ -43,6 +44,6 @@ final class MediaLibraryAuthorization
 
         $superAdminRole = config('capell.roles.super_admin', 'super_admin');
 
-        return is_string($superAdminRole) && $superAdminRole !== '' && $user->hasRole($superAdminRole);
+        return is_string($superAdminRole) && $superAdminRole !== '' && SiteScope::isGlobalActor($user);
     }
 }
