@@ -41,9 +41,6 @@
             "providers": [
                 "Capell\\MediaCurator\\CapellMediaCuratorServiceProvider"
             ]
-        },
-        "branch-alias": {
-            "dev-main": "4.x-dev"
         }
     },
     "config": {

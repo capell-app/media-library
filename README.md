@@ -1,68 +1,78 @@
-# Capell Media Curator
+# Media Curator
 
-**Product group:** Capell Foundation
-**Tier:** Free
+Status: **Available, no schema impact in this package** · Kind: **package** · Tier: **free** · Bundle: **foundation** · Contexts: **admin** · Product group: **Capell Foundation**
 
-Media Curator swaps Capell's default Spatie MediaLibrary backend for [Awcodes Curator](https://github.com/awcodes/filament-curator). Use it when your editors prefer Curator's media library and your models only need one asset per media slot.
+## What This Plugin Adds
 
-## When to install it
+Media Curator connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.
 
-Install Media Curator when a project wants a Curator-backed picker for single-image fields such as hero image, thumbnail, social image, or logo.
+- Curator media model wrapper.
+- Media health admin page and table.
+- Curator media field factory.
+- Migration command and action for moving Spatie media into Curator.
+- InteractsWithCuratorMedia concern.
 
-Stay on the default Spatie backend if you need galleries, ordered media collections, responsive image sets, or Spatie conversions.
+## Why It Matters
 
-## Quick install
+**For developers:** Centralises Curator integration behind actions, field factories, and model concerns so packages can use media fields consistently.
 
-```bash
-composer require capell-app/media-curator
-php artisan migrate
-php artisan optimize:clear
-```
+**For teams:** Helps site operators audit media records and move legacy media into the current Capell media foundation.
 
-The package auto-registers through Laravel discovery and rebinds Capell's media contracts.
+## Screens And Workflow
 
-## What appears in the admin
+Screenshots are generated from [docs/screenshots.json](docs/screenshots.json) during package deployment.
 
-| Area         | What editors can do                                 |
-| ------------ | --------------------------------------------------- |
-| Media fields | Pick Curator media through `CuratorPicker`          |
-| Owner forms  | Store one selected media record per configured slot |
+- Media health page.
+- Media health table.
+- Curator media field inside a form.
+- Migration command output or report.
 
-## What developers get
+## Technical Shape
 
-- `CuratorMedia` implementing Capell's `MediaContract`.
-- `CuratorMediaFieldFactory` returning Curator picker fields.
-- `InteractsWithCuratorMedia` for owner models.
-- A migration command for moving existing Spatie media rows into Curator records.
+- CapellMediaCuratorServiceProvider registers the package.
+- Model: CuratorMedia.
+- Command: MigrateSpatieToCuratorCommand.
+- Action: MigrateSpatieMediaToCuratorAction.
+- Page: MediaHealthPage.
+- No migrations are present in this package.
 
-## Model setup
+## Data Model
 
-Add one nullable foreign key for each media slot:
+- This package does not define its own migrations.
+- It relies on Curator and existing media tables.
+- Migration result data records counts and outcomes for Spatie-to-Curator moves.
 
-```php
-Schema::table('pages', function (Blueprint $table): void {
-    $table->foreignId('image_id')->nullable()->constrained('curator')->nullOnDelete();
-    $table->foreignId('social_image_id')->nullable()->constrained('curator')->nullOnDelete();
-});
-```
+## Install Impact
 
-Then use the Curator trait on the owner model:
+- Adds Curator media field integration.
+- Adds media health admin page.
+- Adds migration command.
+- No package-owned database changes.
 
-```php
-use Capell\Core\Contracts\Media\HasMediaContract;
-use Capell\MediaCurator\Concerns\InteractsWithCuratorMedia;
+## Commands
 
-final class Page extends Model implements HasMediaContract
-{
-    use InteractsWithCuratorMedia;
-}
-```
+- None proven in this package directory.
 
-## Migrate existing Spatie media
+## Admin And Access
 
-```bash
-php artisan capell:media-migrate-to-curator --dry-run
-php artisan capell:media-migrate-to-curator
-```
+- MediaHealthPage (packages/media-curator/src/Filament/Pages/MediaHealthPage.php, slug `media-health`)
 
-Run the dry run first. Add missing foreign-key columns before the real migration.
+- Gate: MediaHealthPage: Filament Shield page permissions
+
+## Common Pitfalls
+
+- Install and migrate Curator before relying on CuratorMedia.
+- Back up legacy Spatie media before migration.
+- Check disk paths and conversions before bulk migration.
+
+## Quick Start
+
+1. Install the package with `composer require capell-app/media-curator`.
+2. Register the package provider through Composer discovery and clear cached config if the host app uses config caching.
+3. Open the new admin surface or integration point and verify the result.
+
+## Next Steps
+
+- [docs/overview.md](docs/overview.md)
+- [../mosaic/README.md](../mosaic/README.md)
+- [../backup/README.md](../backup/README.md)

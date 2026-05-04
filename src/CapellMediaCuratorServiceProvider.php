@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\MediaCurator;
 
+use Capell\Admin\Data\AdminSurfaceContributionData;
 use Capell\Admin\Facades\CapellAdmin;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\Core\Facades\CapellCore;
@@ -26,9 +27,6 @@ final class CapellMediaCuratorServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        config()->set('capell.media.backend', 'curator');
-        config()->set('capell.media.model', CuratorMedia::class);
-
         CapellCore::registerPackage(
             self::$packageName,
             serviceProviderClass: self::class,
@@ -37,19 +35,41 @@ final class CapellMediaCuratorServiceProvider extends ServiceProvider
             description: fn (): string => __('capell-media-curator::package.description'),
         );
 
+        $this->app->booted(function (): void {
+            if (! $this->isPackageInstalled()) {
+                return;
+            }
+
+            $this->registerInstalledPackage();
+        });
+    }
+
+    public function boot(): void
+    {
+        if (! $this->isPackageInstalled()) {
+            return;
+        }
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([MigrateSpatieToCuratorCommand::class]);
+        }
+    }
+
+    private function registerInstalledPackage(): void
+    {
+        config()->set('capell.media.backend', 'curator');
+        config()->set('capell.media.model', CuratorMedia::class);
         CapellCore::registerModels([CuratorMedia::class]);
 
         $this->app->bind(MediaFieldFactory::class, CuratorMediaFieldFactory::class);
 
         if (class_exists(CapellAdmin::class)) {
-            CapellAdmin::registerPage(MediaHealthPage::class);
+            CapellAdmin::contributeToAdminSurface(AdminSurfaceContributionData::page(MediaHealthPage::class));
         }
     }
 
-    public function boot(): void
+    private function isPackageInstalled(): bool
     {
-        if ($this->app->runningInConsole()) {
-            $this->commands([MigrateSpatieToCuratorCommand::class]);
-        }
+        return CapellCore::isPackageInstalled(self::$packageName);
     }
 }
