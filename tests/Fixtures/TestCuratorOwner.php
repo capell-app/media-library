@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * Uses the `InteractsWithCuratorMedia` trait for single-FK media behaviour.
  * The `image` collection maps to the `image_id` column on this model's table,
  * as defined in the TestCase's `defineDatabaseMigrations()`.
+ *
+ * @property int|null $image_id
  */
 class TestCuratorOwner extends Model implements HasMediaContract
 {
