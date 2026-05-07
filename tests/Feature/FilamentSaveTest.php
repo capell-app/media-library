@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Awcodes\Curator\Components\FormBuilder\CuratorPicker;
+use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 
