@@ -2,7 +2,12 @@
 
 declare(strict_types=1);
 
+use Capell\Admin\Enums\ExtensionGroupEnum;
+use Capell\Admin\Support\CapellAdminManager;
+use Capell\Admin\Support\Extensions\ExtensionGroupRegistry;
+use Capell\Admin\Support\Extensions\ExtensionPageRegistry;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -33,6 +38,23 @@ test('media_health_query_is_empty_when_curator_table_has_not_been_installed', fu
     Schema::dropIfExists('curator');
 
     expect(BuildMediaHealthQueryAction::run()->get())->toHaveCount(0);
+});
+
+test('media health page registers in the health extension group', function (): void {
+    app()->singleton(ExtensionGroupRegistry::class, fn (): ExtensionGroupRegistry => new ExtensionGroupRegistry);
+    app()->singleton(ExtensionPageRegistry::class, fn (): ExtensionPageRegistry => new ExtensionPageRegistry);
+    app()->singleton(CapellAdminManager::class, fn (): CapellAdminManager => new CapellAdminManager);
+
+    resolve(CapellAdminManager::class)->registerExtensionPage(
+        'capell-app/media-library',
+        MediaHealthPage::class,
+        ExtensionGroupEnum::Health,
+    );
+
+    $extensionPage = collect(resolve(ExtensionPageRegistry::class)->entries())
+        ->first(fn (array $extensionPage): bool => $extensionPage['page'] === MediaHealthPage::class);
+
+    expect($extensionPage['extensionGroup'] ?? null)->toBe(ExtensionGroupEnum::Health);
 });
 
 function insertCuratorHealthMedia(string $name, ?string $alt, DateTimeInterface $updatedAt): int

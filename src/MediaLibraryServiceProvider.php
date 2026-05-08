@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\MediaLibrary;
 
+use Capell\Admin\Enums\ExtensionGroupEnum;
 use Capell\Admin\Facades\CapellAdmin;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\Core\Facades\CapellCore;
@@ -63,7 +64,7 @@ final class MediaLibraryServiceProvider extends ServiceProvider
         $this->app->bind(MediaFieldFactory::class, CuratorMediaFieldFactory::class);
 
         if (class_exists(CapellAdmin::class)) {
-            CapellAdmin::registerExtensionPage(self::$packageName, MediaHealthPage::class);
+            CapellAdmin::registerExtensionPage(self::$packageName, MediaHealthPage::class, ExtensionGroupEnum::Health);
         }
     }
 
