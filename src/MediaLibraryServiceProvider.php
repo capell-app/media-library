@@ -63,7 +63,7 @@ final class MediaLibraryServiceProvider extends ServiceProvider
 
         $this->app->bind(MediaFieldFactory::class, CuratorMediaFieldFactory::class);
 
-        if (class_exists(CapellAdmin::class)) {
+        if (class_exists(CapellAdmin::class) && class_exists(ExtensionGroupEnum::class)) {
             CapellAdmin::registerExtensionPage(self::$packageName, MediaHealthPage::class, ExtensionGroupEnum::Health);
         }
     }
