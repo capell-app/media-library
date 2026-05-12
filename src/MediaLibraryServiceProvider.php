@@ -26,14 +26,6 @@ final class MediaLibraryServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        CapellCore::registerPackage(
-            self::$packageName,
-            serviceProviderClass: self::class,
-            path: realpath(__DIR__ . '/..'),
-            version: CapellCore::getInstalledPrettyVersion(self::$packageName),
-            description: fn (): string => __('capell-media-library::package.description'),
-        );
-
         $this->app->booted(function (): void {
             if (! $this->isPackageInstalled()) {
                 return;
