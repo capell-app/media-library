@@ -47,6 +47,12 @@ Helps site operators audit media records and move legacy media into the current 
 - Curator media field inside a form.
 - Migration command output or report.
 
+## Screenshots
+
+![Media library admin index](../../../public/docs/screenshots/packages/media-library/media-health-page.png)
+
+The package currently resolves each media screenshot to the same media table. Add separate screenshots only after there are distinct seeded health, migration, and form-field states to capture.
+
 ## Pitfalls
 
 - Install and migrate Curator before relying on CuratorMedia.
