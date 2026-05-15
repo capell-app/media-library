@@ -23,7 +23,7 @@ class TestCuratorOwner extends Model implements HasMediaContract
     use HasFactory;
     use InteractsWithCuratorMedia;
 
-    /** @var string */
+    /** @var string|null */
     protected $table = 'test_curator_owners';
 
     /** @var list<string> */
