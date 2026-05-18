@@ -12,6 +12,7 @@ use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Support\ServiceProvider;
+use Override;
 
 /**
  * Registers the Curator backend for Capell media:
@@ -24,6 +25,7 @@ final class MediaLibraryServiceProvider extends ServiceProvider
 {
     public static string $packageName = 'capell-app/media-library';
 
+    #[Override]
     public function register(): void
     {
         $this->app->booted(function (): void {

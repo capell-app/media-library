@@ -50,6 +50,7 @@ class MediaHealthPage extends Page implements HasActions, HasTable
         return MediaHealthTable::configure($table);
     }
 
+    #[Override]
     public function getSubheading(): string|Htmlable|null
     {
         return __('capell-admin::generic.media_health_info');
