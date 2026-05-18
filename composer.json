@@ -16,7 +16,7 @@
         }
     ],
     "require": {
-        "php": "^8.2",
+        "php": "^8.3",
         "awcodes/filament-curator": "^4.0|^5.0",
         "capell-app/admin": "*",
         "capell-app/core": "*"
