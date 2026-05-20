@@ -1,12 +1,12 @@
-# Media Curator
+# Media Library
 
 Status: **Available, no schema impact in this package** · Kind: **package** · Tier: **free** · Bundle: **foundation** · Contexts: **admin** · Product group: **Capell Foundation**
 
-This page is the consolidated implementation overview for the Media Curator package. It is extracted from the package README, service providers, migrations, config files, routes, resources, models, actions, and the shared Capell ERD notes where available.
+This page is the consolidated implementation overview for the Media Library package. It is extracted from the package README, service providers, migrations, config files, routes, resources, models, actions, and the shared Capell ERD notes where available.
 
 ## What This Plugin Adds
 
-Media Curator connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.
+Media Library connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.
 
 - Curator media model wrapper.
 - Media health admin page and table.
@@ -18,7 +18,7 @@ Media Curator connects Capell to Awcodes Curator media, media health reporting, 
 
 Centralises Curator integration behind actions, field factories, and model concerns so packages can use media fields consistently.
 
-- CapellMediaCuratorServiceProvider registers the package.
+- MediaLibraryServiceProvider registers the package.
 - Model: CuratorMedia.
 - Command: MigrateSpatieToCuratorCommand.
 - Action: MigrateSpatieMediaToCuratorAction.
@@ -47,6 +47,12 @@ Helps site operators audit media records and move legacy media into the current 
 - Curator media field inside a form.
 - Migration command output or report.
 
+## Screenshots
+
+![Media library admin index](../../../public/docs/screenshots/packages/media-library/media-health-page.png)
+
+The package currently resolves each media screenshot to the same media table. Add separate screenshots only after there are distinct seeded health, migration, and form-field states to capture.
+
 ## Pitfalls
 
 - Install and migrate Curator before relying on CuratorMedia.
@@ -55,13 +61,13 @@ Helps site operators audit media records and move legacy media into the current 
 
 ## Verification
 
-- Run `vendor/bin/pest packages/media-curator/tests` when package tests exist.
+- Run `vendor/bin/pest packages/media-library/tests` when package tests exist.
 - Run the relevant host-app migration or package install flow in a disposable database.
 - Open the listed admin or frontend surface and compare it with the screenshot plan.
 
 ## Package Manifest
 
-- Composer name: `capell-app/media-curator`
+- Composer name: `capell-app/media-library`
 - Product group: Capell Foundation
 - Kind: package
 - Tier: free
@@ -72,7 +78,7 @@ Helps site operators audit media records and move legacy media into the current 
 
 ## Admin Surfaces
 
-- MediaHealthPage (packages/media-curator/src/Filament/Pages/MediaHealthPage.php, slug `media-health`)
+- MediaHealthPage (packages/media-library/src/Filament/Pages/MediaHealthPage.php, slug `media-health`)
 
 ## Commands
 
@@ -96,7 +102,7 @@ This package has no committed ERD excerpt. Use implementation notes and extensio
 
 ## Screenshot Automation
 
-Deployment should read [screenshots.json](screenshots.json), install the package with demo data, resolve each admin surface or frontend URL, and write images to `public/docs/screenshots/packages/media-curator`.
+Deployment should read [screenshots.json](screenshots.json), install the package with demo data, resolve each admin surface or frontend URL, and write images to `public/docs/screenshots/packages/media-library`.
 
 - Media health page.
 - Media health table.

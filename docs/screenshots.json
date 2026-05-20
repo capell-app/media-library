@@ -1,49 +1,57 @@
 {
-    "package": "media-curator",
-    "composerName": "capell-app/media-curator",
+    "package": "media-library",
+    "composerName": "capell-app/media-library",
     "generatedFor": "deployment-screenshot-runner",
     "requiresInstalledPackage": true,
-    "outputDirectory": "public/docs/screenshots/packages/media-curator",
+    "outputDirectory": "public/docs/screenshots/packages/media-library",
     "entries": [
         {
             "id": "media-health-page",
             "title": "Media health page.",
-            "package": "media-curator",
+            "package": "media-library",
             "surface": "admin",
             "targetType": "admin-surface",
             "target": "MediaHealthPage",
             "required": true,
-            "notes": "Resolved by the deployment screenshot runner after the package is installed and demo data is prepared."
+            "notes": "Capture after installing capell-app/media-library in the isolated demo harness and seeding the data required for this use case.",
+            "useCase": "An administrator reviews media health status for stale, missing, or incomplete assets.",
+            "screenshotPath": "public/docs/screenshots/packages/media-library/media-health-page.png"
         },
         {
             "id": "media-health-table",
             "title": "Media health table.",
-            "package": "media-curator",
+            "package": "media-library",
             "surface": "admin",
             "targetType": "admin-surface",
             "target": "MediaHealthPage",
             "required": true,
-            "notes": "Resolved by the deployment screenshot runner after the package is installed and demo data is prepared."
+            "notes": "Capture after installing capell-app/media-library in the isolated demo harness and seeding the data required for this use case.",
+            "useCase": "An administrator scans individual media health rows and remediation state.",
+            "screenshotPath": "public/docs/screenshots/packages/media-library/media-health-table.png"
         },
         {
             "id": "curator-media-field-inside-a-form",
             "title": "Curator media field inside a form.",
-            "package": "media-curator",
+            "package": "media-library",
             "surface": "admin",
             "targetType": "admin-surface",
             "target": "MediaHealthPage",
             "required": true,
-            "notes": "Resolved by the deployment screenshot runner after the package is installed and demo data is prepared."
+            "notes": "Capture after installing capell-app/media-library in the isolated demo harness and seeding the data required for this use case.",
+            "useCase": "An editor selects media through the Curator field embedded in a Capell form.",
+            "screenshotPath": "public/docs/screenshots/packages/media-library/curator-media-field-inside-a-form.png"
         },
         {
             "id": "migration-command-output-or-report",
             "title": "Migration command output or report.",
-            "package": "media-curator",
+            "package": "media-library",
             "surface": "admin",
             "targetType": "admin-surface",
             "target": "MediaHealthPage",
             "required": true,
-            "notes": "Resolved by the deployment screenshot runner after the package is installed and demo data is prepared."
+            "notes": "Capture after installing capell-app/media-library in the isolated demo harness and seeding the data required for this use case.",
+            "useCase": "A developer reviews the Spatie-to-Curator migration report before or after migration.",
+            "screenshotPath": "public/docs/screenshots/packages/media-library/migration-command-output-or-report.png"
         }
     ]
 }

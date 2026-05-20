@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Console;
+namespace Capell\MediaLibrary\Console;
 
-use Capell\MediaCurator\Actions\MigrateSpatieMediaToCuratorAction;
-use Capell\MediaCurator\Data\MigrateSpatieMediaInput;
-use Capell\MediaCurator\Data\MigrateSpatieMediaResult;
+use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
+use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
+use Capell\MediaLibrary\Data\MigrateSpatieMediaResult;
 use Illuminate\Console\Command;
 
 /**

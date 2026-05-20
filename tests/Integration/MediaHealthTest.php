@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
-use Capell\MediaCurator\Actions\Reports\BuildMediaHealthQueryAction;
-use Capell\MediaCurator\Tests\Fixtures\TestCuratorOwner;
+use Capell\Admin\Support\CapellAdminManager;
+use Capell\Admin\Support\Extensions\ExtensionPageRegistry;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
+use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 test('media_health_query_uses_curator_rows_and_known_owner_foreign_keys', function (): void {
-    config()->set('capell.media_curator.owner_foreign_keys', [
+    config()->set('capell.media_library.owner_foreign_keys', [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
     ]);
 
@@ -33,6 +36,21 @@ test('media_health_query_is_empty_when_curator_table_has_not_been_installed', fu
     Schema::dropIfExists('curator');
 
     expect(BuildMediaHealthQueryAction::run()->get())->toHaveCount(0);
+});
+
+test('media health page registers as an extension page', function (): void {
+    app()->singleton(ExtensionPageRegistry::class, fn (): ExtensionPageRegistry => new ExtensionPageRegistry);
+    app()->singleton(CapellAdminManager::class, fn (): CapellAdminManager => new CapellAdminManager);
+
+    resolve(CapellAdminManager::class)->registerExtensionPage(
+        'capell-app/media-library',
+        MediaHealthPage::class,
+    );
+
+    $extensionPage = collect(resolve(ExtensionPageRegistry::class)->entries())
+        ->first(fn (array $extensionPage): bool => $extensionPage['page'] === MediaHealthPage::class);
+
+    expect($extensionPage['page'] ?? null)->toBe(MediaHealthPage::class);
 });
 
 function insertCuratorHealthMedia(string $name, ?string $alt, DateTimeInterface $updatedAt): int

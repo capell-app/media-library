@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Actions\Reports;
+namespace Capell\MediaLibrary\Actions\DashboardReports;
 
-use Capell\MediaCurator\Models\CuratorMedia;
+use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -25,7 +25,7 @@ final class BuildMediaHealthQueryAction
 
         $staleThreshold = now()->subDays(90);
         $knownOwnerForeignKeys = $this->knownOwnerForeignKeys(
-            $ownerForeignKeys ?? config('capell.media_curator.owner_foreign_keys', []),
+            $ownerForeignKeys ?? config('capell.media_library.owner_foreign_keys', []),
         );
         $usageCountExpression = $this->usageCountExpression($knownOwnerForeignKeys);
 

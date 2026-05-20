@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
-use Capell\MediaCurator\Filament\Components\CuratorMediaFieldFactory;
+use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 
 test('factory make returns a CuratorPicker field instance', function (): void {
     $factory = resolve(MediaFieldFactory::class);

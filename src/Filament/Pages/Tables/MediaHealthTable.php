@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Filament\Pages\Tables;
+namespace Capell\MediaLibrary\Filament\Pages\Tables;
 
 use Capell\Admin\Filament\Components\Tables\Columns\DateColumn;
 use Capell\Admin\Filament\Contracts\TableConfigurator;
-use Capell\MediaCurator\Actions\Reports\BuildMediaHealthQueryAction;
-use Capell\MediaCurator\Models\CuratorMedia;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Models\CuratorMedia;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;

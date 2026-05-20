@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Filament\Components;
+namespace Capell\MediaLibrary\Filament\Components;
 
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 
 /**
  * MediaFieldFactory implementation that returns a CuratorPicker Filament
- * field. Bound in the container by CapellMediaCuratorServiceProvider so
+ * field. Bound in the container by MediaLibraryServiceProvider so
  * Capell schemas that type-hint MediaFieldFactory render with Curator's
  * picker instead of Spatie's uploader.
  */

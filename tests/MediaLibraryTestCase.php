@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Tests;
+namespace Capell\MediaLibrary\Tests;
 
 use Awcodes\Curator\CuratorServiceProvider;
-use Capell\MediaCurator\CapellMediaCuratorServiceProvider;
+use Capell\Core\Facades\CapellCore;
+use Capell\MediaLibrary\MediaLibraryServiceProvider;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Database\Schema\Blueprint;
@@ -13,9 +14,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
-use Spatie\MediaLibrary\MediaLibraryServiceProvider;
+use Spatie\MediaLibrary\MediaLibraryServiceProvider as SpatieMediaLibraryServiceProvider;
 
-class MediaCuratorTestCase extends OrchestraTestCase
+class MediaLibraryTestCase extends OrchestraTestCase
 {
     protected function setUp(): void
     {
@@ -40,9 +41,9 @@ class MediaCuratorTestCase extends OrchestraTestCase
 
         return [
             LivewireServiceProvider::class,
-            MediaLibraryServiceProvider::class,
+            SpatieMediaLibraryServiceProvider::class,
             CuratorServiceProvider::class,
-            CapellMediaCuratorServiceProvider::class,
+            MediaLibraryServiceProvider::class,
         ];
     }
 
@@ -59,6 +60,8 @@ class MediaCuratorTestCase extends OrchestraTestCase
         ]);
 
         $app->make(Repository::class)->set('curator.glide_token', 'test-token');
+
+        CapellCore::forcePackageInstalled(MediaLibraryServiceProvider::$packageName);
     }
 
     protected function defineDatabaseMigrations(): void

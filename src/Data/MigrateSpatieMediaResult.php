@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Data;
+namespace Capell\MediaLibrary\Data;
 
 use Spatie\LaravelData\Data;
 

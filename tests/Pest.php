@@ -2,6 +2,6 @@
 
 declare(strict_types=1);
 
-use Capell\MediaCurator\Tests\MediaCuratorTestCase;
+use Capell\MediaLibrary\Tests\MediaLibraryTestCase;
 
-pest()->extend(MediaCuratorTestCase::class)->group('media-curator')->in(__DIR__);
+pest()->extend(MediaLibraryTestCase::class)->group('media-library')->in(__DIR__);

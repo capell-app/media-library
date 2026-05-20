@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Models;
+namespace Capell\MediaLibrary\Models;
 
 use Awcodes\Curator\Models\Media as BaseCuratorMedia;
 use Capell\Core\Contracts\Media\MediaContract;

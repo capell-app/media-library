@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Actions;
+namespace Capell\MediaLibrary\Actions;
 
-use Capell\MediaCurator\Data\MigrateSpatieMediaInput;
-use Capell\MediaCurator\Data\MigrateSpatieMediaResult;
+use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
+use Capell\MediaLibrary\Data\MigrateSpatieMediaResult;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;

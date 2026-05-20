@@ -3,7 +3,8 @@
 declare(strict_types=1);
 
 use Capell\Core\Contracts\Media\MediaContract;
-use Capell\MediaCurator\Tests\Fixtures\TestCuratorOwner;
+use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 
 test('attach_from_upload_then_fetch_first_url returns non-empty string', function (): void {
@@ -62,7 +63,8 @@ test('fk column is populated with curator row id after attach', function (): voi
 
     $owner->refresh();
 
-    expect($owner->image_id)->toBe($media->getKey());
+    expect($media)->toBeInstanceOf(Model::class)
+        ->and($owner->image_id)->toBe($media instanceof Model ? $media->getKey() : null);
 });
 
 test('get_first_media returns an instance of MediaContract', function (): void {

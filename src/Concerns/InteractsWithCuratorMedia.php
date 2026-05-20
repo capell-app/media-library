@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Concerns;
+namespace Capell\MediaLibrary\Concerns;
 
 use Capell\Core\Contracts\Media\MediaContract;
-use Capell\MediaCurator\Models\CuratorMedia;
-use Illuminate\Database\Eloquent\Collection;
+use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
@@ -34,7 +34,6 @@ trait InteractsWithCuratorMedia
 
     public function curatorMediaRelation(string $collection): BelongsTo
     {
-        /** @var Model $this */
         return $this->belongsTo(CuratorMedia::class, static::curatorMediaColumn($collection));
     }
 

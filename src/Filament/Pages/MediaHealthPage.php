@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Capell\MediaCurator\Filament\Pages;
+namespace Capell\MediaLibrary\Filament\Pages;
 
 use BackedEnum;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Capell\Admin\Filament\Concerns\HasNavigationBadge;
-use Capell\MediaCurator\Filament\Pages\Tables\MediaHealthTable;
+use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Pages\Page;
@@ -42,7 +42,7 @@ class MediaHealthPage extends Page implements HasActions, HasTable
     #[Override]
     public static function getNavigationGroup(): ?string
     {
-        return (string) (__('capell-admin::navigation.group_monitoring'));
+        return (string) (__('capell-admin::navigation.group_system'));
     }
 
     public static function table(Table $table): Table
@@ -50,6 +50,7 @@ class MediaHealthPage extends Page implements HasActions, HasTable
         return MediaHealthTable::configure($table);
     }
 
+    #[Override]
     public function getSubheading(): string|Htmlable|null
     {
         return __('capell-admin::generic.media_health_info');

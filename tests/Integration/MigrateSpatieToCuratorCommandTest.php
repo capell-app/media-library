@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Capell\MediaCurator\Actions\MigrateSpatieMediaToCuratorAction;
-use Capell\MediaCurator\Data\MigrateSpatieMediaInput;
-use Capell\MediaCurator\Tests\Fixtures\TestCuratorOwner;
+use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
+use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
+use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -77,7 +77,7 @@ beforeEach(function (): void {
     }
 });
 
-test('dry_run_reports_without_writing', function (): void {
+test('dry_run_dashboard-dashboard_reports_without_writing', function (): void {
     seedSpatieFixture(2, ['image']);
 
     $result = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput(dryRun: true));

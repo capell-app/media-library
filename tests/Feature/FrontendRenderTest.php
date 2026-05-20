@@ -3,8 +3,8 @@
 declare(strict_types=1);
 
 use Capell\Core\Contracts\Media\MediaContract;
-use Capell\MediaCurator\Models\CuratorMedia;
-use Capell\MediaCurator\Tests\Fixtures\TestCuratorOwner;
+use Capell\MediaLibrary\Models\CuratorMedia;
+use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Http\UploadedFile;
 
 test('CuratorMedia contract methods return expected scalar types', function (): void {
