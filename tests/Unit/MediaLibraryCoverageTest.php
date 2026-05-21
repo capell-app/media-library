@@ -280,10 +280,10 @@ it('implements curator media contract fallbacks', function (): void {
     ]);
 
     expect($media->getFullUrl())->toBe($media->getUrl())
-        ->and($media->getAvailableFullUrl(['thumb']))->toBe($media->getUrl())
-        ->and($media->getSrcset())->toBe('')
-        ->and($media->hasResponsiveImages())->toBeFalse()
-        ->and($media->hasConversion('thumb'))->toBeFalse()
+        ->and($media->getAvailableFullUrl(['thumb']))->toBe($media->getUrl('thumb'))
+        ->and($media->getSrcset())->toContain('200w')
+        ->and($media->hasResponsiveImages())->toBeTrue()
+        ->and($media->hasConversion('thumb'))->toBeTrue()
         ->and($media->getName())->toBe('Title text')
         ->and($media->getPath())->toBe('media/pretty.jpg')
         ->and($media->getMimeType())->toBe('image/jpeg')

@@ -68,7 +68,7 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
             }
         }
 
-        if (! str_starts_with($this->getMimeType(), 'image/')) {
+        if (! str_starts_with($this->type, 'image/')) {
             return '';
         }
 
@@ -79,11 +79,11 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
         ];
 
         $srcset = collect($candidates)
-            ->filter(fn (array $candidate): bool => $this->hasConversion((string) $candidate['conversion']))
+            ->filter(fn (array $candidate): bool => $this->hasConversion($candidate['conversion']))
             ->map(fn (array $candidate): string => sprintf(
                 '%s %dw',
-                $this->getUrl((string) $candidate['conversion']),
-                (int) $candidate['width'],
+                $this->getUrl($candidate['conversion']),
+                $candidate['width'],
             ))
             ->values()
             ->all();
@@ -98,7 +98,7 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 
     public function hasConversion(string $conversion): bool
     {
-        if (! str_starts_with($this->getMimeType(), 'image/')) {
+        if (! str_starts_with($this->type, 'image/')) {
             return false;
         }
 
