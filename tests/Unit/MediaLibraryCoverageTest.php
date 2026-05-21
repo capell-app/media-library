@@ -248,8 +248,8 @@ it('filters migration rows and handles invalid curation metadata', function (): 
     $filteredResult = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput(
         dryRun: false,
         collections: ['image'],
-        ownerType: TestCuratorOwner::class,
         chunkSize: 1,
+        ownerType: TestCuratorOwner::class,
     ));
     $curatorRow = DB::table('curator')->first();
 
@@ -316,13 +316,22 @@ it('stores uploaded curator media and clears the owner collection', function ():
         'image',
     );
 
-    expect($media)->toBeInstanceOf(CuratorMedia::class)
-        ->and($media->disk)->toBe('public')
+    expect($media)->toBeInstanceOf(CuratorMedia::class);
+
+    throw_unless($media instanceof CuratorMedia, RuntimeException::class, 'Uploaded media must be curator media.');
+
+    $freshMedia = $owner->fresh()->getFirstMedia('image');
+
+    expect($freshMedia)->toBeInstanceOf(CuratorMedia::class);
+
+    throw_unless($freshMedia instanceof CuratorMedia, RuntimeException::class, 'Fresh owner media must be curator media.');
+
+    expect($media->disk)->toBe('public')
         ->and($media->directory)->toBe('media')
         ->and($media->name)->toBe('Profile Photo')
         ->and($media->ext)->toBe('jpg')
         ->and($owner->fresh()->image_id)->toBe($media->getKey())
-        ->and($owner->fresh()->getFirstMedia('image')?->getKey())->toBe($media->getKey())
+        ->and($freshMedia->getKey())->toBe($media->getKey())
         ->and($owner->fresh()->getMedia('image'))->toHaveCount(1);
 
     $returnedOwner = $owner->fresh()->clearMediaCollection('image');
