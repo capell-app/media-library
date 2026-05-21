@@ -18,8 +18,8 @@
     "require": {
         "php": "^8.3",
         "awcodes/filament-curator": "^4.0|^5.0",
-        "capell-app/admin": "*",
-        "capell-app/core": "*"
+        "capell-app/admin": "^4.0 || 4.x-dev",
+        "capell-app/core": "^4.0 || 4.x-dev"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0|^10.0",
@@ -76,5 +76,11 @@
         }
     ],
     "minimum-stability": "dev",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "type": "library",
+    "homepage": "https://github.com/capell-app/media-library",
+    "support": {
+        "source": "https://github.com/capell-app/capell-packages",
+        "docs": "https://docs.capell.app/packages/media-library"
+    }
 }
