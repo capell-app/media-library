@@ -33,6 +33,26 @@ test('CuratorMedia contract methods return expected scalar types', function (): 
     expect($mediaRow->hasResponsiveImages())->toBeBool();
 });
 
+test('CuratorMedia exposes stored responsive srcset metadata', function (): void {
+    $media = (new CuratorMedia)->forceFill([
+        'disk' => 'public',
+        'directory' => 'media',
+        'visibility' => 'public',
+        'name' => 'responsive',
+        'path' => 'media/responsive.jpg',
+        'size' => 12345,
+        'type' => 'image/jpeg',
+        'ext' => 'jpg',
+        'responsive_images' => [
+            'hero' => ['srcset' => 'hero-640.jpg 640w, hero-1024.jpg 1024w'],
+        ],
+    ]);
+
+    expect($media->getSrcset())->toBe('hero-640.jpg 640w, hero-1024.jpg 1024w')
+        ->and($media->hasResponsiveImages())->toBeTrue()
+        ->and($media->hasConversion('medium'))->toBeTrue();
+});
+
 test('getFirstMedia returns an object satisfying MediaContract for view components', function (): void {
     $owner = TestCuratorOwner::query()->create(['name' => 'Render Owner']);
 

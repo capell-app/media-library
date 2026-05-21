@@ -13,10 +13,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  * MediaContract. Subclasses Awcodes\Curator\Models\Media so Curator-native
  * features (picker, library, glide) continue to work untouched.
  *
- * Curator does not implement Spatie-style conversions / responsive images;
- * the corresponding contract methods are implemented to return sensible
- * no-op values. The `$conversion` argument is accepted for contract
- * compliance but has no effect.
+ * Curator exposes Glide-backed thumbnail, medium, and large URLs rather than
+ * Spatie conversion files. The contract methods map those existing URLs into
+ * conversion/srcset semantics without changing Curator storage.
  */
 final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 {
@@ -24,9 +23,20 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 
     public function getUrl(string $conversion = ''): string
     {
+        $conversionUrl = match ($conversion) {
+            'thumb', 'thumbnail' => $this->thumbnail_url,
+            'medium' => $this->medium_url,
+            'large' => $this->large_url,
+            default => null,
+        };
+
+        if (is_string($conversionUrl) && $conversionUrl !== '') {
+            return $conversionUrl;
+        }
+
         // `url` is an Eloquent accessor on BaseCuratorMedia; reading
         // $this->url triggers it and returns a storage-resolved URL.
-        return $this->url;
+        return (string) $this->url;
     }
 
     public function getFullUrl(string $conversion = ''): string
@@ -39,22 +49,66 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
      */
     public function getAvailableFullUrl(array $conversions): string
     {
+        foreach ($conversions as $conversion) {
+            if ($this->hasConversion($conversion)) {
+                return $this->getUrl($conversion);
+            }
+        }
+
         return $this->getUrl();
     }
 
     public function getSrcset(): string
     {
-        return '';
+        $responsiveImages = $this->metadataArray('responsive_images');
+
+        foreach ($responsiveImages as $responsiveImage) {
+            if (is_array($responsiveImage) && is_string($responsiveImage['srcset'] ?? null) && $responsiveImage['srcset'] !== '') {
+                return $responsiveImage['srcset'];
+            }
+        }
+
+        if (! str_starts_with($this->getMimeType(), 'image/')) {
+            return '';
+        }
+
+        $candidates = [
+            ['conversion' => 'thumbnail', 'width' => 200],
+            ['conversion' => 'medium', 'width' => 640],
+            ['conversion' => 'large', 'width' => 1024],
+        ];
+
+        $srcset = collect($candidates)
+            ->filter(fn (array $candidate): bool => $this->hasConversion((string) $candidate['conversion']))
+            ->map(fn (array $candidate): string => sprintf(
+                '%s %dw',
+                $this->getUrl((string) $candidate['conversion']),
+                (int) $candidate['width'],
+            ))
+            ->values()
+            ->all();
+
+        return implode(', ', $srcset);
     }
 
     public function hasResponsiveImages(): bool
     {
-        return false;
+        return $this->getSrcset() !== '';
     }
 
     public function hasConversion(string $conversion): bool
     {
-        return false;
+        if (! str_starts_with($this->getMimeType(), 'image/')) {
+            return false;
+        }
+
+        if (in_array($conversion, ['thumb', 'thumbnail', 'medium', 'large'], true)) {
+            return true;
+        }
+
+        $generatedConversions = $this->metadataArray('generated_conversions');
+
+        return (bool) ($generatedConversions[$conversion] ?? false);
     }
 
     public function getName(): string
@@ -101,5 +155,25 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
             'height' => $this->height ?? $default,
             default => $default,
         };
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function metadataArray(string $attribute): array
+    {
+        $value = $this->getAttribute($attribute);
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        if (is_string($value) && $value !== '') {
+            $decoded = json_decode($value, true);
+
+            return is_array($decoded) ? $decoded : [];
+        }
+
+        return [];
     }
 }
