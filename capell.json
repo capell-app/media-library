@@ -13,16 +13,23 @@
         "bundle": "foundation"
     },
     "namespace": "Capell\\MediaLibrary",
-    "surfaces": ["admin"],
+    "surfaces": [
+        "admin"
+    ],
     "dependencies": {
-        "requires": ["capell-app/admin", "capell-app/core"],
+        "requires": [
+            "capell-app/admin",
+            "capell-app/core"
+        ],
         "optional": [],
         "conflicts": []
     },
     "providers": {
         "metadata": [],
         "install": [],
-        "runtime": ["Capell\\MediaLibrary\\MediaLibraryServiceProvider"],
+        "runtime": [
+            "Capell\\MediaLibrary\\MediaLibraryServiceProvider"
+        ],
         "admin": [],
         "frontend": []
     },
@@ -84,10 +91,22 @@
     },
     "marketplace": {
         "summary": "Media Library connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.",
-        "screenshots": [],
-        "categories": ["admin", "foundation"]
+        "screenshots": [
+            {
+                "path": "docs/assets/marketplace/extension-card.jpg",
+                "alt": "Media Library extension preview image",
+                "caption": "Media Library extension preview"
+            }
+        ],
+        "categories": [
+            "admin",
+            "foundation"
+        ]
     },
     "contributionTraceability": {
-        "deferredContributions": ["admin-page", "model"]
+        "deferredContributions": [
+            "admin-page",
+            "model"
+        ]
     }
 }
