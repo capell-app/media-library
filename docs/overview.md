@@ -4,7 +4,7 @@ Status: **Available, no schema impact in this package** · Kind: **package** · 
 
 This page is the consolidated implementation overview for the Media Library package. It is extracted from the package README, service providers, migrations, config files, routes, resources, models, actions, and the shared Capell ERD notes where available.
 
-## What This Plugin Adds
+## What This Package Adds
 
 Media Library connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.
 
