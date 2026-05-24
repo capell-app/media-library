@@ -245,8 +245,8 @@ final class MigrateSpatieMediaToCuratorAction
      *     caption: string|null,
      *     width: int|null,
      *     height: int|null,
-     *     exif: array<string, mixed>|null,
-     *     curations: array<int, array<string, mixed>>|null
+     *     exif: array<array-key, mixed>|null,
+     *     curations: array<int, array<array-key, mixed>>|null
      * }
      */
     private function mapMetadata(SpatieMedia $spatieMedia): array
@@ -301,7 +301,7 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<array-key, mixed>
      */
     private function decodeArray(mixed $value): array
     {
@@ -319,8 +319,8 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
-     * @param  array<string, mixed>  $source
      * @param  array<int, string>  $keys
+     * @param  array<array-key, mixed>  $source
      */
     private function firstString(array $source, array $keys): ?string
     {
@@ -336,8 +336,8 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
-     * @param  array<string, mixed>  $source
      * @param  array<int, string>  $keys
+     * @param  array<array-key, mixed>  $source
      */
     private function firstInt(array $source, array $keys): ?int
     {
@@ -353,8 +353,8 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
-     * @param  array<string, mixed>  $customProperties
-     * @return array<int, array<string, mixed>>|null
+     * @param  array<array-key, mixed>  $customProperties
+     * @return array<int, array<array-key, mixed>>|null
      */
     private function normalizeCurations(array $customProperties): ?array
     {
@@ -389,6 +389,9 @@ final class MigrateSpatieMediaToCuratorAction
         return $normalizedCurations;
     }
 
+    /**
+     * @param  array<array-key, mixed>  $value
+     */
     private function encodeJson(?array $value): ?string
     {
         if ($value === null) {

@@ -6,6 +6,7 @@ namespace Capell\MediaLibrary\Models;
 
 use Awcodes\Curator\Models\Media as BaseCuratorMedia;
 use Capell\Core\Contracts\Media\MediaContract;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 /**
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
  */
 final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory;
 
     public function getUrl(string $conversion = ''): string
@@ -158,7 +160,7 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<array-key, mixed>
      */
     private function metadataArray(string $attribute): array
     {

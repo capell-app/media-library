@@ -6,6 +6,7 @@ namespace Capell\MediaLibrary\Tests\Fixtures;
 
 use Capell\Core\Contracts\Media\HasMediaContract;
 use Capell\MediaLibrary\Concerns\InteractsWithCuratorMedia;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,7 +21,9 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TestCuratorOwner extends Model implements HasMediaContract
 {
+    /** @use HasFactory<Factory<static>> */
     use HasFactory;
+
     use InteractsWithCuratorMedia;
 
     /** @var string|null */

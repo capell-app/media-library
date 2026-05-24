@@ -16,6 +16,7 @@ final class BuildMediaHealthQueryAction
 
     /**
      * @param  array<int, array{table: string, column: string}>|null  $ownerForeignKeys
+     * @return Builder<CuratorMedia>
      */
     public function handle(?array $ownerForeignKeys = null): Builder
     {
@@ -44,6 +45,9 @@ final class BuildMediaHealthQueryAction
             });
     }
 
+    /**
+     * @return Builder<CuratorMedia>
+     */
     private function emptyCuratorQuery(): Builder
     {
         $query = CuratorMedia::query();
