@@ -13,23 +13,16 @@
         "bundle": "foundation"
     },
     "namespace": "Capell\\MediaLibrary",
-    "surfaces": [
-        "admin"
-    ],
+    "surfaces": ["admin"],
     "dependencies": {
-        "requires": [
-            "capell-app/admin",
-            "capell-app/core"
-        ],
-        "optional": [],
+        "requires": ["capell-app/admin", "capell-app/core"],
+        "supports": [],
         "conflicts": []
     },
     "providers": {
         "metadata": [],
         "install": [],
-        "runtime": [
-            "Capell\\MediaLibrary\\MediaLibraryServiceProvider"
-        ],
+        "runtime": ["Capell\\MediaLibrary\\MediaLibraryServiceProvider"],
         "admin": [],
         "frontend": []
     },
@@ -98,15 +91,9 @@
                 "caption": "Media Library extension preview"
             }
         ],
-        "categories": [
-            "admin",
-            "foundation"
-        ]
+        "categories": ["admin", "foundation"]
     },
     "contributionTraceability": {
-        "deferredContributions": [
-            "admin-page",
-            "model"
-        ]
+        "deferredContributions": ["admin-page", "model"]
     }
 }

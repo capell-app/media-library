@@ -45,6 +45,11 @@ final class MediaLibraryServiceProvider extends ServiceProvider
         }
     }
 
+    protected function isPackageInstalled(): bool
+    {
+        return CapellCore::isPackageInstalled(self::$packageName);
+    }
+
     private function registerInstalledPackage(): void
     {
         CapellCore::registerModels([CuratorMedia::class]);
@@ -60,10 +65,5 @@ final class MediaLibraryServiceProvider extends ServiceProvider
         config()->set('capell.media.model', CuratorMedia::class);
 
         $this->app->bind(MediaFieldFactory::class, CuratorMediaFieldFactory::class);
-    }
-
-    private function isPackageInstalled(): bool
-    {
-        return CapellCore::isPackageInstalled(self::$packageName);
     }
 }
