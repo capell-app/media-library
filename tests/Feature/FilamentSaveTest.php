@@ -11,7 +11,8 @@ test('factory make returns a CuratorPicker field instance', function (): void {
 
     $field = $factory->make('image');
 
-    expect($field)->toBeInstanceOf(CuratorPicker::class);
+    expect($field)->toBeInstanceOf(CuratorPicker::class)
+        ->and($field->getName())->toBe('image_id');
 });
 
 test('MediaFieldFactory contract resolves to CuratorMediaFieldFactory when plugin registered', function (): void {

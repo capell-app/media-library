@@ -36,8 +36,12 @@ it('carries media migration input and result data', function (): void {
 
 it('builds curator media fields and declares package health compatibility', function (): void {
     $field = (new CuratorMediaFieldFactory)->make('featured_image_id');
+    $imageField = (new CuratorMediaFieldFactory)->make('image');
+    $socialImageField = (new CuratorMediaFieldFactory)->make('socialImage');
 
     expect($field)->toBeInstanceOf(CuratorPicker::class)
         ->and($field->getName())->toBe('featured_image_id')
+        ->and($imageField->getName())->toBe('image_id')
+        ->and($socialImageField->getName())->toBe('social_image_id')
         ->and(MediaLibraryHealthCheck::compatibleCapellApiVersion())->toBe('^4.0');
 });

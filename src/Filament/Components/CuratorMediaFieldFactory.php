@@ -6,6 +6,7 @@ namespace Capell\MediaLibrary\Filament\Components;
 
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
+use Illuminate\Support\Str;
 
 /**
  * MediaFieldFactory implementation that returns a CuratorPicker Filament
@@ -17,6 +18,16 @@ final class CuratorMediaFieldFactory implements MediaFieldFactory
 {
     public function make(string $name): CuratorPicker
     {
-        return CuratorPicker::make($name);
+        return CuratorPicker::make($this->resolveFieldName($name))
+            ->dehydrated(fn (mixed $state): bool => filled($state));
+    }
+
+    private function resolveFieldName(string $name): string
+    {
+        if (str_ends_with($name, '_id')) {
+            return $name;
+        }
+
+        return Str::snake($name) . '_id';
     }
 }
