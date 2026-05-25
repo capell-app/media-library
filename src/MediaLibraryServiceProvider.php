@@ -45,7 +45,7 @@ final class MediaLibraryServiceProvider extends ServiceProvider
         }
     }
 
-    protected function isPackageInstalled(): bool
+    private function isPackageInstalled(): bool
     {
         return CapellCore::isPackageInstalled(self::$packageName);
     }
