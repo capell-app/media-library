@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Capell\MediaLibrary\Actions\DashboardReports;
 
+use Capell\Core\Support\Database\RuntimeSchemaState;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 final class BuildMediaHealthQueryAction
@@ -20,7 +20,7 @@ final class BuildMediaHealthQueryAction
      */
     public function handle(?array $ownerForeignKeys = null): Builder
     {
-        if (! Schema::hasTable('curator')) {
+        if (! resolve(RuntimeSchemaState::class)->hasTable('curator')) {
             return $this->emptyCuratorQuery();
         }
 
@@ -122,11 +122,11 @@ final class BuildMediaHealthQueryAction
                 continue;
             }
 
-            if (! Schema::hasTable($table)) {
+            if (! resolve(RuntimeSchemaState::class)->hasTable($table)) {
                 continue;
             }
 
-            if (! Schema::hasColumn($table, $column)) {
+            if (! resolve(RuntimeSchemaState::class)->hasColumn($table, $column)) {
                 continue;
             }
 
