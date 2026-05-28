@@ -143,7 +143,7 @@ it('normalizes command input and prints migration warnings', function (): void {
         'updated_at' => now(),
     ]);
 
-    $this->artisan('capell:media-migrate-to-curator', [
+    capell_artisan('capell:media-migrate-to-curator', [
         '--dry-run' => true,
         '--collection' => ['hero'],
         '--owner-type' => 'App\\Models\\MissingMediaOwner',
