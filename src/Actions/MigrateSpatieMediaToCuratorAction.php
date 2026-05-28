@@ -105,10 +105,17 @@ final class MigrateSpatieMediaToCuratorAction
      *     disk: string,
      *     file_name: string,
      *     model_id: int,
-     *     model_type: class-string<Model>,
+     *     model_type: string,
      *     name: string,
      *     size: int,
-     *     mime_type?: string|null
+     *     mime_type?: string|null,
+     *     uuid?: string|null,
+     *     conversions_disk?: string|null,
+     *     order_column?: int|null,
+     *     custom_properties?: string|null,
+     *     manipulations?: string|null,
+     *     generated_conversions?: string|null,
+     *     responsive_images?: string|null
      * }|null
      */
     private function spatieMediaRow(mixed $row): ?array
@@ -121,7 +128,6 @@ final class MigrateSpatieMediaToCuratorAction
             || ! is_string($row->file_name ?? null)
             || ! is_int($row->model_id ?? null)
             || ! is_string($row->model_type ?? null)
-            || ! is_a($row->model_type, Model::class, true)
             || ! is_string($row->name ?? null)
             || ! is_int($row->size ?? null)
         ) {
@@ -138,6 +144,13 @@ final class MigrateSpatieMediaToCuratorAction
             'name' => $row->name,
             'size' => $row->size,
             'mime_type' => is_string($row->mime_type ?? null) ? $row->mime_type : null,
+            'uuid' => is_string($row->uuid ?? null) ? $row->uuid : null,
+            'conversions_disk' => is_string($row->conversions_disk ?? null) ? $row->conversions_disk : null,
+            'order_column' => is_int($row->order_column ?? null) ? $row->order_column : null,
+            'custom_properties' => is_string($row->custom_properties ?? null) ? $row->custom_properties : null,
+            'manipulations' => is_string($row->manipulations ?? null) ? $row->manipulations : null,
+            'generated_conversions' => is_string($row->generated_conversions ?? null) ? $row->generated_conversions : null,
+            'responsive_images' => is_string($row->responsive_images ?? null) ? $row->responsive_images : null,
         ];
     }
 
@@ -148,10 +161,17 @@ final class MigrateSpatieMediaToCuratorAction
      *     disk: string,
      *     file_name: string,
      *     model_id: int,
-     *     model_type: class-string<Model>,
+     *     model_type: string,
      *     name: string,
      *     size: int,
-     *     mime_type?: string|null
+     *     mime_type?: string|null,
+     *     uuid?: string|null,
+     *     conversions_disk?: string|null,
+     *     order_column?: int|null,
+     *     custom_properties?: string|null,
+     *     manipulations?: string|null,
+     *     generated_conversions?: string|null,
+     *     responsive_images?: string|null
      * }  $spatieRow
      * @param  array<int, string>  $warnings
      */
@@ -258,6 +278,16 @@ final class MigrateSpatieMediaToCuratorAction
             /** @var Model $owner */
             $owner = new $modelType;
 
+            if (! $owner instanceof Model) {
+                $warnings[] = sprintf(
+                    'Row id=%d: model class "%s" is not an Eloquent model — skipped.',
+                    $rowId,
+                    $modelType,
+                );
+
+                return null;
+            }
+
             return $owner->getTable();
         } catch (Throwable $throwable) {
             $warnings[] = sprintf(
@@ -278,10 +308,17 @@ final class MigrateSpatieMediaToCuratorAction
      *     disk: string,
      *     file_name: string,
      *     model_id: int,
-     *     model_type: class-string<Model>,
+     *     model_type: string,
      *     name: string,
      *     size: int,
-     *     mime_type?: string|null
+     *     mime_type?: string|null,
+     *     uuid?: string|null,
+     *     conversions_disk?: string|null,
+     *     order_column?: int|null,
+     *     custom_properties?: string|null,
+     *     manipulations?: string|null,
+     *     generated_conversions?: string|null,
+     *     responsive_images?: string|null
      * }  $spatieRow
      */
     private function hydrateSpatieMedia(array $spatieRow): SpatieMedia
@@ -304,10 +341,17 @@ final class MigrateSpatieMediaToCuratorAction
      *     disk: string,
      *     file_name: string,
      *     model_id: int,
-     *     model_type: class-string<Model>,
+     *     model_type: string,
      *     name: string,
      *     size: int,
-     *     mime_type?: string|null
+     *     mime_type?: string|null,
+     *     uuid?: string|null,
+     *     conversions_disk?: string|null,
+     *     order_column?: int|null,
+     *     custom_properties?: string|null,
+     *     manipulations?: string|null,
+     *     generated_conversions?: string|null,
+     *     responsive_images?: string|null
      * }  $spatieRow
      */
     private function incrementProjectedOwnerUpdate(
