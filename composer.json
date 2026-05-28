@@ -52,29 +52,6 @@
             "composer/package-versions-deprecated": true
         }
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "../../../../../../capell-4/packages/core",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "path",
-            "url": "../../../../../../capell-4/packages/admin",
-            "options": {
-                "symlink": true
-            }
-        },
-        {
-            "type": "path",
-            "url": "../../../../../../capell-4/packages/frontend",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
     "minimum-stability": "dev",
     "prefer-stable": true,
     "type": "library",
