@@ -138,7 +138,7 @@ test('migration_uses_spatie_disk_relative_paths_to_avoid_same_filename_collision
         'updated_at' => now(),
     ]);
 
-    $this->artisan('capell:media-migrate-to-curator')->assertSuccessful();
+    capell_artisan('capell:media-migrate-to-curator')->assertSuccessful();
 
     expect(DB::table('curator')->count())->toBe(2);
 
@@ -188,7 +188,7 @@ test('migration_preserves_spatie_metadata_in_curator_columns', function (): void
         'updated_at' => now(),
     ]);
 
-    $this->artisan('capell:media-migrate-to-curator')->assertSuccessful();
+    capell_artisan('capell:media-migrate-to-curator')->assertSuccessful();
 
     $curatorRow = DB::table('curator')->where('path', $mediaId . '/metadata.jpg')->first();
     $exif = json_decode((string) $curatorRow->exif, true);
@@ -208,7 +208,7 @@ test('migration_preserves_spatie_metadata_in_curator_columns', function (): void
 test('full_migration_creates_curator_rows_and_populates_owner_fk', function (): void {
     seedSpatieFixture(3, ['image']);
 
-    $this->artisan('capell:media-migrate-to-curator')
+    capell_artisan('capell:media-migrate-to-curator')
         ->assertSuccessful();
 
     expect(DB::table('curator')->count())->toBe(3);
@@ -222,8 +222,8 @@ test('full_migration_creates_curator_rows_and_populates_owner_fk', function (): 
 test('migration_is_idempotent', function (): void {
     seedSpatieFixture(2, ['image']);
 
-    $this->artisan('capell:media-migrate-to-curator')->assertSuccessful();
-    $this->artisan('capell:media-migrate-to-curator')->assertSuccessful();
+    capell_artisan('capell:media-migrate-to-curator')->assertSuccessful();
+    capell_artisan('capell:media-migrate-to-curator')->assertSuccessful();
 
     // Exactly 2 curator rows — no duplicates on second run.
     expect(DB::table('curator')->count())->toBe(2);
@@ -235,7 +235,7 @@ test('collection_filter_only_migrates_matching_rows', function (): void {
     // the owner table, so only 'image' will succeed.
     seedSpatieFixture(3, ['image', 'hero', 'gallery']);
 
-    $this->artisan('capell:media-migrate-to-curator', ['--collection' => ['image']])
+    capell_artisan('capell:media-migrate-to-curator', ['--collection' => ['image']])
         ->assertSuccessful();
 
     // Only the 'image' collection was requested; 1 curator row expected.
@@ -246,7 +246,7 @@ test('missing_fk_column_is_warned_not_fatal', function (): void {
     // 'unknown_collection' maps to 'unknown_collection_id' which does not exist.
     seedSpatieFixture(1, ['unknown_collection']);
 
-    $result = $this->artisan('capell:media-migrate-to-curator');
+    $result = capell_artisan('capell:media-migrate-to-curator');
 
     $result->assertSuccessful();
 
@@ -293,7 +293,7 @@ test('command_populates_only_null_fk_columns', function (): void {
         'updated_at' => now(),
     ]);
 
-    $this->artisan('capell:media-migrate-to-curator')->assertSuccessful();
+    capell_artisan('capell:media-migrate-to-curator')->assertSuccessful();
 
     // Pre-existing owner image_id must not be overwritten.
     expect($ownerWithMedia->fresh()->image_id)->toBe($existingCuratorId);

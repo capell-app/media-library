@@ -32,6 +32,9 @@ trait InteractsWithCuratorMedia
         return Str::snake($collection) . '_id';
     }
 
+    /**
+     * @return BelongsTo<CuratorMedia, $this>
+     */
     public function curatorMediaRelation(string $collection): BelongsTo
     {
         return $this->belongsTo(CuratorMedia::class, static::curatorMediaColumn($collection));

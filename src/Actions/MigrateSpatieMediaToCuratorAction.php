@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as SpatieMedia;
+use stdClass;
 use Throwable;
 
 /**
@@ -60,10 +61,18 @@ final class MigrateSpatieMediaToCuratorAction
         ): void {
             foreach ($rows as $spatieRow) {
                 $processed++;
+                $spatieMediaRow = $this->spatieMediaRow($spatieRow);
+
+                if ($spatieMediaRow === null) {
+                    $skipped++;
+                    $warnings[] = 'Encountered malformed media row during migration.';
+
+                    continue;
+                }
 
                 try {
                     $this->processRow(
-                        $spatieRow,
+                        $spatieMediaRow,
                         $input,
                         $created,
                         $skipped,
@@ -73,7 +82,7 @@ final class MigrateSpatieMediaToCuratorAction
                 } catch (Throwable $throwable) {
                     $warnings[] = sprintf(
                         'Row id=%d: unexpected error — %s',
-                        $spatieRow->id,
+                        $spatieMediaRow['id'],
                         $throwable->getMessage(),
                     );
                 }
@@ -90,20 +99,94 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
+     * @return array{
+     *     id: int,
+     *     collection_name: string,
+     *     disk: string,
+     *     file_name: string,
+     *     model_id: int,
+     *     model_type: string,
+     *     name: string,
+     *     size: int,
+     *     mime_type?: string|null,
+     *     uuid?: string|null,
+     *     conversions_disk?: string|null,
+     *     order_column?: int|null,
+     *     custom_properties?: string|null,
+     *     manipulations?: string|null,
+     *     generated_conversions?: string|null,
+     *     responsive_images?: string|null
+     * }|null
+     */
+    private function spatieMediaRow(mixed $row): ?array
+    {
+        if (
+            ! $row instanceof stdClass
+            || ! is_int($row->id ?? null)
+            || ! is_string($row->collection_name ?? null)
+            || ! is_string($row->disk ?? null)
+            || ! is_string($row->file_name ?? null)
+            || ! is_int($row->model_id ?? null)
+            || ! is_string($row->model_type ?? null)
+            || ! is_string($row->name ?? null)
+            || ! is_int($row->size ?? null)
+        ) {
+            return null;
+        }
+
+        return [
+            'id' => $row->id,
+            'collection_name' => $row->collection_name,
+            'disk' => $row->disk,
+            'file_name' => $row->file_name,
+            'model_id' => $row->model_id,
+            'model_type' => $row->model_type,
+            'name' => $row->name,
+            'size' => $row->size,
+            'mime_type' => is_string($row->mime_type ?? null) ? $row->mime_type : null,
+            'uuid' => is_string($row->uuid ?? null) ? $row->uuid : null,
+            'conversions_disk' => is_string($row->conversions_disk ?? null) ? $row->conversions_disk : null,
+            'order_column' => is_int($row->order_column ?? null) ? $row->order_column : null,
+            'custom_properties' => is_string($row->custom_properties ?? null) ? $row->custom_properties : null,
+            'manipulations' => is_string($row->manipulations ?? null) ? $row->manipulations : null,
+            'generated_conversions' => is_string($row->generated_conversions ?? null) ? $row->generated_conversions : null,
+            'responsive_images' => is_string($row->responsive_images ?? null) ? $row->responsive_images : null,
+        ];
+    }
+
+    /**
+     * @param  array{
+     *     id: int,
+     *     collection_name: string,
+     *     disk: string,
+     *     file_name: string,
+     *     model_id: int,
+     *     model_type: string,
+     *     name: string,
+     *     size: int,
+     *     mime_type?: string|null,
+     *     uuid?: string|null,
+     *     conversions_disk?: string|null,
+     *     order_column?: int|null,
+     *     custom_properties?: string|null,
+     *     manipulations?: string|null,
+     *     generated_conversions?: string|null,
+     *     responsive_images?: string|null
+     * }  $spatieRow
      * @param  array<int, string>  $warnings
      */
     private function processRow(
-        object $spatieRow,
+        array $spatieRow,
         MigrateSpatieMediaInput $input,
         int &$created,
         int &$skipped,
         int &$ownersUpdated,
         array &$warnings,
     ): void {
-        $column = Str::snake($spatieRow->collection_name) . '_id';
+        $column = Str::snake($spatieRow['collection_name']) . '_id';
 
         // Resolve owner table; skip with warning if class is missing.
-        $ownerTable = $this->resolveOwnerTable($spatieRow->model_type, $spatieRow->id, $warnings);
+        $ownerTable = $this->resolveOwnerTable($spatieRow['model_type'], $spatieRow['id'], $warnings);
         if ($ownerTable === null) {
             return;
         }
@@ -112,10 +195,10 @@ final class MigrateSpatieMediaToCuratorAction
         if (! Schema::hasColumn($ownerTable, $column)) {
             $warnings[] = sprintf(
                 'Row id=%d: column "%s" does not exist on table "%s" (collection "%s") — skipped.',
-                $spatieRow->id,
+                $spatieRow['id'],
                 $column,
                 $ownerTable,
-                $spatieRow->collection_name,
+                $spatieRow['collection_name'],
             );
 
             return;
@@ -127,16 +210,16 @@ final class MigrateSpatieMediaToCuratorAction
         $directory = ($directory === '.' || $directory === '') ? '' : $directory;
 
         // Idempotency: find existing curator row by disk + path.
-        $existingCuratorRow = DB::table('curator')
-            ->where('disk', $spatieRow->disk)
+        $existingCuratorId = DB::table('curator')
+            ->where('disk', $spatieRow['disk'])
             ->where('path', $path)
-            ->first();
+            ->value('id');
 
-        if ($existingCuratorRow !== null) {
-            $curatorId = $existingCuratorRow->id;
+        if (is_int($existingCuratorId)) {
+            $curatorId = $existingCuratorId;
             $skipped++;
         } else {
-            $extension = pathinfo($spatieRow->file_name, PATHINFO_EXTENSION);
+            $extension = pathinfo($spatieRow['file_name'], PATHINFO_EXTENSION);
             $metadata = $this->mapMetadata($spatieMedia);
 
             $created++;
@@ -148,15 +231,15 @@ final class MigrateSpatieMediaToCuratorAction
             }
 
             $curatorId = DB::transaction(fn (): int => DB::table('curator')->insertGetId([
-                'disk' => $spatieRow->disk,
+                'disk' => $spatieRow['disk'],
                 'directory' => $directory,
                 'visibility' => 'public',
-                'name' => $spatieRow->name,
+                'name' => $spatieRow['name'],
                 'path' => $path,
                 'width' => $metadata['width'],
                 'height' => $metadata['height'],
-                'size' => $spatieRow->size,
-                'type' => $spatieRow->mime_type ?? '',
+                'size' => $spatieRow['size'],
+                'type' => $spatieRow['mime_type'] ?? '',
                 'ext' => $extension,
                 'alt' => $metadata['alt'],
                 'title' => $metadata['title'],
@@ -177,7 +260,7 @@ final class MigrateSpatieMediaToCuratorAction
 
         // Only update the FK when it is currently null.
         $updatedRows = DB::table($ownerTable)
-            ->where('id', $spatieRow->model_id)
+            ->where('id', $spatieRow['model_id'])
             ->whereNull($column)
             ->update([$column => $curatorId]);
 
@@ -195,6 +278,16 @@ final class MigrateSpatieMediaToCuratorAction
             /** @var Model $owner */
             $owner = new $modelType;
 
+            if (! $owner instanceof Model) {
+                $warnings[] = sprintf(
+                    'Row id=%d: model class "%s" is not an Eloquent model — skipped.',
+                    $rowId,
+                    $modelType,
+                );
+
+                return null;
+            }
+
             return $owner->getTable();
         } catch (Throwable $throwable) {
             $warnings[] = sprintf(
@@ -208,7 +301,27 @@ final class MigrateSpatieMediaToCuratorAction
         }
     }
 
-    private function hydrateSpatieMedia(object $spatieRow): SpatieMedia
+    /**
+     * @param  array{
+     *     id: int,
+     *     collection_name: string,
+     *     disk: string,
+     *     file_name: string,
+     *     model_id: int,
+     *     model_type: string,
+     *     name: string,
+     *     size: int,
+     *     mime_type?: string|null,
+     *     uuid?: string|null,
+     *     conversions_disk?: string|null,
+     *     order_column?: int|null,
+     *     custom_properties?: string|null,
+     *     manipulations?: string|null,
+     *     generated_conversions?: string|null,
+     *     responsive_images?: string|null
+     * }  $spatieRow
+     */
+    private function hydrateSpatieMedia(array $spatieRow): SpatieMedia
     {
         $configuredMediaModelClass = config('media-library.media_model', SpatieMedia::class);
         $mediaModelClass = is_string($configuredMediaModelClass) && is_subclass_of($configuredMediaModelClass, SpatieMedia::class)
@@ -216,19 +329,39 @@ final class MigrateSpatieMediaToCuratorAction
             : SpatieMedia::class;
 
         /** @var SpatieMedia $spatieMedia */
-        $spatieMedia = (new $mediaModelClass)->newFromBuilder((array) $spatieRow);
+        $spatieMedia = (new $mediaModelClass)->newFromBuilder($spatieRow);
 
         return $spatieMedia;
     }
 
+    /**
+     * @param  array{
+     *     id: int,
+     *     collection_name: string,
+     *     disk: string,
+     *     file_name: string,
+     *     model_id: int,
+     *     model_type: string,
+     *     name: string,
+     *     size: int,
+     *     mime_type?: string|null,
+     *     uuid?: string|null,
+     *     conversions_disk?: string|null,
+     *     order_column?: int|null,
+     *     custom_properties?: string|null,
+     *     manipulations?: string|null,
+     *     generated_conversions?: string|null,
+     *     responsive_images?: string|null
+     * }  $spatieRow
+     */
     private function incrementProjectedOwnerUpdate(
         string $ownerTable,
-        object $spatieRow,
+        array $spatieRow,
         string $column,
         int &$ownersUpdated,
     ): void {
         $wouldUpdateOwner = DB::table($ownerTable)
-            ->where('id', $spatieRow->model_id)
+            ->where('id', $spatieRow['model_id'])
             ->whereNull($column)
             ->exists();
 
@@ -245,8 +378,8 @@ final class MigrateSpatieMediaToCuratorAction
      *     caption: string|null,
      *     width: int|null,
      *     height: int|null,
-     *     exif: array<string, mixed>|null,
-     *     curations: array<int, array<string, mixed>>|null
+     *     exif: array<array-key, mixed>|null,
+     *     curations: array<int, array<array-key, mixed>>|null
      * }
      */
     private function mapMetadata(SpatieMedia $spatieMedia): array
@@ -301,7 +434,7 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<array-key, mixed>
      */
     private function decodeArray(mixed $value): array
     {
@@ -319,8 +452,8 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
-     * @param  array<string, mixed>  $source
      * @param  array<int, string>  $keys
+     * @param  array<array-key, mixed>  $source
      */
     private function firstString(array $source, array $keys): ?string
     {
@@ -336,8 +469,8 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
-     * @param  array<string, mixed>  $source
      * @param  array<int, string>  $keys
+     * @param  array<array-key, mixed>  $source
      */
     private function firstInt(array $source, array $keys): ?int
     {
@@ -353,8 +486,8 @@ final class MigrateSpatieMediaToCuratorAction
     }
 
     /**
-     * @param  array<string, mixed>  $customProperties
-     * @return array<int, array<string, mixed>>|null
+     * @param  array<array-key, mixed>  $customProperties
+     * @return array<int, array<array-key, mixed>>|null
      */
     private function normalizeCurations(array $customProperties): ?array
     {
@@ -389,6 +522,9 @@ final class MigrateSpatieMediaToCuratorAction
         return $normalizedCurations;
     }
 
+    /**
+     * @param  array<array-key, mixed>  $value
+     */
     private function encodeJson(?array $value): ?string
     {
         if ($value === null) {

@@ -10,6 +10,18 @@ Media Library connects Capell to Awcodes Curator media, media health reporting, 
 - Capell dependencies: `capell-app/admin`, `capell-app/core`
 - Third-party dependencies: `awcodes/filament-curator`
 
+## Why It Helps Your Capell Workflow
+
+- Connects Capell to Curator media management, media health reporting, and Spatie Media migration support.
+- Gives editors a shared media surface for content, themes, and packages instead of isolated upload fields.
+- Gives developers a stable media integration point for rendering, health checks, and migrations.
+
+## Best Used With
+
+- [Foundation Theme](../foundation-theme/README.md)
+- [Media AI](../media-ai/README.md)
+- [Migration Assistant](../migration-assistant/README.md)
+
 ## What It Adds
 
 Media Library connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.
@@ -115,6 +127,7 @@ Screenshots are generated from [docs/screenshots.json](docs/screenshots.json) du
 
 ## Docs
 
+- [docs index](docs/README.md)
 - [credits-and-acknowledgements.md](docs/credits-and-acknowledgements.md)
 - [overview.md](docs/overview.md)
 
