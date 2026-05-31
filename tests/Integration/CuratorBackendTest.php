@@ -39,9 +39,10 @@ test('clear_media_collection nulls fk column and empties url', function (): void
     $owner->addMediaFromUploadedFile(UploadedFile::fake()->image('x.jpg'), 'image');
 
     $owner->clearMediaCollection('image');
+    $owner->refresh();
 
     expect($owner->getFirstMediaUrl('image'))->toBe('');
-    expect($owner->fresh()->image_id)->toBeNull();
+    expect($owner->image_id)->toBeNull();
 });
 
 test('get_first_media_url always returns a string', function (): void {

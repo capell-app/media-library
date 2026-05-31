@@ -138,12 +138,12 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 
     public function getWidth(): int
     {
-        return $this->width;
+        return (int) ($this->width ?? 0);
     }
 
     public function getHeight(): int
     {
-        return $this->height;
+        return (int) ($this->height ?? 0);
     }
 
     public function getCustomProperty(string $key, mixed $default = null): mixed

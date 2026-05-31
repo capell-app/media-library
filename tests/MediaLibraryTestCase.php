@@ -14,6 +14,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
+use RuntimeException;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider as SpatieMediaLibraryServiceProvider;
 
 class MediaLibraryTestCase extends OrchestraTestCase
@@ -66,7 +67,11 @@ class MediaLibraryTestCase extends OrchestraTestCase
 
     protected function defineDatabaseMigrations(): void
     {
-        $this->app->make(ConnectionResolverInterface::class)->getSchemaBuilder()->create('curator', function (Blueprint $table): void {
+        $app = $this->app;
+
+        throw_unless($app instanceof Application, RuntimeException::class, 'Expected media library test application to be available.');
+
+        $app->make(ConnectionResolverInterface::class)->getSchemaBuilder()->create('curator', function (Blueprint $table): void {
             $table->id();
             $table->string('disk');
             $table->string('directory')->nullable();
@@ -88,7 +93,7 @@ class MediaLibraryTestCase extends OrchestraTestCase
             $table->timestamps();
         });
 
-        $this->app->make(ConnectionResolverInterface::class)->getSchemaBuilder()->create('test_curator_owners', function (Blueprint $table): void {
+        $app->make(ConnectionResolverInterface::class)->getSchemaBuilder()->create('test_curator_owners', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
             $table->unsignedBigInteger('image_id')->nullable();

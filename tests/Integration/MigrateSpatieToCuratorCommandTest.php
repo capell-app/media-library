@@ -77,6 +77,44 @@ beforeEach(function (): void {
     }
 });
 
+test('migration reports missing optional spatie media table without failing', function (): void {
+    Schema::dropIfExists('media');
+
+    $result = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput);
+
+    expect($result->processed)->toBe(0)
+        ->and($result->created)->toBe(0)
+        ->and($result->warnings)->toBe(['Spatie media table "media" does not exist — nothing to migrate.']);
+});
+
+test('migration skips non eloquent owner classes before instantiation', function (): void {
+    DB::table('media')->insert([
+        'model_type' => stdClass::class,
+        'model_id' => 1,
+        'uuid' => (string) Str::uuid(),
+        'collection_name' => 'image',
+        'name' => 'bad-owner',
+        'file_name' => 'bad-owner.jpg',
+        'mime_type' => 'image/jpeg',
+        'disk' => 'public',
+        'conversions_disk' => null,
+        'size' => 8000,
+        'manipulations' => '[]',
+        'custom_properties' => '[]',
+        'generated_conversions' => '[]',
+        'responsive_images' => '[]',
+        'order_column' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $result = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput);
+
+    expect($result->processed)->toBe(1)
+        ->and($result->created)->toBe(0)
+        ->and($result->warnings)->toContain('Row id=1: model class "stdClass" is not an Eloquent model — skipped.');
+});
+
 test('dry_run_dashboard-dashboard_reports_without_writing', function (): void {
     seedSpatieFixture(2, ['image']);
 
@@ -191,6 +229,9 @@ test('migration_preserves_spatie_metadata_in_curator_columns', function (): void
     capell_artisan('capell:media-migrate-to-curator')->assertSuccessful();
 
     $curatorRow = DB::table('curator')->where('path', $mediaId . '/metadata.jpg')->first();
+
+    throw_unless($curatorRow instanceof stdClass, RuntimeException::class, 'Expected migrated curator row with metadata.');
+
     $exif = json_decode((string) $curatorRow->exif, true);
 
     expect($curatorRow->alt)->toBe('A dramatic test image');
@@ -294,10 +335,12 @@ test('command_populates_only_null_fk_columns', function (): void {
     ]);
 
     capell_artisan('capell:media-migrate-to-curator')->assertSuccessful();
+    $ownerWithMedia->refresh();
+    $ownerWithoutMedia->refresh();
 
     // Pre-existing owner image_id must not be overwritten.
-    expect($ownerWithMedia->fresh()->image_id)->toBe($existingCuratorId);
+    expect($ownerWithMedia->image_id)->toBe($existingCuratorId);
 
     // New owner should now have a non-null image_id.
-    expect($ownerWithoutMedia->fresh()->image_id)->not->toBeNull();
+    expect($ownerWithoutMedia->image_id)->not->toBeNull();
 });

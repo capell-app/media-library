@@ -37,11 +37,13 @@ final class MigrateSpatieToCuratorCommand extends Command
         $isDryRun = (bool) $this->option('dry-run');
         $chunkSize = (int) ($this->option('chunk') ?? 200);
 
+        $ownerType = $this->option('owner-type');
+
         $input = new MigrateSpatieMediaInput(
             dryRun: $isDryRun,
             collections: (array) ($this->option('collection') ?? []),
             chunkSize: $chunkSize > 0 ? $chunkSize : 200,
-            ownerType: $this->option('owner-type') ? (string) $this->option('owner-type') : null,
+            ownerType: is_string($ownerType) && $ownerType !== '' ? $ownerType : null,
         );
 
         if ($isDryRun) {
