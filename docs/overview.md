@@ -6,11 +6,12 @@ This page is the consolidated implementation overview for the Media Library pack
 
 ## What This Package Adds
 
-Media Library connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.
+Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.
 
 - Curator media model wrapper.
 - Media health admin page and table.
 - Curator media field factory.
+- Focal point, crop preset, responsive variant, rights metadata, duplicate, usage, and orphan media helpers.
 - Migration command and action for moving Spatie media into Curator.
 - InteractsWithCuratorMedia concern.
 
@@ -49,7 +50,7 @@ Helps site operators audit media records and move legacy media into the current 
 
 ## Screenshots
 
-![Media library admin index](../../../public/docs/screenshots/packages/media-library/media-health-page.png)
+![Media library admin index](screenshots/media-health-page.png)
 
 The package currently resolves each media screenshot to the same media table. Add separate screenshots only after there are distinct seeded health, migration, and form-field states to capture.
 
@@ -102,7 +103,7 @@ This package has no committed ERD excerpt. Use implementation notes and extensio
 
 ## Screenshot Automation
 
-Deployment should read [screenshots.json](screenshots.json), install the package with demo data, resolve each admin surface or frontend URL, and write images to `public/docs/screenshots/packages/media-library`.
+Deployment should read [screenshots.json](screenshots.json), install the package with demo data, resolve each admin surface or frontend URL, and write images to `packages/media-library/docs/screenshots`.
 
 - Media health page.
 - Media health table.

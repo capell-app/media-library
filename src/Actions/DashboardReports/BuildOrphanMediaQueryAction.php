@@ -11,7 +11,7 @@ use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
 use Illuminate\Database\Eloquent\Builder;
 use Lorisleiva\Actions\Concerns\AsAction;
 
-final class BuildMediaHealthQueryAction
+final class BuildOrphanMediaQueryAction
 {
     use AsAction;
 
@@ -21,37 +21,28 @@ final class BuildMediaHealthQueryAction
      */
     public function handle(?array $ownerForeignKeys = null): Builder
     {
+        $emptyQueryFactory = resolve(CuratorMediaQueryFactory::class);
+
         if (! resolve(RuntimeSchemaState::class)->hasTable('curator')) {
-            return $this->emptyCuratorQuery();
+            return $emptyQueryFactory->emptyQuery(['0 as usage_count']);
         }
 
-        $staleThreshold = now()->subDays(90);
         $usageExpressions = resolve(MediaUsageQueryExpressions::class);
         $knownOwnerForeignKeys = $usageExpressions->knownOwnerForeignKeys(
             $ownerForeignKeys ?? config('capell.media_library.owner_foreign_keys', []),
         );
+
+        if ($knownOwnerForeignKeys === []) {
+            return $emptyQueryFactory->emptyQuery(['0 as usage_count']);
+        }
+
         $usageCountExpression = $usageExpressions->usageCountExpression($knownOwnerForeignKeys);
 
         return CuratorMedia::query()
             ->select('curator.*')
             ->selectRaw($usageCountExpression . ' as usage_count')
-            ->where(function (Builder $nestedCuratorQuery) use ($knownOwnerForeignKeys, $staleThreshold, $usageCountExpression): void {
-                $nestedCuratorQuery
-                    ->whereNull('alt')
-                    ->orWhere('alt', '')
-                    ->orWhere('updated_at', '<', $staleThreshold);
-
-                if ($knownOwnerForeignKeys !== []) {
-                    $nestedCuratorQuery->orWhereRaw('(' . $usageCountExpression . ') = 0');
-                }
-            });
-    }
-
-    /**
-     * @return Builder<CuratorMedia>
-     */
-    private function emptyCuratorQuery(): Builder
-    {
-        return resolve(CuratorMediaQueryFactory::class)->emptyQuery(['0 as usage_count']);
+            ->whereRaw('(' . $usageCountExpression . ') = 0')
+            ->latest('curator.updated_at')
+            ->orderByDesc('curator.id');
     }
 }

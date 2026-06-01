@@ -41,6 +41,26 @@ final class MigrateSpatieMediaToCuratorAction
         $ownersUpdated = 0;
         $warnings = [];
 
+        if (! Schema::hasTable('media')) {
+            return new MigrateSpatieMediaResult(
+                processed: 0,
+                created: 0,
+                skipped: 0,
+                ownersUpdated: 0,
+                warnings: ['Spatie media table "media" does not exist — nothing to migrate.'],
+            );
+        }
+
+        if (! Schema::hasTable('curator')) {
+            return new MigrateSpatieMediaResult(
+                processed: 0,
+                created: 0,
+                skipped: 0,
+                ownersUpdated: 0,
+                warnings: ['Curator table "curator" does not exist — install the Curator media backend before migrating.'],
+            );
+        }
+
         $query = DB::table('media');
 
         if ($input->collections !== []) {
@@ -274,19 +294,18 @@ final class MigrateSpatieMediaToCuratorAction
      */
     private function resolveOwnerTable(string $modelType, int $rowId, array &$warnings): ?string
     {
+        if (! is_a($modelType, Model::class, true)) {
+            $warnings[] = sprintf(
+                'Row id=%d: model class "%s" is not an Eloquent model — skipped.',
+                $rowId,
+                $modelType,
+            );
+
+            return null;
+        }
+
         try {
-            /** @var Model $owner */
             $owner = new $modelType;
-
-            if (! $owner instanceof Model) {
-                $warnings[] = sprintf(
-                    'Row id=%d: model class "%s" is not an Eloquent model — skipped.',
-                    $rowId,
-                    $modelType,
-                );
-
-                return null;
-            }
 
             return $owner->getTable();
         } catch (Throwable $throwable) {

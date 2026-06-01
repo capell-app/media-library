@@ -2,11 +2,17 @@
 
 declare(strict_types=1);
 
+use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
 use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
+use Capell\MediaLibrary\Manifest\CuratorMediaModelContribution;
+use Capell\MediaLibrary\Manifest\MediaHealthPageContribution;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Tables\Contracts\HasTable;
@@ -118,7 +124,7 @@ it('records migration warnings for missing owner models and unsupported collecti
     expect($result->processed)->toBe(2)
         ->and($result->created)->toBe(0)
         ->and($result->warnings)->toHaveCount(2)
-        ->and($result->warnings[0])->toContain('could not be instantiated')
+        ->and($result->warnings[0])->toContain('is not an Eloquent model')
         ->and($result->warnings[1])->toContain('does not exist on table');
 });
 
@@ -151,7 +157,7 @@ it('normalizes command input and prints migration warnings', function (): void {
     ])
         ->assertSuccessful()
         ->expectsOutputToContain('[Dry run] No data will be written.')
-        ->expectsOutputToContain('could not be instantiated');
+        ->expectsOutputToContain('is not an Eloquent model');
 });
 
 it('declares media health page labels table and model casts', function (): void {
@@ -189,15 +195,19 @@ it('projects and writes successful spatie to curator migrations with metadata', 
     ]);
 
     $dryRunResult = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput(dryRun: true, chunkSize: 5));
+    $owner->refresh();
 
     expect($dryRunResult->processed)->toBe(1)
         ->and($dryRunResult->created)->toBe(1)
         ->and($dryRunResult->ownersUpdated)->toBe(1)
         ->and(DB::table('curator')->count())->toBe(0)
-        ->and($owner->fresh()->image_id)->toBeNull();
+        ->and($owner->image_id)->toBeNull();
 
     $result = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput(dryRun: false, chunkSize: 5));
     $curatorRow = DB::table('curator')->first();
+    $owner->refresh();
+
+    throw_unless($curatorRow instanceof stdClass, RuntimeException::class, 'Expected migrated curator row.');
 
     expect($result->processed)->toBe(1)
         ->and($result->created)->toBe(1)
@@ -210,7 +220,7 @@ it('projects and writes successful spatie to curator migrations with metadata', 
         ->and($curatorRow->caption)->toBe('Hero caption')
         ->and($curatorRow->width)->toBe(1200)
         ->and($curatorRow->height)->toBe(800)
-        ->and($owner->fresh()->image_id)->toBe($curatorRow->id);
+        ->and($owner->image_id)->toBe($curatorRow->id);
 
     $secondResult = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput(dryRun: false, chunkSize: 5));
 
@@ -252,6 +262,8 @@ it('filters migration rows and handles invalid curation metadata', function (): 
         ownerType: TestCuratorOwner::class,
     ));
     $curatorRow = DB::table('curator')->first();
+
+    throw_unless($curatorRow instanceof stdClass, RuntimeException::class, 'Expected filtered curator row.');
 
     expect($filteredResult->processed)->toBe(1)
         ->and($filteredResult->created)->toBe(1)
@@ -298,6 +310,56 @@ it('implements curator media contract fallbacks', function (): void {
         ->and($media->getCustomProperty('missing', 'fallback'))->toBe('fallback');
 });
 
+it('stores curator focal points and crop presets in curation metadata', function (): void {
+    $media = new CuratorMedia([
+        'disk' => 'public',
+        'directory' => 'media',
+        'visibility' => 'public',
+        'name' => 'hero',
+        'path' => 'media/hero.jpg',
+        'width' => 1200,
+        'height' => 800,
+        'size' => 100,
+        'type' => 'image/jpeg',
+        'ext' => 'jpg',
+        'curations' => json_encode([
+            ['curation' => ['key' => 'card', 'focal' => ['x' => 20, 'y' => 80], 'updated_at' => '2026-05-31T00:00:00Z']],
+        ], JSON_THROW_ON_ERROR),
+    ]);
+
+    expect($media->getFocalPoint())->toBe(['x' => 50, 'y' => 50])
+        ->and($media->getFocalPointForConversion('card'))->toBe(['x' => 20, 'y' => 80])
+        ->and($media->getCropPresetNames())->toBe(['card']);
+
+    $media
+        ->setFocalPoint(140, -20)
+        ->setCropPresets(['hero', 'open_graph', 'hero']);
+
+    expect($media->getFocalPoint())->toBe(['x' => 100, 'y' => 0])
+        ->and($media->getCustomProperty('focal'))->toBe(['x' => 100, 'y' => 0])
+        ->and($media->getCropPresetNames())->toBe(['hero', 'open_graph'])
+        ->and($media->getFocalPointForConversion('hero'))->toBe(['x' => 100, 'y' => 0])
+        ->and($media->getFocalPointForConversion('missing'))->toBe(['x' => 100, 'y' => 0]);
+});
+
+it('returns zero dimensions for curator media without image dimensions', function (): void {
+    $media = new CuratorMedia([
+        'disk' => 'public',
+        'directory' => 'documents',
+        'visibility' => 'public',
+        'name' => 'Policy',
+        'path' => 'documents/policy.pdf',
+        'width' => null,
+        'height' => null,
+        'size' => 100,
+        'type' => 'application/pdf',
+        'ext' => 'pdf',
+    ]);
+
+    expect($media->getWidth())->toBe(0)
+        ->and($media->getHeight())->toBe(0);
+});
+
 it('resolves curator media trait columns empty collections and missing ids', function (): void {
     $owner = TestCuratorOwner::query()->create(['name' => 'Trait Owner']);
 
@@ -320,7 +382,8 @@ it('stores uploaded curator media and clears the owner collection', function ():
 
     throw_unless($media instanceof CuratorMedia, RuntimeException::class, 'Uploaded media must be curator media.');
 
-    $freshMedia = $owner->fresh()->getFirstMedia('image');
+    $owner->refresh();
+    $freshMedia = $owner->getFirstMedia('image');
 
     expect($freshMedia)->toBeInstanceOf(CuratorMedia::class);
 
@@ -330,14 +393,16 @@ it('stores uploaded curator media and clears the owner collection', function ():
         ->and($media->directory)->toBe('media')
         ->and($media->name)->toBe('Profile Photo')
         ->and($media->ext)->toBe('jpg')
-        ->and($owner->fresh()->image_id)->toBe($media->getKey())
+        ->and($owner->image_id)->toBe($media->getKey())
         ->and($freshMedia->getKey())->toBe($media->getKey())
-        ->and($owner->fresh()->getMedia('image'))->toHaveCount(1);
+        ->and($owner->getMedia('image'))->toHaveCount(1);
 
-    $returnedOwner = $owner->fresh()->clearMediaCollection('image');
+    $owner->refresh();
+    $returnedOwner = $owner->clearMediaCollection('image');
+    $returnedOwner->refresh();
 
     expect($returnedOwner)->toBeInstanceOf(TestCuratorOwner::class)
-        ->and($returnedOwner->fresh()->image_id)->toBeNull();
+        ->and($returnedOwner->image_id)->toBeNull();
 });
 
 it('builds the media health table columns and default sort', function (): void {
@@ -351,6 +416,43 @@ it('builds the media health table columns and default sort', function (): void {
             'type',
             'updated_at',
         ]);
+});
+
+it('declares implemented media library contributions actions and feature capabilities', function (): void {
+    $manifest = json_decode(
+        (string) file_get_contents(__DIR__ . '/../../capell.json'),
+        associative: true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+
+    expect($manifest['description'])->toContain('focal point and responsive metadata')
+        ->and($manifest['marketplace']['summary'])->toContain('rights metadata checks')
+        ->and($manifest['contributes'])->toContain([
+            'type' => 'admin-page',
+            'class' => MediaHealthPageContribution::class,
+            'pageClass' => MediaHealthPage::class,
+            'labelKey' => 'capell-admin::navigation.media_health',
+        ])
+        ->and($manifest['contributes'])->toContain([
+            'type' => 'model',
+            'class' => CuratorMediaModelContribution::class,
+            'modelClass' => CuratorMedia::class,
+        ])
+        ->and($manifest['actions'])->toHaveKey('buildDuplicateMediaQuery', BuildDuplicateMediaQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('buildMediaHealthQuery', BuildMediaHealthQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('buildMissingRightsMetadataQuery', BuildMissingRightsMetadataQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('buildOrphanMediaQuery', BuildOrphanMediaQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('deleteOrphanMediaRecords', DeleteOrphanMediaRecordsAction::class)
+        ->and($manifest['actions'])->toHaveKey('migrateSpatieMediaToCurator', MigrateSpatieMediaToCuratorAction::class)
+        ->and($manifest['capabilities'])->toContain(
+            'media-library-focal-points',
+            'media-library-responsive-variants',
+            'media-library-rights-metadata',
+            'media-library-duplicate-detection',
+            'media-library-usage-reports',
+            'media-library-orphan-cleanup',
+        )
+        ->and($manifest['contributionTraceability']['deferredContributions'])->not->toContain('admin-page', 'model');
 });
 
 /**
