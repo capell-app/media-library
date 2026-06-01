@@ -29,6 +29,7 @@ Media Library connects Capell to Awcodes Curator media, media health reporting, 
 - Curator media model wrapper.
 - Media health admin page and table.
 - Curator media field factory.
+- Focal point, crop preset, responsive variant, rights metadata, duplicate, usage, and orphan media helpers.
 - Migration command and action for moving Spatie media into Curator.
 - InteractsWithCuratorMedia concern.
 

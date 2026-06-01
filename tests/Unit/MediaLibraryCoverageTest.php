@@ -304,6 +304,38 @@ it('implements curator media contract fallbacks', function (): void {
         ->and($media->getCustomProperty('missing', 'fallback'))->toBe('fallback');
 });
 
+it('stores curator focal points and crop presets in curation metadata', function (): void {
+    $media = new CuratorMedia([
+        'disk' => 'public',
+        'directory' => 'media',
+        'visibility' => 'public',
+        'name' => 'hero',
+        'path' => 'media/hero.jpg',
+        'width' => 1200,
+        'height' => 800,
+        'size' => 100,
+        'type' => 'image/jpeg',
+        'ext' => 'jpg',
+        'curations' => json_encode([
+            ['curation' => ['key' => 'card', 'focal' => ['x' => 20, 'y' => 80], 'updated_at' => '2026-05-31T00:00:00Z']],
+        ], JSON_THROW_ON_ERROR),
+    ]);
+
+    expect($media->getFocalPoint())->toBe(['x' => 50, 'y' => 50])
+        ->and($media->getFocalPointForConversion('card'))->toBe(['x' => 20, 'y' => 80])
+        ->and($media->getCropPresetNames())->toBe(['card']);
+
+    $media
+        ->setFocalPoint(140, -20)
+        ->setCropPresets(['hero', 'open_graph', 'hero']);
+
+    expect($media->getFocalPoint())->toBe(['x' => 100, 'y' => 0])
+        ->and($media->getCustomProperty('focal'))->toBe(['x' => 100, 'y' => 0])
+        ->and($media->getCropPresetNames())->toBe(['hero', 'open_graph'])
+        ->and($media->getFocalPointForConversion('hero'))->toBe(['x' => 100, 'y' => 0])
+        ->and($media->getFocalPointForConversion('missing'))->toBe(['x' => 100, 'y' => 0]);
+});
+
 it('returns zero dimensions for curator media without image dimensions', function (): void {
     $media = new CuratorMedia([
         'disk' => 'public',

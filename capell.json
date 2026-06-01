@@ -40,7 +40,16 @@
     },
     "settings": [],
     "permissions": [],
-    "capabilities": [],
+    "capabilities": [
+        "media-library",
+        "media-library-curator-backend",
+        "media-library-focal-points",
+        "media-library-responsive-variants",
+        "media-library-rights-metadata",
+        "media-library-duplicate-detection",
+        "media-library-usage-reports",
+        "media-library-orphan-cleanup"
+    ],
     "performance": {
         "frontendRenderBudgetMs": 0,
         "adminQueryBudget": 40,
