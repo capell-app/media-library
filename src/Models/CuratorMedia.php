@@ -233,9 +233,11 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
             if (! is_string($presetName)) {
                 continue;
             }
+
             if (trim($presetName) === '') {
                 continue;
             }
+
             $curations[] = [
                 'curation' => [
                     'key' => trim($presetName),

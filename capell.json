@@ -6,7 +6,7 @@
     "kind": "package",
     "capellApiVersion": "^4.0",
     "version": "4.x-dev",
-    "description": "Media Library connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.",
+    "description": "Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.",
     "product": {
         "group": "Capell Foundation",
         "tier": "free",
@@ -26,7 +26,19 @@
         "admin": [],
         "frontend": []
     },
-    "contributes": [],
+    "contributes": [
+        {
+            "type": "admin-page",
+            "class": "Capell\\MediaLibrary\\Manifest\\MediaHealthPageContribution",
+            "pageClass": "Capell\\MediaLibrary\\Filament\\Pages\\MediaHealthPage",
+            "labelKey": "capell-admin::navigation.media_health"
+        },
+        {
+            "type": "model",
+            "class": "Capell\\MediaLibrary\\Manifest\\CuratorMediaModelContribution",
+            "modelClass": "Capell\\MediaLibrary\\Models\\CuratorMedia"
+        }
+    ],
     "database": {
         "migrations": false,
         "settings": false,
@@ -37,6 +49,14 @@
         "setup": null,
         "demo": null,
         "doctor": null
+    },
+    "actions": {
+        "buildDuplicateMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildDuplicateMediaQueryAction",
+        "buildMediaHealthQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaHealthQueryAction",
+        "buildMissingRightsMetadataQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingRightsMetadataQueryAction",
+        "buildOrphanMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildOrphanMediaQueryAction",
+        "deleteOrphanMediaRecords": "Capell\\MediaLibrary\\Actions\\DashboardReports\\DeleteOrphanMediaRecordsAction",
+        "migrateSpatieMediaToCurator": "Capell\\MediaLibrary\\Actions\\MigrateSpatieMediaToCuratorAction"
     },
     "settings": [],
     "permissions": [],
@@ -92,7 +112,7 @@
         "privateDocsRequested": false
     },
     "marketplace": {
-        "summary": "Media Library connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.",
+        "summary": "Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.",
         "screenshots": [
             {
                 "path": "docs/assets/marketplace/extension-card.jpg",
@@ -103,6 +123,6 @@
         "categories": ["admin", "foundation"]
     },
     "contributionTraceability": {
-        "deferredContributions": ["admin-page", "model"]
+        "deferredContributions": []
     }
 }

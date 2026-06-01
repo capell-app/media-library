@@ -6,7 +6,7 @@ This page is the consolidated implementation overview for the Media Library pack
 
 ## What This Package Adds
 
-Media Library connects Capell to Awcodes Curator media, media health reporting, and Spatie Media migration support.
+Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.
 
 - Curator media model wrapper.
 - Media health admin page and table.

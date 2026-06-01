@@ -2,11 +2,17 @@
 
 declare(strict_types=1);
 
+use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
 use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
+use Capell\MediaLibrary\Manifest\CuratorMediaModelContribution;
+use Capell\MediaLibrary\Manifest\MediaHealthPageContribution;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Tables\Contracts\HasTable;
@@ -410,6 +416,43 @@ it('builds the media health table columns and default sort', function (): void {
             'type',
             'updated_at',
         ]);
+});
+
+it('declares implemented media library contributions actions and feature capabilities', function (): void {
+    $manifest = json_decode(
+        (string) file_get_contents(__DIR__ . '/../../capell.json'),
+        associative: true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+
+    expect($manifest['description'])->toContain('focal point and responsive metadata')
+        ->and($manifest['marketplace']['summary'])->toContain('rights metadata checks')
+        ->and($manifest['contributes'])->toContain([
+            'type' => 'admin-page',
+            'class' => MediaHealthPageContribution::class,
+            'pageClass' => MediaHealthPage::class,
+            'labelKey' => 'capell-admin::navigation.media_health',
+        ])
+        ->and($manifest['contributes'])->toContain([
+            'type' => 'model',
+            'class' => CuratorMediaModelContribution::class,
+            'modelClass' => CuratorMedia::class,
+        ])
+        ->and($manifest['actions'])->toHaveKey('buildDuplicateMediaQuery', BuildDuplicateMediaQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('buildMediaHealthQuery', BuildMediaHealthQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('buildMissingRightsMetadataQuery', BuildMissingRightsMetadataQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('buildOrphanMediaQuery', BuildOrphanMediaQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('deleteOrphanMediaRecords', DeleteOrphanMediaRecordsAction::class)
+        ->and($manifest['actions'])->toHaveKey('migrateSpatieMediaToCurator', MigrateSpatieMediaToCuratorAction::class)
+        ->and($manifest['capabilities'])->toContain(
+            'media-library-focal-points',
+            'media-library-responsive-variants',
+            'media-library-rights-metadata',
+            'media-library-duplicate-detection',
+            'media-library-usage-reports',
+            'media-library-orphan-cleanup',
+        )
+        ->and($manifest['contributionTraceability']['deferredContributions'])->not->toContain('admin-page', 'model');
 });
 
 /**
