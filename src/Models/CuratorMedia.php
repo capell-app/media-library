@@ -230,10 +230,12 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
             ->all();
 
         foreach (array_values(array_unique($presetNames)) as $presetName) {
-            if (! is_string($presetName) || trim($presetName) === '') {
+            if (! is_string($presetName)) {
                 continue;
             }
-
+            if (trim($presetName) === '') {
+                continue;
+            }
             $curations[] = [
                 'curation' => [
                     'key' => trim($presetName),

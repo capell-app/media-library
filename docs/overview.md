@@ -50,7 +50,7 @@ Helps site operators audit media records and move legacy media into the current 
 
 ## Screenshots
 
-![Media library admin index](../../../public/docs/screenshots/packages/media-library/media-health-page.png)
+![Media library admin index](screenshots/media-health-page.png)
 
 The package currently resolves each media screenshot to the same media table. Add separate screenshots only after there are distinct seeded health, migration, and form-field states to capture.
 
@@ -103,7 +103,7 @@ This package has no committed ERD excerpt. Use implementation notes and extensio
 
 ## Screenshot Automation
 
-Deployment should read [screenshots.json](screenshots.json), install the package with demo data, resolve each admin surface or frontend URL, and write images to `public/docs/screenshots/packages/media-library`.
+Deployment should read [screenshots.json](screenshots.json), install the package with demo data, resolve each admin surface or frontend URL, and write images to `packages/media-library/docs/screenshots`.
 
 - Media health page.
 - Media health table.
