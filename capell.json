@@ -6,7 +6,7 @@
     "kind": "package",
     "capellApiVersion": "^4.0",
     "version": "4.x-dev",
-    "description": "Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.",
+    "description": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
     "product": {
         "group": "Capell Foundation",
         "tier": "free",
@@ -112,12 +112,32 @@
         "privateDocsRequested": false
     },
     "marketplace": {
-        "summary": "Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.",
+        "summary": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
         "screenshots": [
             {
                 "path": "docs/assets/marketplace/extension-card.jpg",
                 "alt": "Media Library extension preview image",
                 "caption": "Media Library extension preview"
+            },
+            {
+                "path": "docs/screenshots/media-health-page.png",
+                "alt": "Media health dashboard page",
+                "caption": "Media health dashboard"
+            },
+            {
+                "path": "docs/screenshots/media-health-table.png",
+                "alt": "Media health table listing assets with issues",
+                "caption": "Media health report table"
+            },
+            {
+                "path": "docs/screenshots/curator-media-field-inside-a-form.png",
+                "alt": "Curator media field inside an admin form",
+                "caption": "Curator media field in a form"
+            },
+            {
+                "path": "docs/screenshots/migration-command-output-or-report.png",
+                "alt": "Spatie to Curator migration command output",
+                "caption": "Spatie-to-Curator migration output"
             }
         ],
         "categories": ["admin", "foundation"]

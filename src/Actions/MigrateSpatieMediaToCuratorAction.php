@@ -253,7 +253,7 @@ final class MigrateSpatieMediaToCuratorAction
             $curatorId = DB::transaction(fn (): int => DB::table('curator')->insertGetId([
                 'disk' => $spatieRow['disk'],
                 'directory' => $directory,
-                'visibility' => 'public',
+                'visibility' => $this->resolveSourceDiskVisibility($spatieRow['disk']),
                 'name' => $spatieRow['name'],
                 'path' => $path,
                 'width' => $metadata['width'],
@@ -551,5 +551,29 @@ final class MigrateSpatieMediaToCuratorAction
         }
 
         return json_encode($value, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * Preserves the source disk's configured visibility instead of forcing
+     * every migrated asset to public. A private source disk must not become
+     * world-readable after migration.
+     *
+     * @return 'public'|'private'
+     */
+    private function resolveSourceDiskVisibility(string $disk): string
+    {
+        $configuredVisibility = config("filesystems.disks.{$disk}.visibility");
+
+        if ($configuredVisibility === 'private') {
+            return 'private';
+        }
+
+        $root = config("filesystems.disks.{$disk}.root");
+
+        if (is_string($root) && str_contains($root, DIRECTORY_SEPARATOR . 'private')) {
+            return 'private';
+        }
+
+        return 'public';
     }
 }

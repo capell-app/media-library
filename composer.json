@@ -1,6 +1,6 @@
 {
     "name": "capell-app/media-library",
-    "description": "Awcodes Curator backend for Capell CMS media.",
+    "description": "Curator-backed media foundation for Capell CMS: unified media field, media-health reporting, and Spatie-to-Curator migration.",
     "keywords": [
         "capell",
         "media",

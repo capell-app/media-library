@@ -28,6 +28,8 @@ final class MediaLibraryServiceProvider extends ServiceProvider
     #[Override]
     public function register(): void
     {
+        $this->mergeConfigFrom($this->configPath(), 'capell.media_library');
+
         $this->app->booted(function (): void {
             if (! $this->isPackageInstalled()) {
                 return;
@@ -40,9 +42,20 @@ final class MediaLibraryServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        if ($this->app->runningInConsole() && $this->isPackageInstalled()) {
-            $this->commands([MigrateSpatieToCuratorCommand::class]);
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                $this->configPath() => config_path('capell/media-library.php'),
+            ], 'media-library-config');
+
+            if ($this->isPackageInstalled()) {
+                $this->commands([MigrateSpatieToCuratorCommand::class]);
+            }
         }
+    }
+
+    private function configPath(): string
+    {
+        return __DIR__ . '/../config/media-library.php';
     }
 
     private function isPackageInstalled(): bool

@@ -78,9 +78,16 @@ trait InteractsWithCuratorMedia
         return $media?->getUrl($conversion) ?? '';
     }
 
-    public function addMediaFromUploadedFile(UploadedFile $file, string $collection = 'default'): MediaContract
+    /**
+     * @param  'public'|'private'|null  $visibility  Defaults to the configured
+     *                                               visibility (public unless overridden).
+     */
+    public function addMediaFromUploadedFile(UploadedFile $file, string $collection = 'default', ?string $visibility = null): MediaContract
     {
-        $storedPath = $file->store('media', 'public');
+        $visibility = $this->resolveMediaVisibility($visibility);
+        $disk = $visibility === 'private' ? 'local' : 'public';
+
+        $storedPath = $file->store('media', ['disk' => $disk, 'visibility' => $visibility]);
 
         $originalName = $file->getClientOriginalName();
         $extension = $file->getClientOriginalExtension();
@@ -88,9 +95,9 @@ trait InteractsWithCuratorMedia
 
         /** @var CuratorMedia $media */
         $media = CuratorMedia::query()->create([
-            'disk' => 'public',
+            'disk' => $disk,
             'directory' => 'media',
-            'visibility' => 'public',
+            'visibility' => $visibility,
             'name' => $baseName,
             'path' => $storedPath,
             'size' => $file->getSize(),
@@ -118,5 +125,20 @@ trait InteractsWithCuratorMedia
         $this->save();
 
         return $this;
+    }
+
+    /**
+     * @param  'public'|'private'|null  $visibility
+     * @return 'public'|'private'
+     */
+    private function resolveMediaVisibility(?string $visibility): string
+    {
+        if ($visibility === 'public' || $visibility === 'private') {
+            return $visibility;
+        }
+
+        $configured = config('capell.media_library.default_visibility', 'public');
+
+        return $configured === 'private' ? 'private' : 'public';
     }
 }

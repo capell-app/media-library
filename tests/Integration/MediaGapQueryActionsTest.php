@@ -8,6 +8,7 @@ use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 test('duplicate media query returns exact duplicate curator disk path rows', function (): void {
     $firstDuplicateId = insertCuratorGapMedia('first-duplicate', 'media/shared.jpg');
@@ -72,6 +73,40 @@ test('orphan media cleanup does nothing without known owner keys', function (): 
 
     expect(DeleteOrphanMediaRecordsAction::run())->toBe(0)
         ->and(DB::table('curator')->count())->toBe(1);
+});
+
+test('orphan media cleanup deletes the underlying storage file', function (): void {
+    Storage::disk('public')->put('media/orphan-file.jpg', 'image-bytes');
+
+    $orphanMediaId = insertCuratorGapMedia('orphan-with-file', 'media/orphan-file.jpg');
+
+    expect(Storage::disk('public')->exists('media/orphan-file.jpg'))->toBeTrue();
+
+    $deleted = DeleteOrphanMediaRecordsAction::run([
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    expect($deleted)->toBe(1)
+        ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse()
+        ->and(Storage::disk('public')->exists('media/orphan-file.jpg'))->toBeFalse();
+});
+
+test('orphan media cleanup keeps files still referenced by another curator row', function (): void {
+    Storage::disk('public')->put('media/shared-file.jpg', 'image-bytes');
+
+    $orphanMediaId = insertCuratorGapMedia('orphan-shared', 'media/shared-file.jpg');
+    $usedMediaId = insertCuratorGapMedia('used-shared', 'media/shared-file.jpg');
+
+    TestCuratorOwner::query()->create(['name' => 'Sharing Owner', 'image_id' => $usedMediaId]);
+
+    $deleted = DeleteOrphanMediaRecordsAction::run([
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    expect($deleted)->toBe(1)
+        ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse()
+        ->and(DB::table('curator')->where('id', $usedMediaId)->exists())->toBeTrue()
+        ->and(Storage::disk('public')->exists('media/shared-file.jpg'))->toBeTrue();
 });
 
 function insertCuratorGapMedia(string $name, string $path): int

@@ -425,8 +425,8 @@ it('declares implemented media library contributions actions and feature capabil
         flags: JSON_THROW_ON_ERROR,
     );
 
-    expect($manifest['description'])->toContain('focal point and responsive metadata')
-        ->and($manifest['marketplace']['summary'])->toContain('rights metadata checks')
+    expect($manifest['description'])->toContain('media backbone of your Capell site')
+        ->and($manifest['marketplace']['summary'])->toContain('media-health dashboard')
         ->and($manifest['contributes'])->toContain([
             'type' => 'admin-page',
             'class' => MediaHealthPageContribution::class,
