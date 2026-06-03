@@ -1,0 +1,95 @@
+# Media Library — Improvement & Growth Plan
+> Package: capell-app/media-library · Kind: package · Tier: free · Product group: Capell Foundation · Bundle: foundation · Status: Draft
+
+## 1. Snapshot
+
+Media Library swaps Capell's default media backend for Awcodes Curator. `MediaLibraryServiceProvider` sets `capell.media.backend = 'curator'`, points `capell.media.model` at `CuratorMedia`, and binds the `MediaFieldFactory` contract to `CuratorMediaFieldFactory` (a `CuratorPicker`). It ships one admin surface (`MediaHealthPage` + `MediaHealthTable`, slug `media-health`, navigation group `group_system`), one console command (`capell:media-migrate-to-curator`), and a set of report query Actions (`BuildMediaHealthQueryAction`, `BuildDuplicateMediaQueryAction`, `BuildOrphanMediaQueryAction`, `BuildMissingRightsMetadataQueryAction`, `DeleteOrphanMediaRecordsAction`) plus the heavyweight `MigrateSpatieMediaToCuratorAction` (555 LOC). The `CuratorMedia` model (376 LOC) adapts Curator to Capell's `MediaContract`, mapping Glide thumbnail/medium/large URLs to conversion/srcset semantics and storing focal points + crop presets inside Curator `curations`. There are no package-owned migrations or config files; it relies on Curator's `curator` table and host-app FK columns. Dependents: **media-ai** depends on this package for alt-text (the missing-alt signal is a real opportunity — see §3). Marketplace summary (verbatim): *"Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support."* Screenshots: manifest declares **1** marketplace screenshot (`extension-card.jpg`); `docs/screenshots/` actually holds **6** light/dark PNGs and `docs/screenshots.json` defines **4** capture entries — a three-way mismatch (manifest under-declares; screenshots.json points all 4 targets at `MediaHealthPage`, including the "Curator media field inside a form" and "migration command output" entries which are not that page).
+
+## 2. Improvements (existing functionality)
+
+Prioritized.
+
+1. **Implement the three declared health checks — they are stubs.** `MediaLibraryHealthCheck` implements only `compatibleCapellApiVersion()`; it has zero check logic, yet `capell.json` lists three `healthChecks` (`curator-backend` critical, `health-report` warning, `spatie-migration` warning) all pointing at this one empty class. The advertised checks ("Curator backend registered", "report identifies missing alt / stale / unused", "Spatie migration preserves metadata + FKs") do nothing. Either implement real checks (verify `capell.media.backend === 'curator'`, `curator` table exists, FK config present) or stop advertising three checks against an empty class. — `src/Health/MediaLibraryHealthCheck.php`, `capell.json` — **M**
+
+2. **Ship a published config file for `owner_foreign_keys`.** `BuildMediaHealthQueryAction` and `BuildOrphanMediaQueryAction` read `config('capell.media_library.owner_foreign_keys', [])`, but no config file exists in the package (`config/` is absent) and the provider never merges/publishes one. With no host configuration, `knownOwnerForeignKeys()` returns `[]`, `usageCountExpression()` returns the literal `'0'`, every `usage_count` is 0, the orphan report returns nothing, and `DeleteOrphanMediaRecordsAction` is a no-op. The "usage reports" and "orphan cleanup" capabilities are effectively inert out of the box. Add `config/media-library.php`, merge it in `register()`, document the shape, and ideally auto-discover Curator FK columns. — `src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php:32`, `src/Actions/DashboardReports/BuildMediaHealthQueryAction.php:31` — **M**
+
+3. **`DeleteOrphanMediaRecordsAction` deletes DB rows but leaves files on disk.** `handle()` resolves orphan IDs then calls `->delete()` on the Eloquent query — a row delete only. The underlying storage blobs are never removed, so "orphan cleanup" leaves orphaned files accumulating on every disk. Delete via model instances (so Curator/observer file cleanup fires) or explicitly `Storage::disk($media->disk)->delete($media->path)` inside a transaction. Also note the action is exported in the manifest but wired to no command and no UI button — there is no way for an operator to trigger it. — `src/Actions/DashboardReports/DeleteOrphanMediaRecordsAction.php:28-30` — **M**
+
+4. **Focal point / crop preset API has no editor surface.** `CuratorMedia` has full `getFocalPoint`/`setFocalPoint`/`getCropPresets`/`setCropPresets`/`getFocalPointForConversion` logic (and tests), but grep shows these are referenced only in the model and its coverage test — never by `CuratorMediaFieldFactory`, the picker, or any Filament component. The `media-library-focal-points` capability is reachable as a PHP API but invisible to editors. Add a focal-point picker/overlay to the Curator field or a model edit action. — `src/Models/CuratorMedia.php`, `src/Filament/Components/CuratorMediaFieldFactory.php` — **L**
+
+5. **`MediaHealthTable` mixes three distinct problems into one undifferentiated list.** The query OR-combines "missing alt", "stale (>90d)", and "unused" into a single result set with no column or filter telling the operator *which* problem a row has. An editor cannot answer "show me only images missing alt text". Add a computed "issue" column (or per-issue `SelectFilter` / tabs) so the page is actionable. The 90-day stale threshold is also hardcoded — move to config. — `src/Filament/Pages/Tables/MediaHealthTable.php`, `src/Actions/DashboardReports/BuildMediaHealthQueryAction.php:29` — **S**
+
+6. **Duplicate detection keys on `(disk, path)`, which finds re-registrations, not true duplicates.** `BuildDuplicateMediaQueryAction` groups by identical disk+path. Two byte-identical files uploaded to different paths (the common real-world duplicate) are never detected. A content hash (md5/sha1, stored once at upload/migration) would catch real duplicates. At minimum, rename the capability/label so it does not over-promise. — `src/Actions/DashboardReports/BuildDuplicateMediaQueryAction.php` — **M**
+
+7. **Rights-metadata check does substring matching on raw `exif` JSON text.** `BuildMissingRightsMetadataQueryAction` runs `lower(exif) not like '%"copyright"%'` per key. A value like `{"note":"no copyright supplied"}` would falsely satisfy the `copyright` key match, and a key nested anywhere counts as "present" regardless of an empty value. This is a heuristic, not a real metadata check; it will produce false negatives. Parse JSON or use `json_extract` where the driver supports it. — `src/Actions/DashboardReports/BuildMissingRightsMetadataQueryAction.php` — **M**
+
+8. **`InteractsWithCuratorMedia::getFirstMedia` issues an unbounded `find()` per call with no caching.** Each `getFirstMediaUrl()` call re-queries `CuratorMedia` by id; a page rendering N media collections does N queries. Add request-level memoization or eager-load the `mediaRelation()` belongsTo. Relevant to the `adminQueryBudget: 40` (see §4). — `src/Concerns/InteractsWithCuratorMedia.php` — **S**
+
+9. **README is empty; `docs/overview.md` is empty.** `README.md` has no real content (the rich prose lives only in the indexed marketplace doc and `resources/boost/skills/.../SKILL.md`); `docs/overview.md` is a 0-byte/near-empty file despite `docs/README.md` describing a full overview. A package this central to the foundation needs a real README with install + FK-config steps. — `README.md`, `docs/overview.md` — **S**
+
+## 3. Missing Features (gaps)
+
+Tied to `capabilities[]` (`media-library`, `-curator-backend`, `-focal-points`, `-responsive-variants`, `-rights-metadata`, `-duplicate-detection`, `-usage-reports`, `-orphan-cleanup`) and DAM norms.
+
+- **Folders / collections (table stakes).** Curator is flat here; no folder, album, or tag taxonomy is exposed. The `InteractsWithCuratorMedia` concern is explicitly *single-FK, one row per collection, no galleries* (its own docblock says "If you need multi-item collections, stay on the default Spatie backend"). Multi-item galleries are a hard gap for any DAM positioning.
+- **Responsive conversions / WebP / AVIF generation (advertised but absent).** Capability `media-library-responsive-variants` is declared, but grep for `webp|avif|convert|ImageManager|Intervention|encode` returns **nothing**. `getSrcset()` only *reads* a pre-existing `responsive_images` metadata array or falls back to Curator's three Glide presets (thumbnail/medium/large) — the package generates no conversions and emits no modern formats or `<picture>`/format negotiation. This is the single biggest gap vs DAM norms and a clear premium differentiator.
+- **Missing-alt-text signal hook for media-ai (differentiator).** media-ai depends on this package for alt-text, and `BuildMediaHealthQueryAction` already computes "missing or empty alt". There is no public Action/event exposing that set as a queue of candidates (e.g. `BuildMediaMissingAltQueryAction` or a `MediaMissingAlt` event). Extracting it would let media-ai subscribe and auto-generate alt text — turning a report row into an automation hook. High-leverage cross-sell.
+- **Bulk operations.** The health table has no bulk actions (bulk delete orphans, bulk set alt, bulk apply rights metadata, bulk re-tag). `DeleteOrphanMediaRecordsAction` exists but is unreachable from UI (see §2.3).
+- **Usage tracking depth.** Usage is a single integer derived from configured FK columns. There is no "where is this used" drill-down (which page/record references the asset), which is what editors actually need before deleting.
+- **Search / filter.** Only the table `name` column is searchable; no filter by type, size band, missing-metadata, unused, or date range.
+- **CDN / remote disks & signed URLs.** No handling of private-disk signed/temporary URLs; `getUrl()` returns Glide/storage URLs assuming public visibility (see §4).
+- **Video & non-image assets.** All conversion/srcset logic short-circuits on `image/*`; no poster-frame, duration, or transcode handling for video/audio/PDF.
+- **Cropping UI.** Crop presets are stored but never edited visually (see §2.4).
+
+Differentiators (premium-worthy): responsive WebP/AVIF generation, visual focal/crop editor, folders+galleries, the media-ai alt-text hook, usage drill-down. Table stakes the free tier still misses: working orphan cleanup, per-issue filtering, bulk actions.
+
+## 4. Issues / Risks
+
+- **Stub health checks advertised as real (correctness/trust).** See §2.1. `capell.json` promises three checks; the class is empty. — `src/Health/MediaLibraryHealthCheck.php`.
+- **Missing config makes usage/orphan capabilities inert (silent no-op).** See §2.2. No `config/` directory ships; the actions degrade to "0 usage / no orphans" with no warning to the operator. — `src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php:32`.
+- **Orphan cleanup leaks files (data/storage debt).** See §2.3. Row deleted, blob retained. — `src/Actions/DashboardReports/DeleteOrphanMediaRecordsAction.php:30`.
+- **File visibility hardcoded to `public` (Capell common mistake — explicit but always public).** `InteractsWithCuratorMedia::addMediaFromUploadedFile` stores with `'visibility' => 'public'` and `$file->store('media', 'public')`; `MigrateSpatieMediaToCuratorAction` inserts `'visibility' => 'public'` for every migrated row regardless of the source disk's real visibility. Private/source-restricted assets become world-readable after migration. Capell's guidance is that public access must be *deliberate* — here it is unconditional. — `src/Concerns/InteractsWithCuratorMedia.php`, `src/Actions/MigrateSpatieMediaToCuratorAction.php`.
+- **No upload validation (mime / size / extension).** `addMediaFromUploadedFile` stores whatever `UploadedFile` it is handed — no mime allow-list, no size cap, `alt => null`. Any consumer calling this trait method uploads unchecked content. — `src/Concerns/InteractsWithCuratorMedia.php`.
+- **No signed-URL support.** `CuratorMedia::getUrl()` returns Glide/public storage URLs only; there is no temporary/signed URL path for private disks. Combined with the hardcoded-public default, the package has no private-asset story.
+- **SQL-building is guarded (positive — not a risk).** `MediaUsageQueryExpressions` validates identifiers with `^\w+$`, wraps via the query grammar, and checks `hasTable`/`hasColumn` before composing the correlated-subquery `usageCountExpression`. This is the right pattern; keep it. Note for reviewers so the `selectRaw`/`whereRaw` usage isn't flagged as injection.
+- **Performance budget claims vs reality.** Manifest sets `adminQueryBudget: 40` and `cacheSafety.cacheable: false` with no cache tags. The health/orphan queries use correlated subqueries (`(select count(*) ...) + (select count(*) ...)`) per FK per row, unindexed, with no pagination cap on the count expression — on large media tables with several owner FKs this can blow the 40-query/latency budget. No `cacheTags` means no result caching is possible. — `capell.json` (`performance`), `src/Support/MediaUsageQueryExpressions.php`.
+- **Test gaps.** Covered: migration command (dry-run, idempotency, metadata mapping, FK population), duplicate/orphan/rights gap queries, focal/crop metadata storage, srcset `200w`, field factory returns `CuratorPicker`, manifest capability assertions. **Not covered:** `MediaLibraryHealthCheck` (nothing to cover — it's empty), `DeleteOrphanMediaRecordsAction` file-deletion behavior, visibility/privacy of migrated assets, upload validation, `MediaHealthPage` Filament Shield gating, anonymous/non-admin output safety (Capell mandates this for any render path — `getUrl`/`getSrcset` feed public Blade). — `tests/`.
+- **i18n.** All `MediaHealthPage`/`MediaHealthTable` strings resolve from `capell-admin::` translation keys (good), but `resources/lang/en/package.php` is near-empty and `MigrateSpatieToCuratorCommand` console output (`'Migration summary'`, `'Warnings:'`, `'[Dry run] ...'`) is hardcoded English. — `src/Console/MigrateSpatieToCuratorCommand.php`.
+- **Manifest/doc mismatches (besides screenshots in §1).** `MigrateSpatieMediaInput` docblock contains a corruption: *"the action dashboard-dashboard_reports without writing"* (should describe dry-run). — `src/Data/MigrateSpatieMediaInput.php`.
+
+## 5. Marketplace & Positioning
+
+This is a free, bundled **foundation** package and should be positioned as the *media backbone* every Capell site turns on — not a feature add-on. Its real platform job is: standardise media behind one contract so other packages (media-ai, seo-suite, themes) can rely on consistent media fields, URLs, and metadata.
+
+**Current `summary` critique.** The marketplace summary and `composer.json` `description` diverge badly. composer says *"Awcodes Curator backend for Capell CMS media."* (accurate but thin); the manifest summary is a nine-item feature run-on (*"...focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support"*) that over-claims — responsive variants aren't generated, usage/orphan reports are inert without config, health checks are stubs. It reads as a feature list, not a value statement, and several items are aspirational.
+
+- **Improved marketplace summary:** *"Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library."* (Drop responsive-variants/usage-reports until §3/§2.2 land.)
+- **Improved composer description:** *"Curator-backed media foundation for Capell CMS: unified media field, media-health reporting, and Spatie-to-Curator migration."*
+
+**Free/bundle vs premium.** Keep the backend swap, the migration command, alt/stale/unused health reporting, and the media-ai alt-text hook in the free foundation tier — that drives platform adoption and cross-sell. Carve a premium **"Media Pro / DAM"** upsell for: responsive WebP/AVIF conversion generation, visual focal-point + crop editor, folders/galleries, content-hash duplicate detection, and usage drill-down. These are the advanced-DAM items that justify a paid tier without weakening the foundation.
+
+**Screenshot/media gaps.** Reconcile the three counts (manifest 1 / screenshots dir 6 / screenshots.json 4). Fix `screenshots.json` so the "Curator field in a form" and "migration command output" entries target the right surfaces instead of all pointing at `MediaHealthPage`. Add a focal-point editor screenshot once §2.4 ships.
+
+**Platform-pitch contribution & cross-sell.** "Capell gives you a real media foundation, not per-field uploaders" is a strong platform line. Cross-sell hooks: **media-ai** (auto alt text — wire the missing-alt signal from §3), **seo-suite** (alt text + image metadata feed structured data / image sitemaps), **themes** (responsive `srcset`/focal output once conversions exist).
+
+**Keywords/tags (8–12):** `media-library`, `digital-asset-management`, `curator`, `filament-media`, `alt-text`, `responsive-images`, `focal-point`, `image-metadata`, `media-migration`, `spatie-media`, `media-health`, `dam`.
+
+## 6. Prioritized Roadmap
+
+| Item | Bucket | Effort | Impact | Section |
+|------|--------|--------|--------|---------|
+| Implement the 3 declared health checks (or stop advertising them) | Now | M | High | §2.1, §4 |
+| Ship & publish `config/media-library.php` for `owner_foreign_keys` (+ auto-discover) | Now | M | High | §2.2, §4 |
+| Fix orphan cleanup to delete files, not just rows; wire it to UI/command | Now | M | High | §2.3, §4 |
+| Stop forcing `visibility=public` on upload + migration; preserve source visibility | Now | M | High | §4 |
+| Add mime/size/extension validation to `addMediaFromUploadedFile` | Now | S | Med | §4 |
+| Per-issue column/filter on Media Health table; config-drive 90d threshold | Now | S | Med | §2.5 |
+| Rewrite README + `docs/overview.md`; reconcile screenshot counts & targets | Now | S | Med | §2.9, §1, §5 |
+| Extract missing-alt signal Action/event for media-ai | Next | S | High | §3, §5 |
+| Add anonymous/non-admin output-safety tests for `getUrl`/`getSrcset` | Next | S | High | §4 |
+| Memoize/eager-load `getFirstMedia`; cache health/orphan results | Next | S | Med | §2.8, §4 |
+| Content-hash duplicate detection (replace disk+path keying) | Next | M | Med | §2.6, §3 |
+| Parse JSON for rights-metadata check (kill false negatives) | Next | M | Med | §2.7, §4 |
+| Premium: responsive WebP/AVIF conversion generation | Later | L | High | §3, §5 |
+| Premium: visual focal-point + crop editor in Curator field | Later | L | Med | §2.4, §3 |
+| Premium: folders/galleries + usage drill-down (where-used) | Later | L | Med | §3 |
