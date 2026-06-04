@@ -77,9 +77,7 @@ test('migration preserves a private source disk visibility instead of forcing pu
 
 function mediaVisibilityCuratorMedia(mixed $media): CuratorMedia
 {
-    if (! $media instanceof CuratorMedia) {
-        throw new RuntimeException('Expected uploaded media to be stored as a Curator media model.');
-    }
+    throw_unless($media instanceof CuratorMedia, RuntimeException::class, 'Expected uploaded media to be stored as a Curator media model.');
 
     return $media;
 }

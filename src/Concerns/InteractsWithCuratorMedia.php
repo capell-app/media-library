@@ -186,7 +186,7 @@ trait InteractsWithCuratorMedia
     private function allowedUploadExtensions(): array
     {
         return array_map(
-            static fn (string $extension): string => strtolower($extension),
+            strtolower(...),
             $this->stringListConfig('capell.media_library.allowed_extensions'),
         );
     }
