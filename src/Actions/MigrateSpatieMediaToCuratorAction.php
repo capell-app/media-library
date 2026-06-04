@@ -562,13 +562,13 @@ final class MigrateSpatieMediaToCuratorAction
      */
     private function resolveSourceDiskVisibility(string $disk): string
     {
-        $configuredVisibility = config("filesystems.disks.{$disk}.visibility");
+        $configuredVisibility = config(sprintf('filesystems.disks.%s.visibility', $disk));
 
         if ($configuredVisibility === 'private') {
             return 'private';
         }
 
-        $root = config("filesystems.disks.{$disk}.root");
+        $root = config(sprintf('filesystems.disks.%s.root', $disk));
 
         if (is_string($root) && str_contains($root, DIRECTORY_SEPARATOR . 'private')) {
             return 'private';

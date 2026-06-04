@@ -69,7 +69,6 @@ test('migration preserves a private source disk visibility instead of forcing pu
     $action = new MigrateSpatieMediaToCuratorAction;
 
     $reflection = new ReflectionMethod($action, 'resolveSourceDiskVisibility');
-    $reflection->setAccessible(true);
 
     expect($reflection->invoke($action, 'private_source'))->toBe('private')
         ->and($reflection->invoke($action, 'public'))->toBe('public');
