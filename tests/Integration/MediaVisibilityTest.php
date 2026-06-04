@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
+use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
@@ -11,10 +12,10 @@ use Illuminate\Support\Facades\Storage;
 test('upload defaults to public visibility, preserving historic behaviour', function (): void {
     $owner = TestCuratorOwner::query()->create(['name' => 'Public Owner']);
 
-    $media = $owner->addMediaFromUploadedFile(
+    $media = mediaVisibilityCuratorMedia($owner->addMediaFromUploadedFile(
         UploadedFile::fake()->image('public.jpg'),
         'image',
-    );
+    ));
 
     expect($media->getAttribute('visibility'))->toBe('public')
         ->and($media->getAttribute('disk'))->toBe('public');
@@ -26,10 +27,10 @@ test('upload honours the configured default visibility', function (): void {
 
     $owner = TestCuratorOwner::query()->create(['name' => 'Config Owner']);
 
-    $media = $owner->addMediaFromUploadedFile(
+    $media = mediaVisibilityCuratorMedia($owner->addMediaFromUploadedFile(
         UploadedFile::fake()->image('config-private.jpg'),
         'image',
-    );
+    ));
 
     expect($media->getAttribute('visibility'))->toBe('private')
         ->and($media->getAttribute('disk'))->toBe('local');
@@ -40,21 +41,21 @@ test('upload accepts an explicit private visibility without breaking public acce
 
     $owner = TestCuratorOwner::query()->create(['name' => 'Explicit Owner']);
 
-    $privateMedia = $owner->addMediaFromUploadedFile(
+    $privateMedia = mediaVisibilityCuratorMedia($owner->addMediaFromUploadedFile(
         UploadedFile::fake()->image('explicit-private.jpg'),
         'image',
         'private',
-    );
+    ));
 
     expect($privateMedia->getAttribute('visibility'))->toBe('private')
         ->and($privateMedia->getAttribute('disk'))->toBe('local');
 
     $publicOwner = TestCuratorOwner::query()->create(['name' => 'Still Public Owner']);
 
-    $publicMedia = $publicOwner->addMediaFromUploadedFile(
+    $publicMedia = mediaVisibilityCuratorMedia($publicOwner->addMediaFromUploadedFile(
         UploadedFile::fake()->image('still-public.jpg'),
         'image',
-    );
+    ));
 
     expect($publicMedia->getAttribute('visibility'))->toBe('public');
 });
@@ -73,3 +74,12 @@ test('migration preserves a private source disk visibility instead of forcing pu
     expect($reflection->invoke($action, 'private_source'))->toBe('private')
         ->and($reflection->invoke($action, 'public'))->toBe('public');
 });
+
+function mediaVisibilityCuratorMedia(mixed $media): CuratorMedia
+{
+    if (! $media instanceof CuratorMedia) {
+        throw new RuntimeException('Expected uploaded media to be stored as a Curator media model.');
+    }
+
+    return $media;
+}

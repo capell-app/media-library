@@ -112,6 +112,9 @@ Screenshots are generated from [docs/screenshots.json](docs/screenshots.json) du
 ## Install And Setup
 
 - Install with `composer require capell-app/media-library` in the host Capell application.
+- Publish `media-library-config` when you need usage/orphan reports, private default uploads, custom upload limits, or a different stale-media threshold.
+- Configure `capell.media_library.owner_foreign_keys` with each owner table/column that references Curator media so usage and orphan reports are meaningful.
+- Configure `capell.media_library.allowed_mime_types`, `allowed_extensions`, and `max_upload_kb` to match the assets your site permits.
 - In this repository, verify package changes with `vendor/bin/pest`; do not use `php artisan`.
 
 ## Admin And Access
@@ -123,6 +126,8 @@ Screenshots are generated from [docs/screenshots.json](docs/screenshots.json) du
 ## Common Pitfalls
 
 - Install and migrate Curator before relying on CuratorMedia.
+- Configure owner foreign keys before relying on usage or orphan cleanup reports.
+- Keep upload validation aligned with the asset types your editors actually need.
 - Back up legacy Spatie media before migration.
 - Check disk paths and conversions before bulk migration.
 

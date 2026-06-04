@@ -14,6 +14,8 @@ Media Library connects Capell to Awcodes Curator media, focal point and responsi
 - Focal point, crop preset, responsive variant, rights metadata, duplicate, usage, and orphan media helpers.
 - Migration command and action for moving Spatie media into Curator.
 - InteractsWithCuratorMedia concern.
+- Configurable upload validation for mime types, extensions, and max file size.
+- Media health issue labels for missing alt text, stale assets, and unused assets.
 
 ## Developer Notes
 
@@ -31,7 +33,7 @@ Centralises Curator integration behind actions, field factories, and model conce
 Helps site operators audit media records and move legacy media into the current Capell media foundation.
 
 - Adds Curator media field integration.
-- Adds media health admin page.
+- Adds media health admin page. The stale threshold is configured with `capell.media_library.stale_after_days`.
 - Adds migration command.
 - No package-owned database changes.
 
@@ -57,6 +59,8 @@ The package currently resolves each media screenshot to the same media table. Ad
 ## Pitfalls
 
 - Install and migrate Curator before relying on CuratorMedia.
+- Configure `capell.media_library.owner_foreign_keys` before relying on usage or orphan cleanup reports.
+- Configure `capell.media_library.allowed_mime_types`, `allowed_extensions`, and `max_upload_kb` before exposing uploads to editors.
 - Back up legacy Spatie media before migration.
 - Check disk paths and conversions before bulk migration.
 

@@ -34,6 +34,12 @@ class MediaHealthTable implements TableConfigurator
                     ->size('sm')
                     ->state(fn (CuratorMedia $record): int => (int) ($record->getAttribute('usage_count') ?? 0))
                     ->sortable(),
+                TextColumn::make('media_health_issue')
+                    ->label(__('capell-media-library::package.media_health.issue'))
+                    ->size('sm')
+                    ->badge()
+                    ->state(fn (CuratorMedia $record): string => (string) ($record->getAttribute('media_health_issue') ?: 'healthy'))
+                    ->formatStateUsing(fn (string $state): string => __('capell-media-library::package.media_health.issues.' . $state)),
                 TextColumn::make('type')
                     ->label(__('capell-admin::table.media_type'))
                     ->size('sm')

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Capell media trait for Curator-backed owners. Implements HasMediaContract
@@ -84,6 +85,8 @@ trait InteractsWithCuratorMedia
      */
     public function addMediaFromUploadedFile(UploadedFile $file, string $collection = 'default', ?string $visibility = null): MediaContract
     {
+        $this->validateMediaUpload($file);
+
         $visibility = $this->resolveMediaVisibility($visibility);
         $disk = $visibility === 'private' ? 'local' : 'public';
 
@@ -127,6 +130,33 @@ trait InteractsWithCuratorMedia
         return $this;
     }
 
+    private function validateMediaUpload(UploadedFile $file): void
+    {
+        $mimeType = $file->getMimeType();
+        $extension = strtolower($file->getClientOriginalExtension());
+        $sizeKilobytes = (int) ceil(max(0, (int) $file->getSize()) / 1024);
+
+        if (! in_array($mimeType, $this->allowedUploadMimeTypes(), true)) {
+            throw ValidationException::withMessages([
+                'media' => __('capell-media-library::package.validation.invalid_mime_type'),
+            ]);
+        }
+
+        if (! in_array($extension, $this->allowedUploadExtensions(), true)) {
+            throw ValidationException::withMessages([
+                'media' => __('capell-media-library::package.validation.invalid_extension'),
+            ]);
+        }
+
+        if ($sizeKilobytes > $this->maxUploadKilobytes()) {
+            throw ValidationException::withMessages([
+                'media' => __('capell-media-library::package.validation.max_size', [
+                    'max' => $this->maxUploadKilobytes(),
+                ]),
+            ]);
+        }
+    }
+
     /**
      * @param  'public'|'private'|null  $visibility
      * @return 'public'|'private'
@@ -140,5 +170,48 @@ trait InteractsWithCuratorMedia
         $configured = config('capell.media_library.default_visibility', 'public');
 
         return $configured === 'private' ? 'private' : 'public';
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function allowedUploadMimeTypes(): array
+    {
+        return $this->stringListConfig('capell.media_library.allowed_mime_types');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function allowedUploadExtensions(): array
+    {
+        return array_map(
+            static fn (string $extension): string => strtolower($extension),
+            $this->stringListConfig('capell.media_library.allowed_extensions'),
+        );
+    }
+
+    private function maxUploadKilobytes(): int
+    {
+        $maxUploadKilobytes = config('capell.media_library.max_upload_kb', 10240);
+
+        return is_numeric($maxUploadKilobytes) ? max(1, (int) $maxUploadKilobytes) : 10240;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function stringListConfig(string $key): array
+    {
+        $value = config($key, []);
+
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(static fn (mixed $entry): string => is_string($entry) ? trim($entry) : '', $value),
+            static fn (string $entry): bool => $entry !== '',
+        ));
     }
 }

@@ -42,6 +42,8 @@ final class MediaLibraryServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'capell-media-library');
+
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 $this->configPath() => config_path('capell/media-library.php'),

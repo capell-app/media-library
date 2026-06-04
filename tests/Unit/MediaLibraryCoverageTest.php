@@ -408,11 +408,12 @@ it('stores uploaded curator media and clears the owner collection', function ():
 it('builds the media health table columns and default sort', function (): void {
     $table = MediaHealthTable::configure(mediaLibraryCoverageTable());
 
-    expect($table->getColumns())->toHaveCount(5)
+    expect($table->getColumns())->toHaveCount(6)
         ->and(array_keys($table->getColumns()))->toBe([
             'name',
             'size',
             'usage_count',
+            'media_health_issue',
             'type',
             'updated_at',
         ]);

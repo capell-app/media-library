@@ -46,4 +46,39 @@ return [
     | report.
     */
     'stale_after_days' => 90,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Upload validation
+    |--------------------------------------------------------------------------
+    |
+    | Files attached through InteractsWithCuratorMedia are validated before
+    | storage. Keep this list broad enough for normal CMS assets, but explicit
+    | enough that executable/script uploads are rejected by default.
+    |
+    | @var list<string>
+    */
+    'allowed_mime_types' => [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/svg+xml',
+        'application/pdf',
+    ],
+
+    /*
+    | @var list<string>
+    */
+    'allowed_extensions' => [
+        'jpg',
+        'jpeg',
+        'png',
+        'gif',
+        'webp',
+        'svg',
+        'pdf',
+    ],
+
+    'max_upload_kb' => 10240,
 ];

@@ -6,6 +6,7 @@ use Capell\Core\Contracts\Media\MediaContract;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\ValidationException;
 
 test('attach_from_upload_then_fetch_first_url returns non-empty string', function (): void {
     $owner = TestCuratorOwner::query()->create(['name' => 'Test Owner']);
@@ -76,3 +77,36 @@ test('get_first_media returns an instance of MediaContract', function (): void {
 
     expect($media)->toBeInstanceOf(MediaContract::class);
 });
+
+test('upload rejects disallowed mime types before storing media', function (): void {
+    config()->set('capell.media_library.allowed_mime_types', ['image/jpeg']);
+
+    $owner = TestCuratorOwner::query()->create(['name' => 'Mime Guard Owner']);
+
+    $owner->addMediaFromUploadedFile(
+        UploadedFile::fake()->create('document.pdf', 10, 'application/pdf'),
+        'image',
+    );
+})->throws(ValidationException::class);
+
+test('upload rejects disallowed file extensions before storing media', function (): void {
+    config()->set('capell.media_library.allowed_extensions', ['jpg']);
+
+    $owner = TestCuratorOwner::query()->create(['name' => 'Extension Guard Owner']);
+
+    $owner->addMediaFromUploadedFile(
+        UploadedFile::fake()->create('payload.exe', 10, 'image/jpeg'),
+        'image',
+    );
+})->throws(ValidationException::class);
+
+test('upload rejects files larger than the configured media limit', function (): void {
+    config()->set('capell.media_library.max_upload_kb', 1);
+
+    $owner = TestCuratorOwner::query()->create(['name' => 'Size Guard Owner']);
+
+    $owner->addMediaFromUploadedFile(
+        UploadedFile::fake()->image('large.jpg')->size(2048),
+        'image',
+    );
+})->throws(ValidationException::class);

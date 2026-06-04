@@ -29,7 +29,26 @@ test('media_health_query_uses_curator_rows_and_known_owner_foreign_keys', functi
     expect($records->keys()->all())->not->toContain($healthyMediaId);
     expect($records->keys()->all())->toContain($missingAltMediaId, $unusedMediaId, $staleMediaId);
     expect((int) $records->get($missingAltMediaId)->usage_count)->toBe(1);
+    expect($records->get($missingAltMediaId)->getAttribute('media_health_issue'))->toBe('missing_alt');
     expect((int) $records->get($unusedMediaId)->usage_count)->toBe(0);
+    expect($records->get($unusedMediaId)->getAttribute('media_health_issue'))->toBe('unused');
+    expect($records->get($staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
+});
+
+test('media health query uses the configured stale threshold', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+    config()->set('capell.media_library.stale_after_days', 30);
+
+    $staleMediaId = insertCuratorHealthMedia('configured-stale', 'Useful alt text', now()->subDays(31));
+
+    TestCuratorOwner::query()->create(['name' => 'Configured Stale Owner', 'image_id' => $staleMediaId]);
+
+    $records = BuildMediaHealthQueryAction::run()->get()->keyBy('id');
+
+    expect($records->keys()->all())->toContain($staleMediaId)
+        ->and($records->get($staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
 });
 
 test('media_health_query_is_empty_when_curator_table_has_not_been_installed', function (): void {
