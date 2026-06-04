@@ -23,21 +23,26 @@ test('duplicate media query returns exact duplicate curator disk path rows', fun
         ->and((int) $records->get($secondDuplicateId)->getAttribute('duplicate_count'))->toBe(2);
 });
 
-test('orphan media query returns unused media only when owner keys are known', function (): void {
-    $usedMediaId = insertCuratorGapMedia('used', 'media/used.jpg');
-    $orphanMediaId = insertCuratorGapMedia('orphan', 'media/orphan.jpg');
-
-    TestCuratorOwner::query()->create(['name' => 'Owner', 'image_id' => $usedMediaId]);
-
-    $records = BuildOrphanMediaQueryAction::run([
+test('orphan media query returns unused media from configured owner foreign keys', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
+        ['table' => 'test_curator_owners', 'column' => 'thumbnail_id'],
         ['table' => 'test_curator_owners;drop', 'column' => 'image_id'],
         ['table' => 'missing_table', 'column' => 'image_id'],
         ['table' => 'test_curator_owners', 'column' => 'missing_column'],
-    ])->get()->keyBy('id');
+    ]);
+
+    $usedMediaId = insertCuratorGapMedia('used', 'media/used.jpg');
+    $thumbnailMediaId = insertCuratorGapMedia('thumbnail-used', 'media/thumbnail-used.jpg');
+    $orphanMediaId = insertCuratorGapMedia('orphan', 'media/orphan.jpg');
+
+    TestCuratorOwner::query()->create(['name' => 'Owner', 'image_id' => $usedMediaId]);
+    TestCuratorOwner::query()->create(['name' => 'Thumbnail Owner', 'thumbnail_id' => $thumbnailMediaId]);
+
+    $records = BuildOrphanMediaQueryAction::run()->get()->keyBy('id');
 
     expect($records->keys()->all())->toContain($orphanMediaId)
-        ->and($records->keys()->all())->not->toContain($usedMediaId)
+        ->and($records->keys()->all())->not->toContain($usedMediaId, $thumbnailMediaId)
         ->and((int) $records->get($orphanMediaId)->getAttribute('usage_count'))->toBe(0);
 });
 

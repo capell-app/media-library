@@ -13,20 +13,23 @@ use Illuminate\Support\Facades\Schema;
 test('media_health_query_uses_curator_rows_and_known_owner_foreign_keys', function (): void {
     config()->set('capell.media_library.owner_foreign_keys', [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
+        ['table' => 'test_curator_owners', 'column' => 'thumbnail_id'],
     ]);
 
     $healthyMediaId = insertCuratorHealthMedia('healthy', 'Useful alt text', now());
     $missingAltMediaId = insertCuratorHealthMedia('missing-alt', null, now());
+    $thumbnailMediaId = insertCuratorHealthMedia('thumbnail', 'Thumbnail alt text', now());
     $unusedMediaId = insertCuratorHealthMedia('unused', 'Unused alt text', now());
     $staleMediaId = insertCuratorHealthMedia('stale', 'Stale alt text', now()->subDays(91));
 
     TestCuratorOwner::query()->create(['name' => 'Healthy Owner', 'image_id' => $healthyMediaId]);
     TestCuratorOwner::query()->create(['name' => 'Missing Alt Owner', 'image_id' => $missingAltMediaId]);
+    TestCuratorOwner::query()->create(['name' => 'Thumbnail Owner', 'thumbnail_id' => $thumbnailMediaId]);
     TestCuratorOwner::query()->create(['name' => 'Stale Owner', 'image_id' => $staleMediaId]);
 
     $records = BuildMediaHealthQueryAction::run()->get()->keyBy('id');
 
-    expect($records->keys()->all())->not->toContain($healthyMediaId);
+    expect($records->keys()->all())->not->toContain($healthyMediaId, $thumbnailMediaId);
     expect($records->keys()->all())->toContain($missingAltMediaId, $unusedMediaId, $staleMediaId);
     expect((int) $records->get($missingAltMediaId)->usage_count)->toBe(1);
     expect($records->get($missingAltMediaId)->getAttribute('media_health_issue'))->toBe('missing_alt');

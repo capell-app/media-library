@@ -117,6 +117,19 @@ Screenshots are generated from [docs/screenshots.json](docs/screenshots.json) du
 - Configure `capell.media_library.allowed_mime_types`, `allowed_extensions`, and `max_upload_kb` to match the assets your site permits.
 - In this repository, verify package changes with `vendor/bin/pest`; do not use `php artisan`.
 
+### Owner Foreign Key Config
+
+Usage counts, media-health unused rows, and orphan reports are built from configured owner FK columns. The package merges defaults from `packages/media-library/config/media-library.php` under `capell.media_library`; host apps can publish the config and add every Curator media FK they own:
+
+```php
+'owner_foreign_keys' => [
+    ['table' => 'pages', 'column' => 'hero_image_id'],
+    ['table' => 'articles', 'column' => 'thumbnail_id'],
+],
+```
+
+Each entry is a `table`/`column` pair. Identifiers are schema-checked before SQL is generated, and missing or unsafe entries are ignored.
+
 ## Admin And Access
 
 - MediaHealthPage (packages/media-library/src/Filament/Pages/MediaHealthPage.php, slug `media-health`)

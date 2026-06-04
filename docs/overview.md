@@ -34,6 +34,7 @@ Helps site operators audit media records and move legacy media into the current 
 
 - Adds Curator media field integration.
 - Adds media health admin page. The stale threshold is configured with `capell.media_library.stale_after_days`.
+- Adds publishable `media-library-config`; `capell.media_library.owner_foreign_keys` accepts a list of `['table' => string, 'column' => string]` pairs that reference Curator media.
 - Adds migration command.
 - No package-owned database changes.
 
@@ -91,7 +92,8 @@ The package currently resolves each media screenshot to the same media table. Ad
 
 ## Routes And Config
 
-- None proven in this package directory.
+- Config: `packages/media-library/config/media-library.php`, merged under `capell.media_library` and publishable with the `media-library-config` tag.
+- Owner media references: `owner_foreign_keys` is a list of table/column pairs, for example `['table' => 'pages', 'column' => 'hero_image_id']`. The health and orphan query actions validate configured tables and columns against the live schema before composing usage-count SQL.
 
 ## Permissions And Gates
 

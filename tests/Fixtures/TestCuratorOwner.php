@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Model;
  * as defined in the TestCase's `defineDatabaseMigrations()`.
  *
  * @property int|null $image_id
+ * @property int|null $thumbnail_id
  */
 class TestCuratorOwner extends Model implements HasMediaContract
 {
@@ -30,5 +31,5 @@ class TestCuratorOwner extends Model implements HasMediaContract
     protected $table = 'test_curator_owners';
 
     /** @var list<string> */
-    protected $fillable = ['name', 'image_id'];
+    protected $fillable = ['name', 'image_id', 'thumbnail_id'];
 }
