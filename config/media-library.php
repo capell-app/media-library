@@ -93,6 +93,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Report cache TTL
+    |--------------------------------------------------------------------------
+    |
+    | Media health and orphan reports can be expensive on large media tables
+    | because they project usage across owner foreign keys. Cache report result
+    | rows briefly, then rebuild normal Curator query builders from the cached
+    | ids and computed columns so Filament filters/actions can still compose.
+    |
+    | Set to 0 to disable report caching.
+    */
+    'report_cache_ttl_seconds' => 60,
+
+    /*
+    |--------------------------------------------------------------------------
     | Upload validation
     |--------------------------------------------------------------------------
     |

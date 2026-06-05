@@ -63,6 +63,7 @@ Upload policy is controlled by:
 - `capell.media_library.max_upload_kb`
 - `capell.media_library.default_visibility`
 - `capell.media_library.stale_after_days`
+- `capell.media_library.report_cache_ttl_seconds`
 
 ## Admin Surface
 
@@ -72,6 +73,8 @@ Upload policy is controlled by:
 - Access: Filament Shield page permissions
 
 The health table shows media name, size, usage count, primary issue, mime type, and last update time. It includes an issue filter and a bulk action for deleting selected orphan media after re-validating those rows through the orphan query.
+
+Media health and orphan reports cache their computed result rows briefly through `report_cache_ttl_seconds`; orphan deletion bypasses that cache and revalidates live references before deleting files or rows.
 
 ## Missing Alt Signals
 

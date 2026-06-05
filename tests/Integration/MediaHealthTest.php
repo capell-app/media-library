@@ -13,6 +13,7 @@ use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
@@ -75,6 +76,30 @@ test('media health query uses the configured stale threshold', function (): void
 
     expect($records->keys()->all())->toContain($staleMediaId)
         ->and($records->get($staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
+});
+
+test('media health query rebuilds a query from cached report rows', function (): void {
+    Cache::flush();
+    config()->set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    $firstMissingAltMediaId = insertCuratorHealthMedia('cached-missing-alt-first', null, now());
+    TestCuratorOwner::query()->create(['name' => 'Cached Owner', 'image_id' => $firstMissingAltMediaId]);
+
+    $firstRecords = BuildMediaHealthQueryAction::run()->get()->keyBy('id');
+
+    $secondMissingAltMediaId = insertCuratorHealthMedia('cached-missing-alt-second', null, now());
+    TestCuratorOwner::query()->create(['name' => 'Second Cached Owner', 'image_id' => $secondMissingAltMediaId]);
+
+    $cachedRecords = BuildMediaHealthQueryAction::run()->get()->keyBy('id');
+    $liveRecords = BuildMediaHealthQueryAction::run(null, false)->get()->keyBy('id');
+
+    expect($firstRecords->keys()->all())->toBe([$firstMissingAltMediaId])
+        ->and($cachedRecords->keys()->all())->toBe([$firstMissingAltMediaId])
+        ->and($liveRecords->keys()->all())->toContain($firstMissingAltMediaId, $secondMissingAltMediaId)
+        ->and((int) $cachedRecords->get($firstMissingAltMediaId)->getAttribute('usage_count'))->toBe(1)
+        ->and($cachedRecords->get($firstMissingAltMediaId)->getAttribute('media_health_issue'))->toBe('missing_alt');
 });
 
 test('missing alt media query exposes image candidates with usage counts', function (): void {

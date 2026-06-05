@@ -34,7 +34,7 @@ final class DeleteOrphanMediaRecordsAction
         }
 
         /** @var Collection<int, CuratorMedia> $orphans */
-        $orphanQuery = BuildOrphanMediaQueryAction::run($ownerForeignKeys);
+        $orphanQuery = BuildOrphanMediaQueryAction::run($ownerForeignKeys, false);
 
         if ($mediaIds !== null) {
             $orphanQuery->whereIn((new CuratorMedia)->getQualifiedKeyName(), $mediaIds);

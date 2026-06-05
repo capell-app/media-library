@@ -26,6 +26,7 @@ The config is published with the `media-library-config` tag and merged under `ca
 - `owner_foreign_key_columns`: column names considered during discovery.
 - `default_visibility`: default visibility for uploads through `InteractsWithCuratorMedia`.
 - `stale_after_days`: media-health stale threshold.
+- `report_cache_ttl_seconds`: short TTL for computed media health and orphan report rows.
 - `allowed_mime_types`, `allowed_extensions`, `max_upload_kb`: upload validation policy.
 
 Owner FK entries are schema-checked before report SQL is generated. Missing tables, missing columns, and unsafe identifiers are ignored.
@@ -41,6 +42,8 @@ The Media Health page is an admin-only Filament page registered through Capell A
 - selected orphan cleanup that re-validates records before deleting files and rows
 
 The missing-alt signal actions are deliberately separate from the table UI. They return image candidates with null, empty, or whitespace-only alt text, include `usage_count`, and can dispatch `MediaMissingAltDetected` events for downstream automation.
+
+The health and orphan report Actions cache their computed row ids and projected columns briefly, then rebuild normal Curator query builders from that cache. Destructive orphan cleanup bypasses the cache and revalidates live owner references.
 
 The migration command is:
 

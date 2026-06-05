@@ -6,6 +6,7 @@ use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -61,6 +62,27 @@ test('orphan media query discovers conventional owner foreign keys by default', 
         ->and((int) $records->get($orphanMediaId)->getAttribute('usage_count'))->toBe(0);
 });
 
+test('orphan media query rebuilds a query from cached report rows', function (): void {
+    Cache::flush();
+    config()->set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    $firstOrphanMediaId = insertCuratorGapMedia('cached-first-orphan', 'media/cached-first-orphan.jpg');
+
+    $firstRecords = BuildOrphanMediaQueryAction::run()->get()->keyBy('id');
+
+    $secondOrphanMediaId = insertCuratorGapMedia('cached-second-orphan', 'media/cached-second-orphan.jpg');
+
+    $cachedRecords = BuildOrphanMediaQueryAction::run()->get()->keyBy('id');
+    $liveRecords = BuildOrphanMediaQueryAction::run(null, false)->get()->keyBy('id');
+
+    expect($firstRecords->keys()->all())->toBe([$firstOrphanMediaId])
+        ->and($cachedRecords->keys()->all())->toBe([$firstOrphanMediaId])
+        ->and($liveRecords->keys()->all())->toContain($firstOrphanMediaId, $secondOrphanMediaId)
+        ->and((int) $cachedRecords->get($firstOrphanMediaId)->getAttribute('usage_count'))->toBe(0);
+});
+
 test('orphan media query skips discovery when it is disabled', function (): void {
     config()->set('capell.media_library.owner_foreign_keys', []);
     config()->set('capell.media_library.auto_discover_owner_foreign_keys', false);
@@ -95,6 +117,26 @@ test('orphan media cleanup deletes only unused curator records', function (): vo
         ->and(DB::table('curator')->where('id', $firstOrphanMediaId)->exists())->toBeBool()
         ->and(DB::table('curator')->where('id', $secondOrphanMediaId)->exists())->toBeBool()
         ->and(DB::table('curator')->whereIn('id', [$firstOrphanMediaId, $secondOrphanMediaId])->count())->toBe(1);
+});
+
+test('orphan media cleanup bypasses cached report rows before deleting', function (): void {
+    Cache::flush();
+    config()->set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    $mediaId = insertCuratorGapMedia('cached-live-revalidation', 'media/cached-live-revalidation.jpg');
+
+    expect(BuildOrphanMediaQueryAction::run()->pluck('id')->all())->toBe([$mediaId]);
+
+    TestCuratorOwner::query()->create(['name' => 'Late Owner', 'image_id' => $mediaId]);
+
+    $deleted = DeleteOrphanMediaRecordsAction::run([
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    expect($deleted)->toBe(0)
+        ->and(DB::table('curator')->where('id', $mediaId)->exists())->toBeTrue();
 });
 
 test('orphan media cleanup accepts selected media ids but deletes only unused records', function (): void {
