@@ -4,7 +4,7 @@ Status: **available** · Kind: **package** · Tier: **free** · Bundle: **founda
 
 Media Library is Capell's Curator-backed media foundation. It replaces the default media backend with Awcodes Curator, gives packages a shared media field factory, and adds operational tools for media health and Spatie Media Library migration.
 
-It is deliberately scoped as foundation infrastructure. Advanced DAM features such as folders, galleries, generated WebP/AVIF conversions, content-hash duplicate detection, signed private URLs, and a visual focal/crop editor remain product gaps or premium candidates.
+It is deliberately scoped as foundation infrastructure. Advanced DAM features such as folders, galleries, generated WebP/AVIF conversions, signed private URLs, and a visual focal/crop editor remain product gaps or premium candidates.
 
 ## Runtime Shape
 
@@ -12,6 +12,7 @@ It is deliberately scoped as foundation infrastructure. Advanced DAM features su
 - `CuratorMediaFieldFactory` returns an Awcodes `CuratorPicker` for Capell media FK fields.
 - `CuratorMedia` adapts Curator records to Capell's media contract, including URL, alt/title/caption, dimensions, focal point, crop preset, and existing responsive metadata accessors.
 - `MediaHealthPage` and `MediaHealthTable` expose the admin report for missing alt text, stale media, and unused assets.
+- `BuildDuplicateMediaQueryAction` hashes readable storage files and reports byte-identical duplicate media even when the Curator paths differ.
 - `BuildMissingAltMediaQueryAction` and `DispatchMissingAltMediaSignalsAction` expose prioritized missing-alt media candidates for automation packages such as Media AI.
 - `BuildMissingRightsMetadataQueryAction` parses Curator `exif` JSON and reports media whose configured rights keys are missing, blank, or malformed.
 - `MigrateSpatieToCuratorCommand` delegates migration work to `MigrateSpatieMediaToCuratorAction`.
@@ -36,6 +37,7 @@ Owner FK entries are schema-checked before report SQL is generated. Missing tabl
 
 The Media Health page is an admin-only Filament page registered through Capell Admin when the package is installed. It shows:
 
+- byte-identical duplicate assets
 - missing alt text
 - stale assets based on `stale_after_days`
 - unused assets based on configured or discovered owner FK references

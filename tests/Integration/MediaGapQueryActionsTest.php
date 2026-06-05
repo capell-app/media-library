@@ -11,17 +11,24 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
-test('duplicate media query returns exact duplicate curator disk path rows', function (): void {
-    $firstDuplicateId = insertCuratorGapMedia('first-duplicate', 'media/shared.jpg');
-    $secondDuplicateId = insertCuratorGapMedia('second-duplicate', 'media/shared.jpg');
+test('duplicate media query returns byte-identical curator rows across different paths', function (): void {
+    Storage::disk('public')->put('media/first-duplicate.jpg', 'same-image-bytes');
+    Storage::disk('public')->put('media/second-duplicate.jpg', 'same-image-bytes');
+    Storage::disk('public')->put('media/unique.jpg', 'different-image-bytes');
+
+    $firstDuplicateId = insertCuratorGapMedia('first-duplicate', 'media/first-duplicate.jpg');
+    $secondDuplicateId = insertCuratorGapMedia('second-duplicate', 'media/second-duplicate.jpg');
     $uniqueMediaId = insertCuratorGapMedia('unique', 'media/unique.jpg');
+    $missingFileMediaId = insertCuratorGapMedia('missing-file', 'media/missing-file.jpg');
 
     $records = BuildDuplicateMediaQueryAction::run()->get()->keyBy('id');
 
     expect($records->keys()->all())->toContain($firstDuplicateId, $secondDuplicateId)
-        ->and($records->keys()->all())->not->toContain($uniqueMediaId)
+        ->and($records->keys()->all())->not->toContain($uniqueMediaId, $missingFileMediaId)
         ->and((int) $records->get($firstDuplicateId)->getAttribute('duplicate_count'))->toBe(2)
-        ->and((int) $records->get($secondDuplicateId)->getAttribute('duplicate_count'))->toBe(2);
+        ->and((int) $records->get($secondDuplicateId)->getAttribute('duplicate_count'))->toBe(2)
+        ->and((string) $records->get($firstDuplicateId)->getAttribute('duplicate_hash'))->toBe(hash('sha256', 'same-image-bytes'))
+        ->and((string) $records->get($secondDuplicateId)->getAttribute('duplicate_hash'))->toBe(hash('sha256', 'same-image-bytes'));
 });
 
 test('orphan media query returns unused media from configured owner foreign keys', function (): void {

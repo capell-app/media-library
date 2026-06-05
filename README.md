@@ -18,7 +18,7 @@ This is a free Foundation package. It is the media plumbing other Capell package
 - Registers `Capell\MediaLibrary\Models\CuratorMedia` as the Capell media model and sets `capell.media.backend` to `curator`.
 - Binds `Capell\Core\Contracts\Media\MediaFieldFactory` to `CuratorMediaFieldFactory`, which renders an Awcodes `CuratorPicker`.
 - Adds `MediaHealthPage` with `MediaHealthTable` for missing alt text, stale media, and unused asset review.
-- Adds duplicate-path, missing-alt, missing-rights-metadata, usage, orphan, and media-health query actions for reports.
+- Adds content-hash duplicate, missing-alt, missing-rights-metadata, usage, orphan, and media-health query actions for reports.
 - Adds `DispatchMissingAltMediaSignalsAction` and `MediaMissingAltDetected` so media-ai and other packages can subscribe to prioritized missing-alt candidates.
 - Adds selected orphan cleanup through `DeleteOrphanMediaRecordsAction`, including unshared file deletion before row deletion.
 - Parses Curator `exif` JSON structurally for rights metadata reports instead of matching raw JSON text.
@@ -31,7 +31,7 @@ This is a free Foundation package. It is the media plumbing other Capell package
 - `CuratorMedia::getSrcset()` reads Curator responsive metadata or falls back to Glide thumbnail, medium, and large URLs. The package does not generate responsive conversions or modern image formats.
 - Focal points and crop presets are available through the PHP API, but the package does not ship a dedicated visual editor for them.
 - Usage and orphan reports depend on configured or auto-discovered owner FK columns. Publish the config for nonstandard schemas.
-- Duplicate reporting groups by identical disk and path. It does not hash file contents.
+- Duplicate reporting hashes readable storage files and groups byte-identical assets across different paths.
 - Rights metadata reporting treats null, blank, malformed JSON, missing keys, and empty configured metadata values as incomplete.
 - Private upload visibility is supported, but signed temporary URL handling is not part of this package yet.
 
