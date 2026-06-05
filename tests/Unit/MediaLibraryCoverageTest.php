@@ -464,6 +464,125 @@ it('declares implemented media library contributions actions and feature capabil
         ->and($manifest['contributionTraceability']['deferredContributions'])->not->toContain('admin-page', 'model');
 });
 
+it('keeps media library docs and screenshots aligned with committed package assets', function (): void {
+    $packagePath = dirname(__DIR__, 2);
+    $manifest = json_decode(
+        (string) file_get_contents($packagePath . '/capell.json'),
+        associative: true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+    $screenshotContract = json_decode(
+        (string) file_get_contents($packagePath . '/docs/screenshots.json'),
+        associative: true,
+        flags: JSON_THROW_ON_ERROR,
+    );
+
+    throw_unless(is_array($manifest), RuntimeException::class, 'Expected Media Library manifest array.');
+    throw_unless(is_array($screenshotContract), RuntimeException::class, 'Expected Media Library screenshot contract array.');
+
+    $marketplaceScreenshotEntries = $manifest['marketplace']['screenshots'] ?? [];
+    $contractEntries = $screenshotContract['entries'] ?? [];
+
+    throw_unless(is_array($marketplaceScreenshotEntries), RuntimeException::class, 'Expected marketplace screenshots array.');
+    throw_unless(is_array($contractEntries), RuntimeException::class, 'Expected screenshot contract entries array.');
+
+    $marketplaceScreenshotPaths = [];
+
+    foreach ($marketplaceScreenshotEntries as $marketplaceScreenshotEntry) {
+        throw_unless(is_array($marketplaceScreenshotEntry), RuntimeException::class, 'Marketplace screenshot entries must be arrays.');
+
+        $path = $marketplaceScreenshotEntry['path'] ?? null;
+        $altText = $marketplaceScreenshotEntry['alt'] ?? null;
+        $caption = $marketplaceScreenshotEntry['caption'] ?? null;
+
+        throw_unless(is_string($path), RuntimeException::class, 'Marketplace screenshot paths must be strings.');
+        throw_unless(is_string($altText), RuntimeException::class, 'Marketplace screenshot alt text must be strings.');
+        throw_unless(is_string($caption), RuntimeException::class, 'Marketplace screenshot captions must be strings.');
+
+        $marketplaceScreenshotPaths[] = $path;
+
+        expect(file_exists($packagePath . '/' . $path))->toBeTrue()
+            ->and(strlen(trim($altText)))->toBeGreaterThanOrEqual(12)
+            ->and(strlen(trim($caption)))->toBeGreaterThanOrEqual(12);
+    }
+
+    $shippedScreenshotPaths = glob($packagePath . '/docs/screenshots/*.png') ?: [];
+    $shippedScreenshotPaths = array_map(
+        static fn (string $path): string => 'docs/screenshots/' . basename($path),
+        $shippedScreenshotPaths,
+    );
+    sort($shippedScreenshotPaths);
+
+    $marketplaceGalleryPaths = array_filter(
+        $marketplaceScreenshotPaths,
+        static fn (string $path): bool => str_starts_with($path, 'docs/screenshots/'),
+    );
+    sort($marketplaceGalleryPaths);
+
+    expect($marketplaceScreenshotPaths[0])->toBe('docs/assets/marketplace/extension-card.jpg')
+        ->and($marketplaceScreenshotPaths)->toHaveCount(9)
+        ->and(array_values($marketplaceGalleryPaths))->toBe($shippedScreenshotPaths);
+
+    $contractTargets = [];
+
+    foreach ($contractEntries as $contractEntry) {
+        throw_unless(is_array($contractEntry), RuntimeException::class, 'Screenshot contract entries must be arrays.');
+
+        $id = $contractEntry['id'] ?? null;
+        $screenshotPath = $contractEntry['screenshotPath'] ?? null;
+
+        throw_unless(is_string($id), RuntimeException::class, 'Screenshot contract entry IDs must be strings.');
+        throw_unless(is_string($screenshotPath), RuntimeException::class, 'Screenshot contract paths must be strings.');
+
+        $contractTargets[$id] = [
+            'surface' => $contractEntry['surface'] ?? null,
+            'targetType' => $contractEntry['targetType'] ?? null,
+            'target' => $contractEntry['target'] ?? null,
+            'required' => $contractEntry['required'] ?? null,
+            'screenshotPath' => str_replace('packages/media-library/', '', $screenshotPath),
+        ];
+    }
+
+    expect($contractTargets)->toBe([
+        'media-health-page' => [
+            'surface' => 'admin',
+            'targetType' => 'admin-surface',
+            'target' => 'MediaHealthPage',
+            'required' => true,
+            'screenshotPath' => 'docs/screenshots/media-health-page.png',
+        ],
+        'media-health-table' => [
+            'surface' => 'admin',
+            'targetType' => 'admin-component',
+            'target' => 'MediaHealthTable',
+            'required' => true,
+            'screenshotPath' => 'docs/screenshots/media-health-table.png',
+        ],
+        'curator-media-field-inside-a-form' => [
+            'surface' => 'admin',
+            'targetType' => 'admin-component',
+            'target' => 'CuratorMediaFieldFactory',
+            'required' => true,
+            'screenshotPath' => 'docs/screenshots/curator-media-field-inside-a-form.png',
+        ],
+        'migration-command-output-or-report' => [
+            'surface' => 'console',
+            'targetType' => 'console-command',
+            'target' => 'capell:media-migrate-to-curator',
+            'required' => true,
+            'screenshotPath' => 'docs/screenshots/migration-command-output-or-report.png',
+        ],
+    ]);
+
+    $readme = (string) file_get_contents($packagePath . '/README.md');
+    $overview = (string) file_get_contents($packagePath . '/docs/overview.md');
+
+    expect($readme)->toContain('does not generate responsive conversions')
+        ->and($readme)->toContain('The capture contract is [docs/screenshots.json](docs/screenshots.json)')
+        ->and($overview)->toContain('The manifest lists the marketplace card plus the shipped light and dark screenshot assets.')
+        ->and($overview)->toContain('Do not describe this package as generating responsive variants');
+});
+
 /**
  * @param  array<string, mixed>  $overrides
  */

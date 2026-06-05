@@ -125,9 +125,19 @@
                 "caption": "Media health dashboard"
             },
             {
+                "path": "docs/screenshots/media-health-page-dark.png",
+                "alt": "Media health dashboard page in dark mode",
+                "caption": "Media health dashboard (dark mode)"
+            },
+            {
                 "path": "docs/screenshots/media-health-table.png",
                 "alt": "Media health table listing assets with issues",
                 "caption": "Media health report table"
+            },
+            {
+                "path": "docs/screenshots/media-health-table-dark.png",
+                "alt": "Media health table listing assets with issues in dark mode",
+                "caption": "Media health report table (dark mode)"
             },
             {
                 "path": "docs/screenshots/curator-media-field-inside-a-form.png",
@@ -135,9 +145,19 @@
                 "caption": "Curator media field in a form"
             },
             {
+                "path": "docs/screenshots/curator-media-field-inside-a-form-dark.png",
+                "alt": "Curator media field inside an admin form in dark mode",
+                "caption": "Curator media field in a form (dark mode)"
+            },
+            {
                 "path": "docs/screenshots/migration-command-output-or-report.png",
                 "alt": "Spatie to Curator migration command output",
                 "caption": "Spatie-to-Curator migration output"
+            },
+            {
+                "path": "docs/screenshots/migration-command-output-or-report-dark.png",
+                "alt": "Spatie to Curator migration command output in dark mode",
+                "caption": "Spatie-to-Curator migration output (dark mode)"
             }
         ],
         "categories": ["admin", "foundation"]
