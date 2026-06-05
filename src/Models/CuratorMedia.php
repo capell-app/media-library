@@ -75,8 +75,14 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
         $responsiveImages = $this->metadataArray('responsive_images');
 
         foreach ($responsiveImages as $responsiveImage) {
-            if (is_array($responsiveImage) && is_string($responsiveImage['srcset'] ?? null) && $responsiveImage['srcset'] !== '') {
-                return $responsiveImage['srcset'];
+            if (! is_array($responsiveImage) || ! is_string($responsiveImage['srcset'] ?? null)) {
+                continue;
+            }
+
+            $srcset = trim($responsiveImage['srcset']);
+
+            if ($srcset !== '' && $this->isPublicSafeSrcset($srcset)) {
+                return $srcset;
             }
         }
 
@@ -327,6 +333,48 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
         } catch (Throwable) {
             return '';
         }
+    }
+
+    private function isPublicSafeSrcset(string $srcset): bool
+    {
+        return ! $this->containsUnsafePublicMarker($srcset);
+    }
+
+    private function containsUnsafePublicMarker(string $value): bool
+    {
+        $normalizedValue = strtolower($value);
+
+        foreach ($this->unsafePublicOutputMarkers() as $marker) {
+            if (str_contains($normalizedValue, $marker)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function unsafePublicOutputMarkers(): array
+    {
+        return [
+            '/admin',
+            'admin.',
+            'capell-app/',
+            'capell-frontend-authoring',
+            'capell-media-library',
+            'data-capell',
+            'field_path',
+            'filament',
+            'frontend-authoring',
+            'javascript:',
+            'livewire',
+            'model_id',
+            'permission',
+            'signed-editor',
+            'wire:',
+        ];
     }
 
     /**
