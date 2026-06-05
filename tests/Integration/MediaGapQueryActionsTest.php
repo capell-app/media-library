@@ -73,6 +73,28 @@ test('orphan media cleanup deletes only unused curator records', function (): vo
         ->and(DB::table('curator')->whereIn('id', [$firstOrphanMediaId, $secondOrphanMediaId])->count())->toBe(1);
 });
 
+test('orphan media cleanup accepts selected media ids but deletes only unused records', function (): void {
+    Storage::disk('public')->put('media/selected-used.jpg', 'image-bytes');
+    Storage::disk('public')->put('media/selected-orphan.jpg', 'image-bytes');
+
+    $usedMediaId = insertCuratorGapMedia('selected-used', 'media/selected-used.jpg');
+    $orphanMediaId = insertCuratorGapMedia('selected-orphan', 'media/selected-orphan.jpg');
+    $unselectedOrphanMediaId = insertCuratorGapMedia('unselected-orphan', 'media/unselected-orphan.jpg');
+
+    TestCuratorOwner::query()->create(['name' => 'Selected Owner', 'image_id' => $usedMediaId]);
+
+    $deleted = DeleteOrphanMediaRecordsAction::run([
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ], mediaIds: [$usedMediaId, $orphanMediaId]);
+
+    expect($deleted)->toBe(1)
+        ->and(DB::table('curator')->where('id', $usedMediaId)->exists())->toBeTrue()
+        ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse()
+        ->and(DB::table('curator')->where('id', $unselectedOrphanMediaId)->exists())->toBeTrue()
+        ->and(Storage::disk('public')->exists('media/selected-used.jpg'))->toBeTrue()
+        ->and(Storage::disk('public')->exists('media/selected-orphan.jpg'))->toBeFalse();
+});
+
 test('orphan media cleanup does nothing without known owner keys', function (): void {
     insertCuratorGapMedia('orphan-without-owners', 'media/orphan-without-owners.jpg');
 

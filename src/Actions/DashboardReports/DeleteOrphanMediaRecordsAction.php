@@ -21,16 +21,26 @@ final class DeleteOrphanMediaRecordsAction
      * are left on disk to avoid breaking still-referenced or derived assets.
      *
      * @param  array<int, array{table: string, column: string}>|null  $ownerForeignKeys
+     * @param  array<int, int|string>|null  $mediaIds
      * @return int Number of database rows deleted.
      */
-    public function handle(?array $ownerForeignKeys = null, int $limit = 100): int
+    public function handle(?array $ownerForeignKeys = null, int $limit = 100, ?array $mediaIds = null): int
     {
         $limit = max(1, min($limit, 1000));
+        $mediaIds = $this->normalizeMediaIds($mediaIds);
+
+        if ($mediaIds !== null && $mediaIds === []) {
+            return 0;
+        }
 
         /** @var Collection<int, CuratorMedia> $orphans */
-        $orphans = BuildOrphanMediaQueryAction::run($ownerForeignKeys)
-            ->limit($limit)
-            ->get();
+        $orphanQuery = BuildOrphanMediaQueryAction::run($ownerForeignKeys);
+
+        if ($mediaIds !== null) {
+            $orphanQuery->whereIn((new CuratorMedia)->getQualifiedKeyName(), $mediaIds);
+        }
+
+        $orphans = $orphanQuery->limit($limit)->get();
 
         if ($orphans->isEmpty()) {
             return 0;
@@ -82,5 +92,23 @@ final class DeleteOrphanMediaRecordsAction
             // A missing or misconfigured disk must not abort the row cleanup;
             // the orphan record is still removed below.
         }
+    }
+
+    /**
+     * @param  array<int, int|string>|null  $mediaIds
+     * @return array<int, int>|null
+     */
+    private function normalizeMediaIds(?array $mediaIds): ?array
+    {
+        if ($mediaIds === null) {
+            return null;
+        }
+
+        return collect($mediaIds)
+            ->filter(static fn (mixed $mediaId): bool => (is_int($mediaId) || is_string($mediaId)) && is_numeric($mediaId) && (int) $mediaId > 0)
+            ->map(static fn (mixed $mediaId): int => (int) $mediaId)
+            ->unique()
+            ->values()
+            ->all();
     }
 }

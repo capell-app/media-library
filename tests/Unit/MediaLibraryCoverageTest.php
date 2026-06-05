@@ -416,7 +416,12 @@ it('builds the media health table columns and default sort', function (): void {
             'media_health_issue',
             'type',
             'updated_at',
-        ]);
+        ])
+        ->and(collect($table->getToolbarActions())
+            ->map(static fn (mixed $action): ?string => method_exists($action, 'getName') ? $action->getName() : null)
+            ->filter()
+            ->values()
+            ->all())->toContain('delete_orphan_media');
 });
 
 it('declares implemented media library contributions actions and feature capabilities', function (): void {

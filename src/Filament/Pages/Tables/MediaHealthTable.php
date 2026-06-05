@@ -7,10 +7,14 @@ namespace Capell\MediaLibrary\Filament\Pages\Tables;
 use Capell\Admin\Filament\Components\Tables\Columns\DateColumn;
 use Capell\Admin\Filament\Contracts\TableConfigurator;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Models\CuratorMedia;
+use Filament\Actions\BulkAction;
+use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 
 class MediaHealthTable implements TableConfigurator
 {
@@ -49,6 +53,29 @@ class MediaHealthTable implements TableConfigurator
                     ->label(__('capell-admin::table.last_used'))
                     ->size('sm')
                     ->sortable(),
+            ])
+            ->toolbarActions([
+                BulkAction::make('delete_orphan_media')
+                    ->label(__('capell-media-library::package.media_health.delete_orphan_media'))
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('capell-media-library::package.media_health.delete_orphan_media_heading'))
+                    ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description'))
+                    ->action(function (EloquentCollection $records): void {
+                        $deletedCount = DeleteOrphanMediaRecordsAction::run(
+                            mediaIds: $records->modelKeys(),
+                            limit: $records->count(),
+                        );
+
+                        Notification::make('capell-media-library-orphan-media-deleted')
+                            ->title(__('capell-media-library::package.media_health.orphan_media_deleted', [
+                                'count' => $deletedCount,
+                            ]))
+                            ->success()
+                            ->send();
+                    })
+                    ->deselectRecordsAfterCompletion(),
             ])
             ->defaultSort('updated_at', 'asc');
     }
