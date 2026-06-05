@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
+use Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction;
 use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
 use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
@@ -449,12 +451,15 @@ it('declares implemented media library contributions actions and feature capabil
         ])
         ->and($manifest['actions'])->toHaveKey('buildDuplicateMediaQuery', BuildDuplicateMediaQueryAction::class)
         ->and($manifest['actions'])->toHaveKey('buildMediaHealthQuery', BuildMediaHealthQueryAction::class)
+        ->and($manifest['actions'])->toHaveKey('buildMissingAltMediaQuery', BuildMissingAltMediaQueryAction::class)
         ->and($manifest['actions'])->toHaveKey('buildMissingRightsMetadataQuery', BuildMissingRightsMetadataQueryAction::class)
         ->and($manifest['actions'])->toHaveKey('buildOrphanMediaQuery', BuildOrphanMediaQueryAction::class)
         ->and($manifest['actions'])->toHaveKey('deleteOrphanMediaRecords', DeleteOrphanMediaRecordsAction::class)
+        ->and($manifest['actions'])->toHaveKey('dispatchMissingAltMediaSignals', DispatchMissingAltMediaSignalsAction::class)
         ->and($manifest['actions'])->toHaveKey('migrateSpatieMediaToCurator', MigrateSpatieMediaToCuratorAction::class)
         ->and($manifest['capabilities'])->toContain(
             'media-library-focal-points',
+            'media-library-missing-alt-signal',
             'media-library-responsive-variants',
             'media-library-rights-metadata',
             'media-library-duplicate-detection',

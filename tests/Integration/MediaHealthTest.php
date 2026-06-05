@@ -5,12 +5,16 @@ declare(strict_types=1);
 use Capell\Admin\Support\CapellAdminManager;
 use Capell\Admin\Support\Extensions\ExtensionPageRegistry;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction;
+use Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction;
+use Capell\MediaLibrary\Events\MediaMissingAltDetected;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 
 test('media_health_query_uses_curator_rows_and_known_owner_foreign_keys', function (): void {
@@ -71,6 +75,50 @@ test('media health query uses the configured stale threshold', function (): void
 
     expect($records->keys()->all())->toContain($staleMediaId)
         ->and($records->get($staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
+});
+
+test('missing alt media query exposes image candidates with usage counts', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    $usedMissingAltMediaId = insertCuratorSignalMedia('used-missing-alt', null, 'image/jpeg');
+    $unusedMissingAltMediaId = insertCuratorSignalMedia('unused-missing-alt', '   ', 'image/jpeg');
+    $completeMediaId = insertCuratorSignalMedia('complete-alt', 'Useful alt text', 'image/jpeg');
+    $documentMediaId = insertCuratorSignalMedia('document-missing-alt', null, 'application/pdf');
+
+    TestCuratorOwner::query()->create(['name' => 'Used Missing Alt Owner', 'image_id' => $usedMissingAltMediaId]);
+
+    $records = BuildMissingAltMediaQueryAction::run()->get()->keyBy('id');
+
+    expect($records->keys()->all())->toBe([$usedMissingAltMediaId, $unusedMissingAltMediaId])
+        ->and($records->keys()->all())->not->toContain($completeMediaId, $documentMediaId)
+        ->and((int) $records->get($usedMissingAltMediaId)->getAttribute('usage_count'))->toBe(1)
+        ->and((int) $records->get($unusedMissingAltMediaId)->getAttribute('usage_count'))->toBe(0)
+        ->and($records->get($usedMissingAltMediaId)->getAttribute('media_missing_alt_signal'))->toBe('missing_alt');
+});
+
+test('missing alt signal dispatch action emits prioritized media events', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    $usedMissingAltMediaId = insertCuratorSignalMedia('signal-used-missing-alt', null, 'image/jpeg');
+    insertCuratorSignalMedia('signal-unused-missing-alt', null, 'image/jpeg');
+
+    TestCuratorOwner::query()->create(['name' => 'Signal Owner', 'image_id' => $usedMissingAltMediaId]);
+
+    Event::fake([MediaMissingAltDetected::class]);
+
+    $dispatched = DispatchMissingAltMediaSignalsAction::run(null, 1);
+
+    expect($dispatched)->toBe(1);
+
+    Event::assertDispatched(
+        MediaMissingAltDetected::class,
+        fn (MediaMissingAltDetected $event): bool => (int) $event->media->getKey() === $usedMissingAltMediaId
+            && $event->usageCount === 1,
+    );
 });
 
 test('media health table issue filter matches computed issue labels', function (): void {
@@ -143,6 +191,30 @@ function insertCuratorHealthMedia(string $name, ?string $alt, DateTimeInterface 
         'curations' => null,
         'created_at' => now(),
         'updated_at' => $updatedAt,
+    ]);
+}
+
+function insertCuratorSignalMedia(string $name, ?string $alt, string $type): int
+{
+    return DB::table('curator')->insertGetId([
+        'disk' => 'public',
+        'directory' => 'media',
+        'visibility' => 'public',
+        'name' => $name,
+        'path' => 'media/' . $name . '.jpg',
+        'width' => $type === 'image/jpeg' ? 800 : null,
+        'height' => $type === 'image/jpeg' ? 600 : null,
+        'size' => 10000,
+        'type' => $type,
+        'ext' => $type === 'image/jpeg' ? 'jpg' : 'pdf',
+        'alt' => $alt,
+        'title' => null,
+        'description' => null,
+        'caption' => null,
+        'exif' => null,
+        'curations' => null,
+        'created_at' => now(),
+        'updated_at' => now(),
     ]);
 }
 

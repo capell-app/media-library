@@ -18,7 +18,8 @@ This is a free Foundation package. It is the media plumbing other Capell package
 - Registers `Capell\MediaLibrary\Models\CuratorMedia` as the Capell media model and sets `capell.media.backend` to `curator`.
 - Binds `Capell\Core\Contracts\Media\MediaFieldFactory` to `CuratorMediaFieldFactory`, which renders an Awcodes `CuratorPicker`.
 - Adds `MediaHealthPage` with `MediaHealthTable` for missing alt text, stale media, and unused asset review.
-- Adds duplicate-path, missing-rights-metadata, usage, orphan, and media-health query actions for reports.
+- Adds duplicate-path, missing-alt, missing-rights-metadata, usage, orphan, and media-health query actions for reports.
+- Adds `DispatchMissingAltMediaSignalsAction` and `MediaMissingAltDetected` so media-ai and other packages can subscribe to prioritized missing-alt candidates.
 - Adds selected orphan cleanup through `DeleteOrphanMediaRecordsAction`, including unshared file deletion before row deletion.
 - Adds configurable upload validation for mime types, extensions, max file size, and default visibility.
 - Adds `capell:media-migrate-to-curator` and `MigrateSpatieMediaToCuratorAction` for Spatie-to-Curator migrations.
@@ -71,6 +72,10 @@ Upload policy is controlled by:
 - Access: Filament Shield page permissions
 
 The health table shows media name, size, usage count, primary issue, mime type, and last update time. It includes an issue filter and a bulk action for deleting selected orphan media after re-validating those rows through the orphan query.
+
+## Missing Alt Signals
+
+`BuildMissingAltMediaQueryAction` returns image media with null, empty, or whitespace-only alt text, including a `usage_count` projection from configured or auto-discovered owner foreign keys. `DispatchMissingAltMediaSignalsAction` dispatches `MediaMissingAltDetected` events for that ordered queue so packages such as Media AI can generate alt text without coupling to the admin health table.
 
 ## Command
 

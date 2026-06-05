@@ -53,9 +53,11 @@
     "actions": {
         "buildDuplicateMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildDuplicateMediaQueryAction",
         "buildMediaHealthQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaHealthQueryAction",
+        "buildMissingAltMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingAltMediaQueryAction",
         "buildMissingRightsMetadataQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingRightsMetadataQueryAction",
         "buildOrphanMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildOrphanMediaQueryAction",
         "deleteOrphanMediaRecords": "Capell\\MediaLibrary\\Actions\\DashboardReports\\DeleteOrphanMediaRecordsAction",
+        "dispatchMissingAltMediaSignals": "Capell\\MediaLibrary\\Actions\\DispatchMissingAltMediaSignalsAction",
         "migrateSpatieMediaToCurator": "Capell\\MediaLibrary\\Actions\\MigrateSpatieMediaToCuratorAction"
     },
     "settings": [],
@@ -64,6 +66,7 @@
         "media-library",
         "media-library-curator-backend",
         "media-library-focal-points",
+        "media-library-missing-alt-signal",
         "media-library-responsive-variants",
         "media-library-rights-metadata",
         "media-library-duplicate-detection",

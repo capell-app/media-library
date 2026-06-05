@@ -12,6 +12,7 @@ It is deliberately scoped as foundation infrastructure. Advanced DAM features su
 - `CuratorMediaFieldFactory` returns an Awcodes `CuratorPicker` for Capell media FK fields.
 - `CuratorMedia` adapts Curator records to Capell's media contract, including URL, alt/title/caption, dimensions, focal point, crop preset, and existing responsive metadata accessors.
 - `MediaHealthPage` and `MediaHealthTable` expose the admin report for missing alt text, stale media, and unused assets.
+- `BuildMissingAltMediaQueryAction` and `DispatchMissingAltMediaSignalsAction` expose prioritized missing-alt media candidates for automation packages such as Media AI.
 - `MigrateSpatieToCuratorCommand` delegates migration work to `MigrateSpatieMediaToCuratorAction`.
 
 ## Configuration
@@ -38,6 +39,8 @@ The Media Health page is an admin-only Filament page registered through Capell A
 - unused assets based on configured or discovered owner FK references
 - per-issue filtering
 - selected orphan cleanup that re-validates records before deleting files and rows
+
+The missing-alt signal actions are deliberately separate from the table UI. They return image candidates with null, empty, or whitespace-only alt text, include `usage_count`, and can dispatch `MediaMissingAltDetected` events for downstream automation.
 
 The migration command is:
 
