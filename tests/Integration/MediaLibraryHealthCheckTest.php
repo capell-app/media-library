@@ -38,6 +38,16 @@ test('passes when curator backend, table and owner foreign keys are present', fu
         ->and(MediaLibraryHealthCheck::passed())->toBeTrue();
 });
 
+test('passes the owner foreign keys check when conventional columns are discovered', function (): void {
+    Config::set('capell.media_library.owner_foreign_keys', []);
+
+    $check = new MediaLibraryHealthCheck;
+
+    expect($check->validOwnerForeignKeys())->toHaveCount(2)
+        ->and($check->hasOwnerForeignKeysConfigured())->toBeTrue()
+        ->and($check->ownerForeignKeysConfiguredCheck()->passed)->toBeTrue();
+});
+
 test('fails the backend check when curator is not the registered backend', function (): void {
     Config::set('capell.media.backend', 'spatie');
 
@@ -72,8 +82,9 @@ test('fails the curator table check when the table is missing', function (): voi
         ->and(MediaLibraryHealthCheck::passed())->toBeFalse();
 });
 
-test('fails the owner foreign keys check when none are configured', function (): void {
+test('fails the owner foreign keys check when none are configured and discovery is disabled', function (): void {
     Config::set('capell.media_library.owner_foreign_keys', []);
+    Config::set('capell.media_library.auto_discover_owner_foreign_keys', false);
 
     $check = new MediaLibraryHealthCheck;
 

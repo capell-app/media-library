@@ -46,6 +46,30 @@ test('orphan media query returns unused media from configured owner foreign keys
         ->and((int) $records->get($orphanMediaId)->getAttribute('usage_count'))->toBe(0);
 });
 
+test('orphan media query discovers conventional owner foreign keys by default', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', []);
+
+    $usedMediaId = insertCuratorGapMedia('discovered-used', 'media/discovered-used.jpg');
+    $orphanMediaId = insertCuratorGapMedia('discovered-orphan', 'media/discovered-orphan.jpg');
+
+    TestCuratorOwner::query()->create(['name' => 'Discovered Owner', 'image_id' => $usedMediaId]);
+
+    $records = BuildOrphanMediaQueryAction::run()->get()->keyBy('id');
+
+    expect($records->keys()->all())->toContain($orphanMediaId)
+        ->and($records->keys()->all())->not->toContain($usedMediaId)
+        ->and((int) $records->get($orphanMediaId)->getAttribute('usage_count'))->toBe(0);
+});
+
+test('orphan media query skips discovery when it is disabled', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', []);
+    config()->set('capell.media_library.auto_discover_owner_foreign_keys', false);
+
+    insertCuratorGapMedia('disabled-discovery-orphan', 'media/disabled-discovery-orphan.jpg');
+
+    expect(BuildOrphanMediaQueryAction::run()->get())->toHaveCount(0);
+});
+
 test('media gap queries are empty when curator table has not been installed', function (): void {
     Schema::dropIfExists('curator');
 
@@ -98,7 +122,7 @@ test('orphan media cleanup accepts selected media ids but deletes only unused re
 test('orphan media cleanup does nothing without known owner keys', function (): void {
     insertCuratorGapMedia('orphan-without-owners', 'media/orphan-without-owners.jpg');
 
-    expect(DeleteOrphanMediaRecordsAction::run())->toBe(0)
+    expect(DeleteOrphanMediaRecordsAction::run([]))->toBe(0)
         ->and(DB::table('curator')->count())->toBe(1);
 });
 

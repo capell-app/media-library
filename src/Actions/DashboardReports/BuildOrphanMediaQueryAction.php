@@ -28,9 +28,7 @@ final class BuildOrphanMediaQueryAction
         }
 
         $usageExpressions = resolve(MediaUsageQueryExpressions::class);
-        $knownOwnerForeignKeys = $usageExpressions->knownOwnerForeignKeys(
-            $ownerForeignKeys ?? config('capell.media_library.owner_foreign_keys', []),
-        );
+        $knownOwnerForeignKeys = ResolveOwnerForeignKeysAction::run($ownerForeignKeys);
 
         if ($knownOwnerForeignKeys === []) {
             return $emptyQueryFactory->emptyQuery(['0 as usage_count']);

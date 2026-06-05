@@ -7,10 +7,10 @@ namespace Capell\MediaLibrary\Health;
 use Capell\Core\Contracts\Extensions\ChecksExtensionHealth;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\Core\Data\Diagnostics\DoctorCheckResultData;
+use Capell\MediaLibrary\Actions\DashboardReports\ResolveOwnerForeignKeysAction;
 use Capell\MediaLibrary\Data\MediaOwnerForeignKeyData;
 use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 use Capell\MediaLibrary\Models\CuratorMedia;
-use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Schema;
@@ -81,8 +81,8 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
     }
 
     /**
-     * Warns when no owner foreign keys are configured, which makes the usage
-     * and orphan reports silently inert.
+     * Warns when no owner foreign keys are configured or discovered, which
+     * makes the usage and orphan reports silently inert.
      */
     public function ownerForeignKeysConfiguredCheck(): DoctorCheckResultData
     {
@@ -115,10 +115,13 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
     public function hasOwnerForeignKeysConfigured(): bool
     {
         $ownerForeignKeys = config('capell.media_library.owner_foreign_keys', []);
+        $validOwnerForeignKeys = $this->validOwnerForeignKeys();
 
-        return is_array($ownerForeignKeys)
-            && $ownerForeignKeys !== []
-            && count($this->validOwnerForeignKeys()) === count($ownerForeignKeys);
+        if (! is_array($ownerForeignKeys) || $ownerForeignKeys === []) {
+            return $validOwnerForeignKeys !== [];
+        }
+
+        return count($validOwnerForeignKeys) === count($ownerForeignKeys);
     }
 
     public function hasCuratorFieldFactoryBinding(): bool
@@ -135,9 +138,7 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
      */
     public function validOwnerForeignKeys(): array
     {
-        return resolve(MediaUsageQueryExpressions::class)->knownOwnerForeignKeys(
-            config('capell.media_library.owner_foreign_keys', []),
-        );
+        return ResolveOwnerForeignKeysAction::run();
     }
 
     /**

@@ -27,9 +27,7 @@ final class BuildMediaHealthQueryAction
 
         $staleThreshold = now()->subDays($this->staleAfterDays());
         $usageExpressions = resolve(MediaUsageQueryExpressions::class);
-        $knownOwnerForeignKeys = $usageExpressions->knownOwnerForeignKeys(
-            $ownerForeignKeys ?? config('capell.media_library.owner_foreign_keys', []),
-        );
+        $knownOwnerForeignKeys = ResolveOwnerForeignKeysAction::run($ownerForeignKeys);
         $usageCountExpression = $usageExpressions->usageCountExpression($knownOwnerForeignKeys);
         $issueExpression = $this->issueExpression($usageCountExpression, $knownOwnerForeignKeys !== []);
 

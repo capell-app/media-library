@@ -41,6 +41,22 @@ test('media_health_query_uses_curator_rows_and_known_owner_foreign_keys', functi
     expect($records->get($staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
 });
 
+test('media health query discovers conventional owner foreign keys by default', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', []);
+
+    $healthyMediaId = insertCuratorHealthMedia('discovered-healthy', 'Useful alt text', now());
+    $unusedMediaId = insertCuratorHealthMedia('discovered-unused', 'Unused alt text', now());
+
+    TestCuratorOwner::query()->create(['name' => 'Discovered Owner', 'image_id' => $healthyMediaId]);
+
+    $records = BuildMediaHealthQueryAction::run()->get()->keyBy('id');
+
+    expect($records->keys()->all())->toContain($unusedMediaId)
+        ->and($records->keys()->all())->not->toContain($healthyMediaId)
+        ->and((int) $records->get($unusedMediaId)->usage_count)->toBe(0)
+        ->and($records->get($unusedMediaId)->getAttribute('media_health_issue'))->toBe('unused');
+});
+
 test('media health query uses the configured stale threshold', function (): void {
     config()->set('capell.media_library.owner_foreign_keys', [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
