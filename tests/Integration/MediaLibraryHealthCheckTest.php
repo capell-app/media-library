@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\Core\Data\Diagnostics\DoctorCheckResultData;
+use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 use Capell\MediaLibrary\Health\MediaLibraryHealthCheck;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Support\Facades\Config;
@@ -29,8 +31,10 @@ test('passes when curator backend, table and owner foreign keys are present', fu
     $check = new MediaLibraryHealthCheck;
 
     expect($check->isCuratorBackendRegistered())->toBeTrue()
+        ->and($check->hasCuratorFieldFactoryBinding())->toBeTrue()
         ->and($check->curatorTableExists())->toBeTrue()
         ->and($check->hasOwnerForeignKeysConfigured())->toBeTrue()
+        ->and($check->validOwnerForeignKeys())->toHaveCount(1)
         ->and(MediaLibraryHealthCheck::passed())->toBeTrue();
 });
 
@@ -42,6 +46,20 @@ test('fails the backend check when curator is not the registered backend', funct
     expect($check->isCuratorBackendRegistered())->toBeFalse()
         ->and($check->backendRegisteredCheck()->passed)->toBeFalse()
         ->and(MediaLibraryHealthCheck::passed())->toBeFalse();
+});
+
+test('fails the backend check when the curator field factory is not bound', function (): void {
+    Config::set('capell.media.backend', 'curator');
+    Config::set('capell.media.model', CuratorMedia::class);
+    $this->app->bind(MediaFieldFactory::class, fn (): stdClass => new stdClass);
+
+    $check = new MediaLibraryHealthCheck;
+
+    expect($check->hasCuratorFieldFactoryBinding())->toBeFalse()
+        ->and($check->backendRegisteredCheck()->passed)->toBeFalse()
+        ->and(MediaLibraryHealthCheck::passed())->toBeFalse();
+
+    $this->app->bind(MediaFieldFactory::class, CuratorMediaFieldFactory::class);
 });
 
 test('fails the curator table check when the table is missing', function (): void {
@@ -60,5 +78,18 @@ test('fails the owner foreign keys check when none are configured', function ():
     $check = new MediaLibraryHealthCheck;
 
     expect($check->hasOwnerForeignKeysConfigured())->toBeFalse()
+        ->and($check->ownerForeignKeysConfiguredCheck()->passed)->toBeFalse();
+});
+
+test('fails the owner foreign keys check when configured keys do not resolve against the schema', function (): void {
+    Config::set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+        ['table' => 'missing_owner_table', 'column' => 'image_id'],
+    ]);
+
+    $check = new MediaLibraryHealthCheck;
+
+    expect($check->validOwnerForeignKeys())->toHaveCount(1)
+        ->and($check->hasOwnerForeignKeysConfigured())->toBeFalse()
         ->and($check->ownerForeignKeysConfiguredCheck()->passed)->toBeFalse();
 });
