@@ -13,6 +13,7 @@ It is deliberately scoped as foundation infrastructure. Advanced DAM features su
 - `CuratorMedia` adapts Curator records to Capell's media contract, including URL, alt/title/caption, dimensions, focal point, crop preset, and existing responsive metadata accessors.
 - `MediaHealthPage` and `MediaHealthTable` expose the admin report for missing alt text, stale media, and unused assets.
 - `BuildMissingAltMediaQueryAction` and `DispatchMissingAltMediaSignalsAction` expose prioritized missing-alt media candidates for automation packages such as Media AI.
+- `BuildMissingRightsMetadataQueryAction` parses Curator `exif` JSON and reports media whose configured rights keys are missing, blank, or malformed.
 - `MigrateSpatieToCuratorCommand` delegates migration work to `MigrateSpatieMediaToCuratorAction`.
 
 ## Configuration
@@ -42,6 +43,8 @@ The Media Health page is an admin-only Filament page registered through Capell A
 - selected orphan cleanup that re-validates records before deleting files and rows
 
 The missing-alt signal actions are deliberately separate from the table UI. They return image candidates with null, empty, or whitespace-only alt text, include `usage_count`, and can dispatch `MediaMissingAltDetected` events for downstream automation.
+
+Rights metadata reporting decodes Curator `exif` JSON before matching keys, so unrelated text values do not satisfy copyright/license requirements and empty metadata values remain visible.
 
 The health and orphan report Actions cache their computed row ids and projected columns briefly, then rebuild normal Curator query builders from that cache. Destructive orphan cleanup bypasses the cache and revalidates live owner references.
 

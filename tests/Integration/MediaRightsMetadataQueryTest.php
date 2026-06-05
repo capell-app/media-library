@@ -12,6 +12,13 @@ test('missing rights metadata query reports curator rows without license or attr
     $unrelatedExifMediaId = insertCuratorRightsMetadataMedia('unrelated-exif', [
         'camera' => 'Test body',
     ]);
+    $rightsWordOnlyMediaId = insertCuratorRightsMetadataMedia('rights-word-only', [
+        'note' => 'copyright',
+    ]);
+    $emptyLicenseMediaId = insertCuratorRightsMetadataMedia('empty-license', [
+        'license' => '',
+    ]);
+    $invalidExifMediaId = insertCuratorRightsMetadataMedia('invalid-exif', '{invalid-json');
     $licensedMediaId = insertCuratorRightsMetadataMedia('licensed', [
         'license' => 'CC BY 4.0',
     ]);
@@ -25,7 +32,14 @@ test('missing rights metadata query reports curator rows without license or attr
 
     $records = BuildMissingRightsMetadataQueryAction::run()->get()->keyBy('id');
 
-    expect($records->keys()->all())->toContain($missingExifMediaId, $emptyExifMediaId, $unrelatedExifMediaId)
+    expect($records->keys()->all())->toContain(
+        $missingExifMediaId,
+        $emptyExifMediaId,
+        $unrelatedExifMediaId,
+        $rightsWordOnlyMediaId,
+        $emptyLicenseMediaId,
+        $invalidExifMediaId,
+    )
         ->and($records->keys()->all())->not->toContain($licensedMediaId, $creditedMediaId);
 });
 
@@ -33,13 +47,16 @@ test('missing rights metadata query can use custom metadata keys', function (): 
     $sourceMediaId = insertCuratorRightsMetadataMedia('sourced', [
         'source_url' => 'https://example.test/image.jpg',
     ]);
+    $emptySourceMediaId = insertCuratorRightsMetadataMedia('empty-source', [
+        'source_url' => ' ',
+    ]);
     $unsourcedMediaId = insertCuratorRightsMetadataMedia('unsourced', [
         'camera' => 'Test body',
     ]);
 
     $records = BuildMissingRightsMetadataQueryAction::run(['source_url'])->get()->keyBy('id');
 
-    expect($records->keys()->all())->toContain($unsourcedMediaId)
+    expect($records->keys()->all())->toContain($emptySourceMediaId, $unsourcedMediaId)
         ->and($records->keys()->all())->not->toContain($sourceMediaId);
 });
 

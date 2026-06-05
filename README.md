@@ -21,6 +21,7 @@ This is a free Foundation package. It is the media plumbing other Capell package
 - Adds duplicate-path, missing-alt, missing-rights-metadata, usage, orphan, and media-health query actions for reports.
 - Adds `DispatchMissingAltMediaSignalsAction` and `MediaMissingAltDetected` so media-ai and other packages can subscribe to prioritized missing-alt candidates.
 - Adds selected orphan cleanup through `DeleteOrphanMediaRecordsAction`, including unshared file deletion before row deletion.
+- Parses Curator `exif` JSON structurally for rights metadata reports instead of matching raw JSON text.
 - Adds configurable upload validation for mime types, extensions, max file size, and default visibility.
 - Adds `capell:media-migrate-to-curator` and `MigrateSpatieMediaToCuratorAction` for Spatie-to-Curator migrations.
 - Stores and reads Curator focal point, crop preset, and responsive image metadata when that metadata already exists.
@@ -31,6 +32,7 @@ This is a free Foundation package. It is the media plumbing other Capell package
 - Focal points and crop presets are available through the PHP API, but the package does not ship a dedicated visual editor for them.
 - Usage and orphan reports depend on configured or auto-discovered owner FK columns. Publish the config for nonstandard schemas.
 - Duplicate reporting groups by identical disk and path. It does not hash file contents.
+- Rights metadata reporting treats null, blank, malformed JSON, missing keys, and empty configured metadata values as incomplete.
 - Private upload visibility is supported, but signed temporary URL handling is not part of this package yet.
 
 ## Install And Setup

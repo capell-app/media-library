@@ -8,6 +8,7 @@ use Capell\Core\Support\Database\RuntimeSchemaState;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Support\CuratorMediaQueryFactory;
 use Illuminate\Database\Eloquent\Builder;
+use JsonException;
 use Lorisleiva\Actions\Concerns\AsAction;
 
 final class BuildMissingRightsMetadataQueryAction
@@ -25,19 +26,24 @@ final class BuildMissingRightsMetadataQueryAction
         }
 
         $normalizedMetadataKeys = $this->normalizeMetadataKeys($metadataKeys ?? $this->defaultMetadataKeys());
+        $missingMediaIds = CuratorMedia::query()
+            ->select(['id', 'exif'])
+            ->get()
+            ->filter(fn (CuratorMedia $media): bool => $this->isMissingRightsMetadata(
+                $media->getAttribute('exif'),
+                $normalizedMetadataKeys,
+            ))
+            ->pluck('id')
+            ->map(static fn (mixed $mediaId): int => (int) $mediaId)
+            ->values()
+            ->all();
+
+        if ($missingMediaIds === []) {
+            return resolve(CuratorMediaQueryFactory::class)->emptyQuery();
+        }
 
         return CuratorMedia::query()
-            ->select('curator.*')
-            ->where(function (Builder $curatorQuery) use ($normalizedMetadataKeys): void {
-                $curatorQuery
-                    ->whereNull('exif')
-                    ->orWhere('exif', '')
-                    ->orWhere(function (Builder $metadataQuery) use ($normalizedMetadataKeys): void {
-                        foreach ($normalizedMetadataKeys as $metadataKey) {
-                            $metadataQuery->whereRaw("lower(coalesce(exif, '')) not like ?", ['%"' . $metadataKey . '"%']);
-                        }
-                    });
-            })
+            ->whereIn((new CuratorMedia)->getQualifiedKeyName(), $missingMediaIds)
             ->latest('curator.updated_at')
             ->orderByDesc('curator.id');
     }
@@ -54,6 +60,73 @@ final class BuildMissingRightsMetadataQueryAction
             ->unique()
             ->values()
             ->all();
+    }
+
+    /**
+     * @param  array<int, string>  $metadataKeys
+     */
+    private function isMissingRightsMetadata(mixed $exif, array $metadataKeys): bool
+    {
+        if (is_array($exif)) {
+            return ! $this->containsRightsMetadataValue($exif, $metadataKeys);
+        }
+
+        if (! is_string($exif) || trim($exif) === '') {
+            return true;
+        }
+
+        try {
+            $decodedExif = json_decode($exif, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return true;
+        }
+
+        return ! $this->containsRightsMetadataValue($decodedExif, $metadataKeys);
+    }
+
+    /**
+     * @param  array<int, string>  $metadataKeys
+     */
+    private function containsRightsMetadataValue(mixed $value, array $metadataKeys, ?string $currentKey = null): bool
+    {
+        if ($currentKey !== null && in_array(strtolower($currentKey), $metadataKeys, true)) {
+            return $this->hasMeaningfulMetadataValue($value);
+        }
+
+        if (! is_array($value)) {
+            return false;
+        }
+
+        foreach ($value as $nestedKey => $nestedValue) {
+            if ($this->containsRightsMetadataValue($nestedValue, $metadataKeys, is_string($nestedKey) ? $nestedKey : null)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function hasMeaningfulMetadataValue(mixed $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+
+        if (is_string($value)) {
+            return trim($value) !== '';
+        }
+
+        if (is_array($value)) {
+            foreach ($value as $nestedValue) {
+                if ($this->hasMeaningfulMetadataValue($nestedValue)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
