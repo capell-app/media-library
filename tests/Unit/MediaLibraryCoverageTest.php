@@ -16,6 +16,7 @@ use Capell\MediaLibrary\Manifest\MediaHealthPageContribution;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
@@ -421,7 +422,9 @@ it('builds the media health table columns and default sort', function (): void {
             ->map(static fn (mixed $action): ?string => method_exists($action, 'getName') ? $action->getName() : null)
             ->filter()
             ->values()
-            ->all())->toContain('delete_orphan_media');
+            ->all())->toContain('delete_orphan_media')
+        ->and(array_keys($table->getFilters()))->toBe(['media_health_issue'])
+        ->and($table->getFilters()['media_health_issue'])->toBeInstanceOf(SelectFilter::class);
 });
 
 it('declares implemented media library contributions actions and feature capabilities', function (): void {

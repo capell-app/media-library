@@ -6,7 +6,10 @@ use Capell\Admin\Support\CapellAdminManager;
 use Capell\Admin\Support\Extensions\ExtensionPageRegistry;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
+use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -54,6 +57,34 @@ test('media health query uses the configured stale threshold', function (): void
         ->and($records->get($staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
 });
 
+test('media health table issue filter matches computed issue labels', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+    config()->set('capell.media_library.stale_after_days', 30);
+
+    $healthyMediaId = insertCuratorHealthMedia('filter-healthy', 'Useful alt text', now());
+    $missingAltMediaId = insertCuratorHealthMedia('filter-missing-alt', null, now());
+    $staleMediaId = insertCuratorHealthMedia('filter-stale-unused', 'Stale alt text', now()->subDays(31));
+    $unusedMediaId = insertCuratorHealthMedia('filter-unused', 'Unused alt text', now());
+
+    TestCuratorOwner::query()->create(['name' => 'Healthy Owner', 'image_id' => $healthyMediaId]);
+    TestCuratorOwner::query()->create(['name' => 'Missing Alt Owner', 'image_id' => $missingAltMediaId]);
+
+    $filter = MediaHealthTable::configure(mediaHealthTableHarness())->getFilters()['media_health_issue'];
+    $missingAltQuery = BuildMediaHealthQueryAction::run();
+    $staleQuery = BuildMediaHealthQueryAction::run();
+    $unusedQuery = BuildMediaHealthQueryAction::run();
+
+    $filter->apply($missingAltQuery, ['value' => 'missing_alt']);
+    $filter->apply($staleQuery, ['value' => 'stale']);
+    $filter->apply($unusedQuery, ['value' => 'unused']);
+
+    expect($missingAltQuery->pluck('id')->all())->toBe([$missingAltMediaId])
+        ->and($staleQuery->pluck('id')->all())->toBe([$staleMediaId])
+        ->and($unusedQuery->pluck('id')->all())->toBe([$unusedMediaId]);
+});
+
 test('media_health_query_is_empty_when_curator_table_has_not_been_installed', function (): void {
     Schema::dropIfExists('curator');
 
@@ -97,4 +128,12 @@ function insertCuratorHealthMedia(string $name, ?string $alt, DateTimeInterface 
         'created_at' => now(),
         'updated_at' => $updatedAt,
     ]);
+}
+
+function mediaHealthTableHarness(): Table
+{
+    $livewire = Mockery::mock(HasTable::class);
+    $livewire->shouldReceive('makeFilamentTranslatableContentDriver')->andReturn(null);
+
+    return Table::make($livewire);
 }
