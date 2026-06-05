@@ -132,26 +132,36 @@ trait InteractsWithCuratorMedia
 
     private function validateMediaUpload(UploadedFile $file): void
     {
-        $mimeType = $file->getMimeType();
+        $mimeType = $file->getMimeType() ?? 'unknown';
         $extension = strtolower($file->getClientOriginalExtension());
         $sizeKilobytes = (int) ceil(max(0, (int) $file->getSize()) / 1024);
+        $allowedMimeTypes = $this->allowedUploadMimeTypes();
+        $allowedExtensions = $this->allowedUploadExtensions();
+        $maxUploadKilobytes = $this->maxUploadKilobytes();
 
-        if (! in_array($mimeType, $this->allowedUploadMimeTypes(), true)) {
+        if (! in_array($mimeType, $allowedMimeTypes, true)) {
             throw ValidationException::withMessages([
-                'media' => __('capell-media-library::package.validation.invalid_mime_type'),
+                'media' => __('capell-media-library::package.validation.invalid_mime_type', [
+                    'mime' => $mimeType,
+                    'allowed' => $this->formatAllowedUploadValues($allowedMimeTypes),
+                ]),
             ]);
         }
 
-        if (! in_array($extension, $this->allowedUploadExtensions(), true)) {
+        if (! in_array($extension, $allowedExtensions, true)) {
             throw ValidationException::withMessages([
-                'media' => __('capell-media-library::package.validation.invalid_extension'),
+                'media' => __('capell-media-library::package.validation.invalid_extension', [
+                    'extension' => $extension === '' ? __('capell-media-library::package.validation.no_extension') : ".{$extension}",
+                    'allowed' => $this->formatAllowedUploadValues($allowedExtensions, '.'),
+                ]),
             ]);
         }
 
-        if ($sizeKilobytes > $this->maxUploadKilobytes()) {
+        if ($sizeKilobytes > $maxUploadKilobytes) {
             throw ValidationException::withMessages([
                 'media' => __('capell-media-library::package.validation.max_size', [
-                    'max' => $this->maxUploadKilobytes(),
+                    'actual' => $sizeKilobytes,
+                    'max' => $maxUploadKilobytes,
                 ]),
             ]);
         }
@@ -212,6 +222,21 @@ trait InteractsWithCuratorMedia
         return array_values(array_filter(
             array_map(static fn (mixed $entry): string => is_string($entry) ? trim($entry) : '', $value),
             static fn (string $entry): bool => $entry !== '',
+        ));
+    }
+
+    /**
+     * @param  list<string>  $values
+     */
+    private function formatAllowedUploadValues(array $values, string $prefix = ''): string
+    {
+        if ($values === []) {
+            return __('capell-media-library::package.validation.none_configured');
+        }
+
+        return implode(', ', array_map(
+            static fn (string $value): string => $prefix . ltrim($value, '.'),
+            $values,
         ));
     }
 }

@@ -83,7 +83,7 @@ This is a free, bundled **foundation** package and should be positioned as the _
 | Ship & publish `config/media-library.php` for `owner_foreign_keys` (+ auto-discover) | Now    | M      | High   | §2.2, §4     |
 | Done/Shipped: Fix orphan cleanup to delete files, not just rows; wire it to UI/command. Evidence: selected health-table bulk cleanup delegates to `DeleteOrphanMediaRecordsAction`, revalidates selected rows through the orphan query, and focused tests prove only unused selected records/files are deleted. | Done | M | High | §2.3, §4 |
 | Stop forcing `visibility=public` on upload + migration; preserve source visibility   | Now    | M      | High   | §4           |
-| Add mime/size/extension validation to `addMediaFromUploadedFile`                     | Now    | S      | Med    | §4           |
+| Done/Shipped: Add mime/size/extension validation to `addMediaFromUploadedFile`; upload validation is config-driven via `allowed_mime_types`, `allowed_extensions`, and `max_upload_kb`, with focused tests for allowed uploads and actionable rejection errors. | Done | S | Med | §4 |
 | Per-issue column/filter on Media Health table; config-drive 90d threshold            | Now    | S      | Med    | §2.5         |
 | Rewrite README + `docs/overview.md`; reconcile screenshot counts & targets           | Now    | S      | Med    | §2.9, §1, §5 |
 | Extract missing-alt signal Action/event for media-ai                                 | Next   | S      | High   | §3, §5       |

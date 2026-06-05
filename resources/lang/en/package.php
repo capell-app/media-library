@@ -18,8 +18,10 @@ return [
         'orphan_media_deleted' => 'Deleted :count unused media record(s).',
     ],
     'validation' => [
-        'invalid_mime_type' => 'This media file type is not allowed.',
-        'invalid_extension' => 'This media file extension is not allowed.',
-        'max_size' => 'This media file may not be larger than :max KB.',
+        'invalid_mime_type' => 'The media file type ":mime" is not allowed. Allowed types: :allowed.',
+        'invalid_extension' => 'The media file extension ":extension" is not allowed. Allowed extensions: :allowed.',
+        'max_size' => 'This media file is :actual KB and may not be larger than :max KB.',
+        'no_extension' => 'none',
+        'none_configured' => 'none configured',
     ],
 ];

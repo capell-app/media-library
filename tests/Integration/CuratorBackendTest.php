@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use Capell\Core\Contracts\Media\MediaContract;
+use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 test('attach_from_upload_then_fetch_first_url returns non-empty string', function (): void {
@@ -78,35 +80,87 @@ test('get_first_media returns an instance of MediaContract', function (): void {
     expect($media)->toBeInstanceOf(MediaContract::class);
 });
 
+test('upload accepts allowed files under configured validation defaults', function (): void {
+    $owner = TestCuratorOwner::query()->create(['name' => 'Allowed Upload Owner']);
+
+    $media = $owner->addMediaFromUploadedFile(
+        UploadedFile::fake()->image('editor-photo.jpg')->size(512),
+        'image',
+    );
+
+    $storedMedia = CuratorMedia::query()->sole();
+
+    expect($media)->toBeInstanceOf(MediaContract::class)
+        ->and($storedMedia->type)->toBe('image/jpeg')
+        ->and($storedMedia->ext)->toBe('jpg')
+        ->and($storedMedia->size)->toBe(512 * 1024);
+
+    Storage::disk('public')->assertExists($storedMedia->path);
+});
+
 test('upload rejects disallowed mime types before storing media', function (): void {
     config()->set('capell.media_library.allowed_mime_types', ['image/jpeg']);
 
     $owner = TestCuratorOwner::query()->create(['name' => 'Mime Guard Owner']);
 
-    $owner->addMediaFromUploadedFile(
-        UploadedFile::fake()->create('document.pdf', 10, 'application/pdf'),
-        'image',
-    );
-})->throws(ValidationException::class);
+    try {
+        $owner->addMediaFromUploadedFile(
+            UploadedFile::fake()->create('document.pdf', 10, 'application/pdf'),
+            'image',
+        );
+
+        $this->fail('Expected disallowed mime type validation to fail.');
+    } catch (ValidationException $exception) {
+        expect($exception->errors())->toBe([
+            'media' => ['The media file type "application/pdf" is not allowed. Allowed types: image/jpeg.'],
+        ]);
+    }
+
+    expect(CuratorMedia::query()->count())->toBe(0)
+        ->and(Storage::disk('public')->allFiles())->toBe([]);
+});
 
 test('upload rejects disallowed file extensions before storing media', function (): void {
+    config()->set('capell.media_library.allowed_mime_types', ['image/jpeg', 'application/octet-stream']);
     config()->set('capell.media_library.allowed_extensions', ['jpg']);
 
     $owner = TestCuratorOwner::query()->create(['name' => 'Extension Guard Owner']);
 
-    $owner->addMediaFromUploadedFile(
-        UploadedFile::fake()->create('payload.exe', 10, 'image/jpeg'),
-        'image',
-    );
-})->throws(ValidationException::class);
+    try {
+        $owner->addMediaFromUploadedFile(
+            UploadedFile::fake()->create('payload.exe', 10, 'image/jpeg'),
+            'image',
+        );
+
+        $this->fail('Expected disallowed extension validation to fail.');
+    } catch (ValidationException $exception) {
+        expect($exception->errors())->toBe([
+            'media' => ['The media file extension ".exe" is not allowed. Allowed extensions: .jpg.'],
+        ]);
+    }
+
+    expect(CuratorMedia::query()->count())->toBe(0)
+        ->and(Storage::disk('public')->allFiles())->toBe([]);
+});
 
 test('upload rejects files larger than the configured media limit', function (): void {
     config()->set('capell.media_library.max_upload_kb', 1);
 
     $owner = TestCuratorOwner::query()->create(['name' => 'Size Guard Owner']);
 
-    $owner->addMediaFromUploadedFile(
-        UploadedFile::fake()->image('large.jpg')->size(2048),
-        'image',
-    );
-})->throws(ValidationException::class);
+    try {
+        $owner->addMediaFromUploadedFile(
+            UploadedFile::fake()->image('large.jpg')->size(2048),
+            'image',
+        );
+
+        $this->fail('Expected oversized media validation to fail.');
+    } catch (ValidationException $exception) {
+        expect($exception->errors())->toBe([
+            'media' => ['This media file is 2048 KB and may not be larger than 1 KB.'],
+        ]);
+    }
+
+    expect(CuratorMedia::query()->count())->toBe(0)
+        ->and(Storage::disk('public')->allFiles())->toBe([]);
+});
