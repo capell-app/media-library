@@ -34,7 +34,8 @@ final class BuildDuplicateMediaQueryAction
             ->where('path', '<>', '')
             ->get();
 
-        $rows = $media
+        /** @var list<array{id: int, duplicate_count: int, duplicate_hash: string}> $rows */
+        $rows = array_values($media
             ->map(fn (CuratorMedia $media): ?array => $this->duplicateCandidateRow($media))
             ->filter()
             ->groupBy('duplicate_hash')
@@ -57,7 +58,7 @@ final class BuildDuplicateMediaQueryAction
                 ['id', 'asc'],
             ])
             ->values()
-            ->all();
+            ->all());
 
         return resolve(CuratorMediaQueryFactory::class)->cachedReportRowsQuery($rows, [
             'duplicate_count' => 0,
@@ -77,7 +78,7 @@ final class BuildDuplicateMediaQueryAction
         }
 
         return [
-            'id' => (int) $media->getKey(),
+            'id' => $this->intValue($media->getKey()),
             'duplicate_hash' => $hash,
         ];
     }
@@ -140,5 +141,10 @@ final class BuildDuplicateMediaQueryAction
             '0 as duplicate_count',
             "'' as duplicate_hash",
         ];
+    }
+
+    private function intValue(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
     }
 }

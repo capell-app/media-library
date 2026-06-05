@@ -11,6 +11,9 @@ use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
 use Illuminate\Database\Eloquent\Builder;
 use Lorisleiva\Actions\Concerns\AsAction;
 
+/**
+ * @method static Builder<CuratorMedia> run(array<int, array{table: string, column: string}>|null $ownerForeignKeys = null, bool $onlyImages = true)
+ */
 final class BuildMissingAltMediaQueryAction
 {
     use AsAction;

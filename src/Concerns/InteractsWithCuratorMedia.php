@@ -145,7 +145,7 @@ trait InteractsWithCuratorMedia
 
     private function curatorMediaCacheKey(string $collection, mixed $mediaId): string
     {
-        return $collection . ':' . $mediaId;
+        return $collection . ':' . (is_scalar($mediaId) ? (string) $mediaId : '');
     }
 
     private function forgetCuratorMediaCache(string $collection): void

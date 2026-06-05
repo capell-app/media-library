@@ -10,9 +10,11 @@ use Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction;
 use Capell\MediaLibrary\Events\MediaMissingAltDetected;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
+use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -39,11 +41,16 @@ test('media_health_query_uses_curator_rows_and_known_owner_foreign_keys', functi
 
     expect($records->keys()->all())->not->toContain($healthyMediaId, $thumbnailMediaId);
     expect($records->keys()->all())->toContain($missingAltMediaId, $unusedMediaId, $staleMediaId);
-    expect((int) $records->get($missingAltMediaId)->usage_count)->toBe(1);
-    expect($records->get($missingAltMediaId)->getAttribute('media_health_issue'))->toBe('missing_alt');
-    expect((int) $records->get($unusedMediaId)->usage_count)->toBe(0);
-    expect($records->get($unusedMediaId)->getAttribute('media_health_issue'))->toBe('unused');
-    expect($records->get($staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
+
+    $missingAltMedia = mediaHealthRecord($records, $missingAltMediaId);
+    $unusedMedia = mediaHealthRecord($records, $unusedMediaId);
+    $staleMedia = mediaHealthRecord($records, $staleMediaId);
+
+    expect(mediaHealthIntAttribute($missingAltMedia, 'usage_count'))->toBe(1);
+    expect($missingAltMedia->getAttribute('media_health_issue'))->toBe('missing_alt');
+    expect(mediaHealthIntAttribute($unusedMedia, 'usage_count'))->toBe(0);
+    expect($unusedMedia->getAttribute('media_health_issue'))->toBe('unused');
+    expect($staleMedia->getAttribute('media_health_issue'))->toBe('stale');
 });
 
 test('media health query discovers conventional owner foreign keys by default', function (): void {
@@ -58,8 +65,8 @@ test('media health query discovers conventional owner foreign keys by default', 
 
     expect($records->keys()->all())->toContain($unusedMediaId)
         ->and($records->keys()->all())->not->toContain($healthyMediaId)
-        ->and((int) $records->get($unusedMediaId)->usage_count)->toBe(0)
-        ->and($records->get($unusedMediaId)->getAttribute('media_health_issue'))->toBe('unused');
+        ->and(mediaHealthIntAttribute(mediaHealthRecord($records, $unusedMediaId), 'usage_count'))->toBe(0)
+        ->and(mediaHealthRecord($records, $unusedMediaId)->getAttribute('media_health_issue'))->toBe('unused');
 });
 
 test('media health query uses the configured stale threshold', function (): void {
@@ -75,7 +82,7 @@ test('media health query uses the configured stale threshold', function (): void
     $records = BuildMediaHealthQueryAction::run()->get()->keyBy('id');
 
     expect($records->keys()->all())->toContain($staleMediaId)
-        ->and($records->get($staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
+        ->and(mediaHealthRecord($records, $staleMediaId)->getAttribute('media_health_issue'))->toBe('stale');
 });
 
 test('media health query rebuilds a query from cached report rows', function (): void {
@@ -98,8 +105,8 @@ test('media health query rebuilds a query from cached report rows', function ():
     expect($firstRecords->keys()->all())->toBe([$firstMissingAltMediaId])
         ->and($cachedRecords->keys()->all())->toBe([$firstMissingAltMediaId])
         ->and($liveRecords->keys()->all())->toContain($firstMissingAltMediaId, $secondMissingAltMediaId)
-        ->and((int) $cachedRecords->get($firstMissingAltMediaId)->getAttribute('usage_count'))->toBe(1)
-        ->and($cachedRecords->get($firstMissingAltMediaId)->getAttribute('media_health_issue'))->toBe('missing_alt');
+        ->and(mediaHealthIntAttribute(mediaHealthRecord($cachedRecords, $firstMissingAltMediaId), 'usage_count'))->toBe(1)
+        ->and(mediaHealthRecord($cachedRecords, $firstMissingAltMediaId)->getAttribute('media_health_issue'))->toBe('missing_alt');
 });
 
 test('missing alt media query exposes image candidates with usage counts', function (): void {
@@ -118,9 +125,9 @@ test('missing alt media query exposes image candidates with usage counts', funct
 
     expect($records->keys()->all())->toBe([$usedMissingAltMediaId, $unusedMissingAltMediaId])
         ->and($records->keys()->all())->not->toContain($completeMediaId, $documentMediaId)
-        ->and((int) $records->get($usedMissingAltMediaId)->getAttribute('usage_count'))->toBe(1)
-        ->and((int) $records->get($unusedMissingAltMediaId)->getAttribute('usage_count'))->toBe(0)
-        ->and($records->get($usedMissingAltMediaId)->getAttribute('media_missing_alt_signal'))->toBe('missing_alt');
+        ->and(mediaHealthIntAttribute(mediaHealthRecord($records, $usedMissingAltMediaId), 'usage_count'))->toBe(1)
+        ->and(mediaHealthIntAttribute(mediaHealthRecord($records, $unusedMissingAltMediaId), 'usage_count'))->toBe(0)
+        ->and(mediaHealthRecord($records, $usedMissingAltMediaId)->getAttribute('media_missing_alt_signal'))->toBe('missing_alt');
 });
 
 test('missing alt signal dispatch action emits prioritized media events', function (): void {
@@ -141,7 +148,7 @@ test('missing alt signal dispatch action emits prioritized media events', functi
 
     Event::assertDispatched(
         MediaMissingAltDetected::class,
-        fn (MediaMissingAltDetected $event): bool => (int) $event->media->getKey() === $usedMissingAltMediaId
+        fn (MediaMissingAltDetected $event): bool => mediaHealthIntValue($event->media->getKey()) === $usedMissingAltMediaId
             && $event->usageCount === 1,
     );
 });
@@ -217,6 +224,28 @@ function insertCuratorHealthMedia(string $name, ?string $alt, DateTimeInterface 
         'created_at' => now(),
         'updated_at' => $updatedAt,
     ]);
+}
+
+/**
+ * @param  Collection<int|string, CuratorMedia>  $records
+ */
+function mediaHealthRecord(Collection $records, int $mediaId): CuratorMedia
+{
+    $record = $records->get($mediaId);
+
+    throw_unless($record instanceof CuratorMedia, RuntimeException::class, 'Expected media health query record.');
+
+    return $record;
+}
+
+function mediaHealthIntAttribute(CuratorMedia $media, string $attribute): int
+{
+    return mediaHealthIntValue($media->getAttribute($attribute));
+}
+
+function mediaHealthIntValue(mixed $value): int
+{
+    return is_numeric($value) ? (int) $value : 0;
 }
 
 function insertCuratorSignalMedia(string $name, ?string $alt, string $type): int

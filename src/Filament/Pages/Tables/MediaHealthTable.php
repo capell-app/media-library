@@ -73,8 +73,8 @@ class MediaHealthTable implements TableConfigurator
                     ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description'))
                     ->action(function (EloquentCollection $records): void {
                         $deletedCount = DeleteOrphanMediaRecordsAction::run(
-                            mediaIds: $records->modelKeys(),
                             limit: $records->count(),
+                            mediaIds: $records->modelKeys(),
                         );
 
                         Notification::make('capell-media-library-orphan-media-deleted')
@@ -101,6 +101,10 @@ class MediaHealthTable implements TableConfigurator
         ];
     }
 
+    /**
+     * @param  Builder<CuratorMedia>  $query
+     * @return Builder<CuratorMedia>
+     */
     private static function applyIssueFilter(Builder $query, mixed $issue): Builder
     {
         return match ($issue) {
@@ -118,6 +122,10 @@ class MediaHealthTable implements TableConfigurator
         };
     }
 
+    /**
+     * @param  Builder<CuratorMedia>  $query
+     * @return Builder<CuratorMedia>
+     */
     private static function applyUnusedIssueFilter(Builder $query): Builder
     {
         $usageCountExpression = self::usageCountExpression();

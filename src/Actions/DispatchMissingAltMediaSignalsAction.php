@@ -29,12 +29,17 @@ final class DispatchMissingAltMediaSignalsAction
         $query->get()->each(function (CuratorMedia $media) use (&$dispatched): void {
             event(new MediaMissingAltDetected(
                 media: $media,
-                usageCount: (int) $media->getAttribute('usage_count'),
+                usageCount: $this->intValue($media->getAttribute('usage_count')),
             ));
 
             $dispatched++;
         });
 
         return $dispatched;
+    }
+
+    private function intValue(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
     }
 }

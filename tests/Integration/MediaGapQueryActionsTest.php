@@ -5,7 +5,9 @@ declare(strict_types=1);
 use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
+use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -51,7 +53,7 @@ test('orphan media query returns unused media from configured owner foreign keys
 
     expect($records->keys()->all())->toContain($orphanMediaId)
         ->and($records->keys()->all())->not->toContain($usedMediaId, $thumbnailMediaId)
-        ->and((int) $records->get($orphanMediaId)->getAttribute('usage_count'))->toBe(0);
+        ->and(mediaGapIntAttribute(mediaGapRecord($records, $orphanMediaId), 'usage_count'))->toBe(0);
 });
 
 test('orphan media query discovers conventional owner foreign keys by default', function (): void {
@@ -66,7 +68,7 @@ test('orphan media query discovers conventional owner foreign keys by default', 
 
     expect($records->keys()->all())->toContain($orphanMediaId)
         ->and($records->keys()->all())->not->toContain($usedMediaId)
-        ->and((int) $records->get($orphanMediaId)->getAttribute('usage_count'))->toBe(0);
+        ->and(mediaGapIntAttribute(mediaGapRecord($records, $orphanMediaId), 'usage_count'))->toBe(0);
 });
 
 test('orphan media query rebuilds a query from cached report rows', function (): void {
@@ -87,7 +89,7 @@ test('orphan media query rebuilds a query from cached report rows', function ():
     expect($firstRecords->keys()->all())->toBe([$firstOrphanMediaId])
         ->and($cachedRecords->keys()->all())->toBe([$firstOrphanMediaId])
         ->and($liveRecords->keys()->all())->toContain($firstOrphanMediaId, $secondOrphanMediaId)
-        ->and((int) $cachedRecords->get($firstOrphanMediaId)->getAttribute('usage_count'))->toBe(0);
+        ->and(mediaGapIntAttribute(mediaGapRecord($cachedRecords, $firstOrphanMediaId), 'usage_count'))->toBe(0);
 });
 
 test('orphan media query skips discovery when it is disabled', function (): void {
@@ -231,4 +233,23 @@ function insertCuratorGapMedia(string $name, string $path): int
         'created_at' => now(),
         'updated_at' => now(),
     ]);
+}
+
+/**
+ * @param  Collection<int|string, CuratorMedia>  $records
+ */
+function mediaGapRecord(Collection $records, int $mediaId): CuratorMedia
+{
+    $record = $records->get($mediaId);
+
+    throw_unless($record instanceof CuratorMedia, RuntimeException::class, 'Expected media gap query record.');
+
+    return $record;
+}
+
+function mediaGapIntAttribute(CuratorMedia $media, string $attribute): int
+{
+    $value = $media->getAttribute($attribute);
+
+    return is_numeric($value) ? (int) $value : 0;
 }

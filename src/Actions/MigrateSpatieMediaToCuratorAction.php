@@ -28,6 +28,8 @@ use Throwable;
  *   6. Updates the owner FK only when currently null.
  *
  * Pass `dryRun=true` to perform all checks and counts without writing.
+ *
+ * @method static MigrateSpatieMediaResult run(MigrateSpatieMediaInput $input)
  */
 final class MigrateSpatieMediaToCuratorAction
 {

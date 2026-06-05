@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Capell\Core\Contracts\Media\MediaContract;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as AuthenticatableUser;
 use Illuminate\Http\UploadedFile;
@@ -71,6 +72,7 @@ test('CuratorMedia suppresses unsafe responsive srcset metadata in anonymous out
 test('CuratorMedia omits admin and editor markers from non-admin public output', function (): void {
     $user = new class extends AuthenticatableUser
     {
+        /** @use HasFactory<Factory<self>> */
         use HasFactory;
 
         protected $guarded = [];

@@ -34,7 +34,7 @@ final class BuildMissingRightsMetadataQueryAction
                 $normalizedMetadataKeys,
             ))
             ->pluck('id')
-            ->map(static fn (mixed $mediaId): int => (int) $mediaId)
+            ->map(static fn (mixed $mediaId): int => is_numeric($mediaId) ? (int) $mediaId : 0)
             ->values()
             ->all();
 

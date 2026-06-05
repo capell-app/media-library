@@ -8,6 +8,9 @@ use Capell\MediaLibrary\Data\MediaOwnerForeignKeyData;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
 use Lorisleiva\Actions\Concerns\AsAction;
 
+/**
+ * @method static array<int, MediaOwnerForeignKeyData> run(array<int, array{table: string, column: string}>|null $ownerForeignKeys = null)
+ */
 final class ResolveOwnerForeignKeysAction
 {
     use AsAction;

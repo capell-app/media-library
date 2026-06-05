@@ -127,7 +127,7 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
     public function hasCuratorFieldFactoryBinding(): bool
     {
         try {
-            return resolve(MediaFieldFactory::class) instanceof CuratorMediaFieldFactory;
+            return $this->resolveMediaFieldFactory() instanceof CuratorMediaFieldFactory;
         } catch (BindingResolutionException) {
             return false;
         }
@@ -139,6 +139,11 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
     public function validOwnerForeignKeys(): array
     {
         return ResolveOwnerForeignKeysAction::run();
+    }
+
+    private function resolveMediaFieldFactory(): object
+    {
+        return resolve(MediaFieldFactory::class);
     }
 
     /**

@@ -78,9 +78,11 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
             if (! is_array($responsiveImage)) {
                 continue;
             }
+
             if (! is_string($responsiveImage['srcset'] ?? null)) {
                 continue;
             }
+
             $srcset = trim($responsiveImage['srcset']);
 
             if ($srcset !== '' && $this->isPublicSafeSrcset($srcset)) {

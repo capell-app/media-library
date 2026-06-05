@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Actions\DashboardReports;
 
 use Capell\MediaLibrary\Models\CuratorMedia;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Throwable;
 
+/**
+ * @method static int run(array<int, array{table: string, column: string}>|null $ownerForeignKeys = null, int $limit = 100, array<int, int|string>|null $mediaIds = null)
+ */
 final class DeleteOrphanMediaRecordsAction
 {
     use AsAction;
@@ -33,7 +35,6 @@ final class DeleteOrphanMediaRecordsAction
             return 0;
         }
 
-        /** @var Collection<int, CuratorMedia> $orphans */
         $orphanQuery = BuildOrphanMediaQueryAction::run($ownerForeignKeys, false);
 
         if ($mediaIds !== null) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Actions\DashboardReports;
 
 use Capell\Core\Support\Database\RuntimeSchemaState;
+use Capell\MediaLibrary\Data\MediaOwnerForeignKeyData;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Support\CuratorMediaQueryFactory;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
@@ -12,6 +13,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Lorisleiva\Actions\Concerns\AsAction;
 
+/**
+ * @method static Builder<CuratorMedia> run(array<int, array{table: string, column: string}>|null $ownerForeignKeys = null, bool $useCache = true)
+ */
 final class BuildOrphanMediaQueryAction
 {
     use AsAction;
@@ -55,8 +59,8 @@ final class BuildOrphanMediaQueryAction
             fn (): array => $query
                 ->get()
                 ->map(static fn (CuratorMedia $media): array => [
-                    'id' => (int) $media->getKey(),
-                    'usage_count' => (int) $media->getAttribute('usage_count'),
+                    'id' => self::intValue($media->getKey()),
+                    'usage_count' => self::intValue($media->getAttribute('usage_count')),
                 ])
                 ->values()
                 ->all(),
@@ -67,6 +71,11 @@ final class BuildOrphanMediaQueryAction
         ]);
     }
 
+    private static function intValue(mixed $value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
+    }
+
     private function cacheTtlSeconds(): int
     {
         $ttlSeconds = config('capell.media_library.report_cache_ttl_seconds', 60);
@@ -75,7 +84,7 @@ final class BuildOrphanMediaQueryAction
     }
 
     /**
-     * @param  array<int, mixed>  $knownOwnerForeignKeys
+     * @param  array<int, MediaOwnerForeignKeyData>  $knownOwnerForeignKeys
      */
     private function cacheKey(array $knownOwnerForeignKeys): string
     {
@@ -85,18 +94,20 @@ final class BuildOrphanMediaQueryAction
     }
 
     /**
-     * @param  array<int, mixed>  $knownOwnerForeignKeys
+     * @param  array<int, MediaOwnerForeignKeyData>  $knownOwnerForeignKeys
      * @return list<array{table: string, column: string}>
      */
     private function ownerForeignKeyPayload(array $knownOwnerForeignKeys): array
     {
-        return collect($knownOwnerForeignKeys)
-            ->map(static fn (mixed $ownerForeignKey): array => [
-                'table' => (string) $ownerForeignKey->table,
-                'column' => (string) $ownerForeignKey->column,
+        $payload = collect($knownOwnerForeignKeys)
+            ->map(static fn (MediaOwnerForeignKeyData $ownerForeignKey): array => [
+                'table' => $ownerForeignKey->table,
+                'column' => $ownerForeignKey->column,
             ])
             ->sortBy(static fn (array $ownerForeignKey): string => $ownerForeignKey['table'] . ':' . $ownerForeignKey['column'])
             ->values()
             ->all();
+
+        return array_values($payload);
     }
 }
