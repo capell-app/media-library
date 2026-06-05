@@ -7,6 +7,7 @@ use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Foundation\Auth\User as AuthenticatableUser;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 
 test('CuratorMedia contract methods return expected scalar types', function (): void {
     $mediaRow = CuratorMedia::query()->create([
@@ -96,6 +97,31 @@ test('getFirstMedia returns an object satisfying MediaContract for view componen
     $media = $owner->getFirstMedia('image');
 
     expect($media)->toBeInstanceOf(MediaContract::class);
+});
+
+test('getFirstMedia memoizes repeated collection lookups on the owner instance', function (): void {
+    $owner = TestCuratorOwner::query()->create(['name' => 'Memoized Render Owner']);
+
+    $owner->addMediaFromUploadedFile(
+        UploadedFile::fake()->image('memoized-view-test.jpg'),
+        'image',
+    );
+
+    $owner = $owner->fresh();
+
+    throw_unless($owner instanceof TestCuratorOwner, RuntimeException::class, 'Expected fresh media owner.');
+
+    DB::enableQueryLog();
+
+    $owner->getFirstMedia('image');
+    $owner->getFirstMediaUrl('image');
+    $owner->getMedia('image');
+
+    $curatorSelectQueries = collect(DB::getQueryLog())
+        ->filter(static fn (array $query): bool => str_contains(strtolower((string) ($query['query'] ?? '')), 'from "curator"'))
+        ->values();
+
+    expect($curatorSelectQueries)->toHaveCount(1);
 });
 
 /**

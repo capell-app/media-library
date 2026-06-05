@@ -28,6 +28,9 @@ use Illuminate\Validation\ValidationException;
  */
 trait InteractsWithCuratorMedia
 {
+    /** @var array<string, CuratorMedia|null> */
+    private array $curatorMediaCache = [];
+
     public static function curatorMediaColumn(string $collection): string
     {
         return Str::snake($collection) . '_id';
@@ -66,10 +69,18 @@ trait InteractsWithCuratorMedia
             return null;
         }
 
+        $cacheKey = $this->curatorMediaCacheKey($collection, $mediaId);
+
+        if (array_key_exists($cacheKey, $this->curatorMediaCache)) {
+            return $this->curatorMediaCache[$cacheKey];
+        }
+
         /** @var CuratorMedia|null $media */
         $media = CuratorMedia::query()->find($mediaId);
 
-        return $media;
+        $this->curatorMediaCache[$cacheKey] = $media;
+
+        return $this->curatorMediaCache[$cacheKey];
     }
 
     public function getFirstMediaUrl(string $collection = 'default', string $conversion = ''): string
@@ -117,6 +128,7 @@ trait InteractsWithCuratorMedia
         $column = static::curatorMediaColumn($collection);
         $this->setAttribute($column, $media->getKey());
         $this->save();
+        $this->curatorMediaCache[$this->curatorMediaCacheKey($collection, $media->getKey())] = $media;
 
         return $media;
     }
@@ -126,8 +138,25 @@ trait InteractsWithCuratorMedia
         $column = static::curatorMediaColumn($collection);
         $this->setAttribute($column, null);
         $this->save();
+        $this->forgetCuratorMediaCache($collection);
 
         return $this;
+    }
+
+    private function curatorMediaCacheKey(string $collection, mixed $mediaId): string
+    {
+        return $collection . ':' . (string) $mediaId;
+    }
+
+    private function forgetCuratorMediaCache(string $collection): void
+    {
+        $prefix = $collection . ':';
+
+        foreach (array_keys($this->curatorMediaCache) as $cacheKey) {
+            if (str_starts_with($cacheKey, $prefix)) {
+                unset($this->curatorMediaCache[$cacheKey]);
+            }
+        }
     }
 
     private function validateMediaUpload(UploadedFile $file): void
