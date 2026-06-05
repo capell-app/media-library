@@ -145,7 +145,7 @@ trait InteractsWithCuratorMedia
 
     private function curatorMediaCacheKey(string $collection, mixed $mediaId): string
     {
-        return $collection . ':' . (string) $mediaId;
+        return $collection . ':' . $mediaId;
     }
 
     private function forgetCuratorMediaCache(string $collection): void
@@ -153,7 +153,7 @@ trait InteractsWithCuratorMedia
         $prefix = $collection . ':';
 
         foreach (array_keys($this->curatorMediaCache) as $cacheKey) {
-            if (str_starts_with($cacheKey, $prefix)) {
+            if (str_starts_with((string) $cacheKey, $prefix)) {
                 unset($this->curatorMediaCache[$cacheKey]);
             }
         }
@@ -180,7 +180,7 @@ trait InteractsWithCuratorMedia
         if (! in_array($extension, $allowedExtensions, true)) {
             throw ValidationException::withMessages([
                 'media' => __('capell-media-library::package.validation.invalid_extension', [
-                    'extension' => $extension === '' ? __('capell-media-library::package.validation.no_extension') : ".{$extension}",
+                    'extension' => $extension === '' ? __('capell-media-library::package.validation.no_extension') : '.' . $extension,
                     'allowed' => $this->formatAllowedUploadValues($allowedExtensions, '.'),
                 ]),
             ]);

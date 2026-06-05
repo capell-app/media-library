@@ -41,7 +41,7 @@ final class BuildMissingAltMediaQueryAction
             })
             ->when($onlyImages, fn (Builder $curatorQuery): Builder => $curatorQuery->where('type', 'like', 'image/%'))
             ->orderByDesc('usage_count')
-            ->orderBy('updated_at')
+            ->oldest('updated_at')
             ->orderBy('id');
     }
 

@@ -110,8 +110,8 @@ test('upload rejects disallowed mime types before storing media', function (): v
         );
 
         $this->fail('Expected disallowed mime type validation to fail.');
-    } catch (ValidationException $exception) {
-        expect($exception->errors())->toBe([
+    } catch (ValidationException $validationException) {
+        expect($validationException->errors())->toBe([
             'media' => ['The media file type "application/pdf" is not allowed. Allowed types: image/jpeg.'],
         ]);
     }
@@ -133,8 +133,8 @@ test('upload rejects disallowed file extensions before storing media', function 
         );
 
         $this->fail('Expected disallowed extension validation to fail.');
-    } catch (ValidationException $exception) {
-        expect($exception->errors())->toBe([
+    } catch (ValidationException $validationException) {
+        expect($validationException->errors())->toBe([
             'media' => ['The media file extension ".exe" is not allowed. Allowed extensions: .jpg.'],
         ]);
     }
@@ -155,8 +155,8 @@ test('upload rejects files larger than the configured media limit', function ():
         );
 
         $this->fail('Expected oversized media validation to fail.');
-    } catch (ValidationException $exception) {
-        expect($exception->errors())->toBe([
+    } catch (ValidationException $validationException) {
+        expect($validationException->errors())->toBe([
             'media' => ['This media file is 2048 KB and may not be larger than 1 KB.'],
         ]);
     }

@@ -92,7 +92,7 @@ final class DiscoverOwnerForeignKeysAction
         try {
             return array_values(array_filter(
                 $schema->getColumnListing($table),
-                fn (string $column): bool => $this->isSafeIdentifier($column),
+                $this->isSafeIdentifier(...),
             ));
         } catch (Throwable) {
             return [];

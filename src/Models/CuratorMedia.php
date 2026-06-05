@@ -75,10 +75,12 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
         $responsiveImages = $this->metadataArray('responsive_images');
 
         foreach ($responsiveImages as $responsiveImage) {
-            if (! is_array($responsiveImage) || ! is_string($responsiveImage['srcset'] ?? null)) {
+            if (! is_array($responsiveImage)) {
                 continue;
             }
-
+            if (! is_string($responsiveImage['srcset'] ?? null)) {
+                continue;
+            }
             $srcset = trim($responsiveImage['srcset']);
 
             if ($srcset !== '' && $this->isPublicSafeSrcset($srcset)) {

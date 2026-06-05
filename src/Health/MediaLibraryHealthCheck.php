@@ -127,7 +127,7 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
     public function hasCuratorFieldFactoryBinding(): bool
     {
         try {
-            return app(MediaFieldFactory::class) instanceof CuratorMediaFieldFactory;
+            return resolve(MediaFieldFactory::class) instanceof CuratorMediaFieldFactory;
         } catch (BindingResolutionException) {
             return false;
         }
