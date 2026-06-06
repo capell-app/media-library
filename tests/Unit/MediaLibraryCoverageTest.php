@@ -437,7 +437,6 @@ it('declares implemented media library contributions actions and feature capabil
     $capabilities = mediaLibraryCoverageArrayValue($manifest, 'capabilities');
     $contributionTraceability = mediaLibraryCoverageArrayValue($manifest, 'contributionTraceability');
     $deferredContributions = mediaLibraryCoverageArrayValue($contributionTraceability, 'deferredContributions');
-    $deferredProductScope = mediaLibraryCoverageArrayValue($manifest, 'deferredProductScope');
 
     expect(mediaLibraryCoverageStringValue($manifest, 'description'))->toContain('media backbone of your Capell site')
         ->and(mediaLibraryCoverageStringValue($marketplace, 'summary'))->toContain('media-health dashboard')
@@ -470,13 +469,7 @@ it('declares implemented media library contributions actions and feature capabil
             'media-library-orphan-cleanup',
         )
         ->and($capabilities)->not->toContain('media-library-responsive-variants')
-        ->and($deferredContributions)->not->toContain('admin-page', 'model')
-        ->and(mediaLibraryCoverageStringValue($deferredProductScope, 'targetPackage'))->toBe('media-pro')
-        ->and(mediaLibraryCoverageArrayValue($deferredProductScope, 'items'))->toBe([
-            'responsive-webp-avif-generation',
-            'visual-focal-point-crop-editor',
-            'folders-galleries-where-used',
-        ]);
+        ->and($deferredContributions)->not->toContain('admin-page', 'model');
 });
 
 it('keeps media library docs and screenshots aligned with committed package assets', function (): void {

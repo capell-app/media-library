@@ -167,13 +167,5 @@
     },
     "contributionTraceability": {
         "deferredContributions": []
-    },
-    "deferredProductScope": {
-        "targetPackage": "media-pro",
-        "items": [
-            "responsive-webp-avif-generation",
-            "visual-focal-point-crop-editor",
-            "folders-galleries-where-used"
-        ]
     }
 }
