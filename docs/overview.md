@@ -72,7 +72,7 @@ The committed media set is:
 - `docs/screenshots/migration-command-output-or-report.png`
 - `docs/screenshots/migration-command-output-or-report-dark.png`
 
-The screenshot capture contract is [screenshots.json](screenshots.json). It defines four required scenarios: the media health page, the media health table component, a host form using the Curator media field factory, and the migration command output. The manifest lists the marketplace card plus the shipped light and dark screenshot assets.
+The screenshot capture contract is [screenshots.json](screenshots.json). It defines four required scenarios: the media health page, the media health table component, a host form using the Curator media field factory, and the migration command output. The committed screenshot captures remain runner evidence until they show populated Capell media workflows.
 
 ## Pitfalls
 
