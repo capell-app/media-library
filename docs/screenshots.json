@@ -15,7 +15,8 @@
             "required": true,
             "notes": "Capture after installing capell-app/media-library in the isolated demo harness and seeding the data required for this use case.",
             "useCase": "An administrator reviews media health status for stale, missing, or incomplete assets.",
-            "screenshotPath": "packages/media-library/docs/screenshots/media-health-page.png"
+            "screenshotPath": "packages/media-library/docs/screenshots/media-health-page.png",
+            "darkScreenshotPath": "packages/media-library/docs/screenshots/media-health-page-dark.png"
         },
         {
             "id": "media-health-table",
@@ -27,7 +28,8 @@
             "required": true,
             "notes": "Capture the table inside MediaHealthPage after installing capell-app/media-library in the isolated demo harness and seeding missing-alt, stale, and unused Curator records.",
             "useCase": "An administrator scans individual media health rows and remediation state.",
-            "screenshotPath": "packages/media-library/docs/screenshots/media-health-table.png"
+            "screenshotPath": "packages/media-library/docs/screenshots/media-health-table.png",
+            "darkScreenshotPath": "packages/media-library/docs/screenshots/media-health-table-dark.png"
         },
         {
             "id": "curator-media-field-inside-a-form",
@@ -39,7 +41,8 @@
             "required": true,
             "notes": "Capture a host Capell form that resolves Capell\\Core\\Contracts\\Media\\MediaFieldFactory to CuratorMediaFieldFactory and renders Awcodes CuratorPicker for a media FK column.",
             "useCase": "An editor selects media through the Curator field embedded in a Capell form.",
-            "screenshotPath": "packages/media-library/docs/screenshots/curator-media-field-inside-a-form.png"
+            "screenshotPath": "packages/media-library/docs/screenshots/curator-media-field-inside-a-form.png",
+            "darkScreenshotPath": "packages/media-library/docs/screenshots/curator-media-field-inside-a-form-dark.png"
         },
         {
             "id": "migration-command-output-or-report",
@@ -51,7 +54,8 @@
             "required": true,
             "notes": "Run the migration command with a seeded Spatie media fixture, preferably first with --dry-run, and capture the summary table and warning output.",
             "useCase": "A developer reviews the Spatie-to-Curator migration report before or after migration.",
-            "screenshotPath": "packages/media-library/docs/screenshots/migration-command-output-or-report.png"
+            "screenshotPath": "packages/media-library/docs/screenshots/migration-command-output-or-report.png",
+            "darkScreenshotPath": "packages/media-library/docs/screenshots/migration-command-output-or-report-dark.png"
         }
     ]
 }
