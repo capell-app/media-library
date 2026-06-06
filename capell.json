@@ -67,7 +67,7 @@
         "media-library-curator-backend",
         "media-library-focal-points",
         "media-library-missing-alt-signal",
-        "media-library-responsive-variants",
+        "media-library-responsive-metadata",
         "media-library-rights-metadata",
         "media-library-duplicate-detection",
         "media-library-usage-reports",
@@ -167,5 +167,13 @@
     },
     "contributionTraceability": {
         "deferredContributions": []
+    },
+    "deferredProductScope": {
+        "targetPackage": "media-pro",
+        "items": [
+            "responsive-webp-avif-generation",
+            "visual-focal-point-crop-editor",
+            "folders-galleries-where-used"
+        ]
     }
 }

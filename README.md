@@ -25,6 +25,7 @@ This is a free Foundation package. It is the media plumbing other Capell package
 - Adds configurable upload validation for mime types, extensions, max file size, and default visibility.
 - Adds `capell:media-migrate-to-curator` and `MigrateSpatieMediaToCuratorAction` for Spatie-to-Curator migrations.
 - Stores and reads Curator focal point, crop preset, and responsive image metadata when that metadata already exists.
+- Defers full DAM features, generated WebP/AVIF conversions, visual crop editing, folders, galleries, and where-used drill-down to a future Media Pro layer.
 
 ## Current Boundaries
 

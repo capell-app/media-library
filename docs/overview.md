@@ -4,7 +4,7 @@ Status: **available** · Kind: **package** · Tier: **free** · Bundle: **founda
 
 Media Library is Capell's Curator-backed media foundation. It replaces the default media backend with Awcodes Curator, gives packages a shared media field factory, and adds operational tools for media health and Spatie Media Library migration.
 
-It is deliberately scoped as foundation infrastructure. Advanced DAM features such as folders, galleries, generated WebP/AVIF conversions, signed private URLs, and a visual focal/crop editor remain product gaps or premium candidates.
+It is deliberately scoped as foundation infrastructure. Advanced DAM features such as folders, galleries, generated WebP/AVIF conversions, signed private URLs, and a visual focal/crop editor are explicitly deferred to a future Media Pro/DAM layer.
 
 ## Runtime Shape
 
