@@ -8,6 +8,8 @@ use Awcodes\Curator\Models\Media as BaseCuratorMedia;
 use Capell\Core\Contracts\Media\MediaContract;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 /**
  * Curator's Media model, extended to satisfy Capell's backend-agnostic
@@ -25,6 +27,10 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 
     public function getUrl(string $conversion = ''): string
     {
+        if ($this->isPrivateMedia()) {
+            return $this->temporaryPrivateUrl();
+        }
+
         $conversionUrl = match ($conversion) {
             'thumb', 'thumbnail' => $this->thumbnail_url,
             'medium' => $this->medium_url,
@@ -62,11 +68,25 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 
     public function getSrcset(): string
     {
+        if ($this->isPrivateMedia()) {
+            return '';
+        }
+
         $responsiveImages = $this->metadataArray('responsive_images');
 
         foreach ($responsiveImages as $responsiveImage) {
-            if (is_array($responsiveImage) && is_string($responsiveImage['srcset'] ?? null) && $responsiveImage['srcset'] !== '') {
-                return $responsiveImage['srcset'];
+            if (! is_array($responsiveImage)) {
+                continue;
+            }
+
+            if (! is_string($responsiveImage['srcset'] ?? null)) {
+                continue;
+            }
+
+            $srcset = trim($responsiveImage['srcset']);
+
+            if ($srcset !== '' && $this->isPublicSafeSrcset($srcset)) {
+                return $srcset;
             }
         }
 
@@ -275,6 +295,90 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
         }
 
         return $this->getFocalPoint();
+    }
+
+    private function isPrivateMedia(): bool
+    {
+        if ($this->getAttribute('visibility') === 'private') {
+            return true;
+        }
+
+        $disk = $this->getAttribute('disk');
+        $path = $this->getAttribute('path');
+
+        if (! is_string($disk) || $disk === '' || ! is_string($path) || $path === '') {
+            return false;
+        }
+
+        try {
+            return Storage::disk($disk)->getVisibility($path) === 'private';
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    private function temporaryPrivateUrl(): string
+    {
+        $disk = $this->getAttribute('disk');
+        $path = $this->getAttribute('path');
+
+        if (! is_string($disk) || $disk === '' || ! is_string($path) || $path === '') {
+            return '';
+        }
+
+        try {
+            $storageDisk = Storage::disk($disk);
+
+            if (! $storageDisk->providesTemporaryUrls()) {
+                return '';
+            }
+
+            return $storageDisk->temporaryUrl($path, now()->addMinutes(5));
+        } catch (Throwable) {
+            return '';
+        }
+    }
+
+    private function isPublicSafeSrcset(string $srcset): bool
+    {
+        return ! $this->containsUnsafePublicMarker($srcset);
+    }
+
+    private function containsUnsafePublicMarker(string $value): bool
+    {
+        $normalizedValue = strtolower($value);
+
+        foreach ($this->unsafePublicOutputMarkers() as $marker) {
+            if (str_contains($normalizedValue, $marker)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function unsafePublicOutputMarkers(): array
+    {
+        return [
+            '/admin',
+            'admin.',
+            'capell-app/',
+            'capell-frontend-authoring',
+            'capell-media-library',
+            'data-capell',
+            'field_path',
+            'filament',
+            'frontend-authoring',
+            'javascript:',
+            'livewire',
+            'model_id',
+            'permission',
+            'signed-editor',
+            'wire:',
+        ];
     }
 
     /**

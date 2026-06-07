@@ -97,6 +97,7 @@ class MediaLibraryTestCase extends OrchestraTestCase
             $table->id();
             $table->string('name');
             $table->unsignedBigInteger('image_id')->nullable();
+            $table->unsignedBigInteger('thumbnail_id')->nullable();
             $table->timestamps();
         });
     }

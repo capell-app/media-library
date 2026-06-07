@@ -6,23 +6,30 @@
     "kind": "package",
     "capellApiVersion": "^4.0",
     "version": "4.x-dev",
-    "description": "Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.",
+    "description": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
     "product": {
         "group": "Capell Foundation",
         "tier": "free",
         "bundle": "foundation"
     },
     "namespace": "Capell\\MediaLibrary",
-    "surfaces": ["admin"],
+    "surfaces": [
+        "admin"
+    ],
     "dependencies": {
-        "requires": ["capell-app/admin", "capell-app/core"],
+        "requires": [
+            "capell-app/admin",
+            "capell-app/core"
+        ],
         "supports": [],
         "conflicts": []
     },
     "providers": {
         "metadata": [],
         "install": [],
-        "runtime": ["Capell\\MediaLibrary\\MediaLibraryServiceProvider"],
+        "runtime": [
+            "Capell\\MediaLibrary\\MediaLibraryServiceProvider"
+        ],
         "admin": [],
         "frontend": []
     },
@@ -53,9 +60,11 @@
     "actions": {
         "buildDuplicateMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildDuplicateMediaQueryAction",
         "buildMediaHealthQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaHealthQueryAction",
+        "buildMissingAltMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingAltMediaQueryAction",
         "buildMissingRightsMetadataQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingRightsMetadataQueryAction",
         "buildOrphanMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildOrphanMediaQueryAction",
         "deleteOrphanMediaRecords": "Capell\\MediaLibrary\\Actions\\DashboardReports\\DeleteOrphanMediaRecordsAction",
+        "dispatchMissingAltMediaSignals": "Capell\\MediaLibrary\\Actions\\DispatchMissingAltMediaSignalsAction",
         "migrateSpatieMediaToCurator": "Capell\\MediaLibrary\\Actions\\MigrateSpatieMediaToCuratorAction"
     },
     "settings": [],
@@ -64,7 +73,8 @@
         "media-library",
         "media-library-curator-backend",
         "media-library-focal-points",
-        "media-library-responsive-variants",
+        "media-library-missing-alt-signal",
+        "media-library-responsive-metadata",
         "media-library-rights-metadata",
         "media-library-duplicate-detection",
         "media-library-usage-reports",
@@ -112,7 +122,7 @@
         "privateDocsRequested": false
     },
     "marketplace": {
-        "summary": "Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.",
+        "summary": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
         "screenshots": [
             {
                 "path": "docs/assets/marketplace/extension-card.jpg",
@@ -120,7 +130,10 @@
                 "caption": "Media Library extension preview"
             }
         ],
-        "categories": ["admin", "foundation"]
+        "categories": [
+            "admin",
+            "foundation"
+        ]
     },
     "contributionTraceability": {
         "deferredContributions": []

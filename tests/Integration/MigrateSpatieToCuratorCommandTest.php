@@ -6,6 +6,7 @@ use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
 use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -258,6 +259,50 @@ test('full_migration_creates_curator_rows_and_populates_owner_fk', function (): 
     foreach ($owners as $owner) {
         expect($owner->image_id)->not->toBeNull();
     }
+});
+
+test('migration preserves private source disk visibility on migrated curator rows', function (): void {
+    Config::set('filesystems.disks.private_source', [
+        'driver' => 'local',
+        'root' => storage_path('app/private-source'),
+        'visibility' => 'private',
+    ]);
+
+    $owner = TestCuratorOwner::query()->create(['name' => 'Private Source Owner']);
+
+    $mediaId = DB::table('media')->insertGetId([
+        'model_type' => TestCuratorOwner::class,
+        'model_id' => $owner->getKey(),
+        'uuid' => (string) Str::uuid(),
+        'collection_name' => 'image',
+        'name' => 'private-source-file',
+        'file_name' => 'private-source-file.jpg',
+        'mime_type' => 'image/jpeg',
+        'disk' => 'private_source',
+        'conversions_disk' => null,
+        'size' => 8000,
+        'manipulations' => '[]',
+        'custom_properties' => '[]',
+        'generated_conversions' => '[]',
+        'responsive_images' => '[]',
+        'order_column' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $result = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput);
+
+    $curatorRow = DB::table('curator')->where('path', $mediaId . '/private-source-file.jpg')->first();
+    $owner->refresh();
+
+    throw_unless($curatorRow instanceof stdClass, RuntimeException::class, 'Expected migrated private curator row.');
+
+    expect($result->processed)->toBe(1)
+        ->and($result->created)->toBe(1)
+        ->and($result->ownersUpdated)->toBe(1)
+        ->and($curatorRow->disk)->toBe('private_source')
+        ->and($curatorRow->visibility)->toBe('private')
+        ->and($owner->image_id)->toBe($curatorRow->id);
 });
 
 test('migration_is_idempotent', function (): void {

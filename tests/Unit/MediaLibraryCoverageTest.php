@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
+use Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction;
 use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
 use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
@@ -16,6 +18,7 @@ use Capell\MediaLibrary\Manifest\MediaHealthPageContribution;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Http\UploadedFile;
@@ -408,51 +411,165 @@ it('stores uploaded curator media and clears the owner collection', function ():
 it('builds the media health table columns and default sort', function (): void {
     $table = MediaHealthTable::configure(mediaLibraryCoverageTable());
 
-    expect($table->getColumns())->toHaveCount(5)
+    expect($table->getColumns())->toHaveCount(6)
         ->and(array_keys($table->getColumns()))->toBe([
             'name',
             'size',
             'usage_count',
+            'media_health_issue',
             'type',
             'updated_at',
-        ]);
+        ])
+        ->and(collect($table->getToolbarActions())
+            ->map(static fn (mixed $action): ?string => method_exists($action, 'getName') ? $action->getName() : null)
+            ->filter()
+            ->values()
+            ->all())->toContain('delete_orphan_media')
+        ->and(array_keys($table->getFilters()))->toBe(['media_health_issue'])
+        ->and($table->getFilters()['media_health_issue'])->toBeInstanceOf(SelectFilter::class);
 });
 
 it('declares implemented media library contributions actions and feature capabilities', function (): void {
-    $manifest = json_decode(
-        (string) file_get_contents(__DIR__ . '/../../capell.json'),
-        associative: true,
-        flags: JSON_THROW_ON_ERROR,
-    );
+    $manifest = capell_json_file_array(__DIR__ . '/../../capell.json');
+    $marketplace = mediaLibraryCoverageArrayValue($manifest, 'marketplace');
+    $contributes = mediaLibraryCoverageArrayValue($manifest, 'contributes');
+    $actions = mediaLibraryCoverageArrayValue($manifest, 'actions');
+    $capabilities = mediaLibraryCoverageArrayValue($manifest, 'capabilities');
+    $contributionTraceability = mediaLibraryCoverageArrayValue($manifest, 'contributionTraceability');
+    $deferredContributions = mediaLibraryCoverageArrayValue($contributionTraceability, 'deferredContributions');
 
-    expect($manifest['description'])->toContain('focal point and responsive metadata')
-        ->and($manifest['marketplace']['summary'])->toContain('rights metadata checks')
-        ->and($manifest['contributes'])->toContain([
+    expect(mediaLibraryCoverageStringValue($manifest, 'description'))->toContain('media backbone of your Capell site')
+        ->and(mediaLibraryCoverageStringValue($marketplace, 'summary'))->toContain('media-health dashboard')
+        ->and($contributes)->toContain([
             'type' => 'admin-page',
             'class' => MediaHealthPageContribution::class,
             'pageClass' => MediaHealthPage::class,
             'labelKey' => 'capell-admin::navigation.media_health',
         ])
-        ->and($manifest['contributes'])->toContain([
+        ->and($contributes)->toContain([
             'type' => 'model',
             'class' => CuratorMediaModelContribution::class,
             'modelClass' => CuratorMedia::class,
         ])
-        ->and($manifest['actions'])->toHaveKey('buildDuplicateMediaQuery', BuildDuplicateMediaQueryAction::class)
-        ->and($manifest['actions'])->toHaveKey('buildMediaHealthQuery', BuildMediaHealthQueryAction::class)
-        ->and($manifest['actions'])->toHaveKey('buildMissingRightsMetadataQuery', BuildMissingRightsMetadataQueryAction::class)
-        ->and($manifest['actions'])->toHaveKey('buildOrphanMediaQuery', BuildOrphanMediaQueryAction::class)
-        ->and($manifest['actions'])->toHaveKey('deleteOrphanMediaRecords', DeleteOrphanMediaRecordsAction::class)
-        ->and($manifest['actions'])->toHaveKey('migrateSpatieMediaToCurator', MigrateSpatieMediaToCuratorAction::class)
-        ->and($manifest['capabilities'])->toContain(
+        ->and($actions)->toHaveKey('buildDuplicateMediaQuery', BuildDuplicateMediaQueryAction::class)
+        ->and($actions)->toHaveKey('buildMediaHealthQuery', BuildMediaHealthQueryAction::class)
+        ->and($actions)->toHaveKey('buildMissingAltMediaQuery', BuildMissingAltMediaQueryAction::class)
+        ->and($actions)->toHaveKey('buildMissingRightsMetadataQuery', BuildMissingRightsMetadataQueryAction::class)
+        ->and($actions)->toHaveKey('buildOrphanMediaQuery', BuildOrphanMediaQueryAction::class)
+        ->and($actions)->toHaveKey('deleteOrphanMediaRecords', DeleteOrphanMediaRecordsAction::class)
+        ->and($actions)->toHaveKey('dispatchMissingAltMediaSignals', DispatchMissingAltMediaSignalsAction::class)
+        ->and($actions)->toHaveKey('migrateSpatieMediaToCurator', MigrateSpatieMediaToCuratorAction::class)
+        ->and($capabilities)->toContain(
             'media-library-focal-points',
-            'media-library-responsive-variants',
+            'media-library-missing-alt-signal',
+            'media-library-responsive-metadata',
             'media-library-rights-metadata',
             'media-library-duplicate-detection',
             'media-library-usage-reports',
             'media-library-orphan-cleanup',
         )
-        ->and($manifest['contributionTraceability']['deferredContributions'])->not->toContain('admin-page', 'model');
+        ->and($capabilities)->not->toContain('media-library-responsive-variants')
+        ->and($deferredContributions)->not->toContain('admin-page', 'model');
+});
+
+it('keeps media library docs and screenshots aligned with committed package assets', function (): void {
+    $packagePath = dirname(__DIR__, 2);
+    $manifest = capell_json_file_array($packagePath . '/capell.json');
+    $screenshotContract = capell_json_file_array($packagePath . '/docs/screenshots.json');
+
+    $marketplace = mediaLibraryCoverageArrayValue($manifest, 'marketplace');
+    $marketplaceScreenshotEntries = mediaLibraryCoverageArrayValue($marketplace, 'screenshots');
+    $contractEntries = mediaLibraryCoverageArrayValue($screenshotContract, 'entries');
+
+    $marketplaceScreenshotPaths = [];
+
+    foreach ($marketplaceScreenshotEntries as $marketplaceScreenshotEntry) {
+        throw_unless(is_array($marketplaceScreenshotEntry), RuntimeException::class, 'Marketplace screenshot entries must be arrays.');
+
+        $path = $marketplaceScreenshotEntry['path'] ?? null;
+        $altText = $marketplaceScreenshotEntry['alt'] ?? null;
+        $caption = $marketplaceScreenshotEntry['caption'] ?? null;
+
+        throw_unless(is_string($path), RuntimeException::class, 'Marketplace screenshot paths must be strings.');
+        throw_unless(is_string($altText), RuntimeException::class, 'Marketplace screenshot alt text must be strings.');
+        throw_unless(is_string($caption), RuntimeException::class, 'Marketplace screenshot captions must be strings.');
+
+        $marketplaceScreenshotPaths[] = $path;
+
+        expect(file_exists($packagePath . '/' . $path))->toBeTrue()
+            ->and(strlen(trim($altText)))->toBeGreaterThanOrEqual(12)
+            ->and(strlen(trim($caption)))->toBeGreaterThanOrEqual(12);
+    }
+
+    $shippedScreenshotPaths = glob($packagePath . '/docs/screenshots/*.png') ?: [];
+    $shippedScreenshotPaths = array_map(
+        static fn (string $path): string => 'docs/screenshots/' . basename($path),
+        $shippedScreenshotPaths,
+    );
+    sort($shippedScreenshotPaths);
+
+    expect($marketplaceScreenshotPaths[0])->toBe('docs/assets/marketplace/extension-card.jpg')
+        ->and($marketplaceScreenshotPaths)->toHaveCount(1)
+        ->and($shippedScreenshotPaths)->not->toBeEmpty();
+
+    $contractTargets = [];
+
+    foreach ($contractEntries as $contractEntry) {
+        throw_unless(is_array($contractEntry), RuntimeException::class, 'Screenshot contract entries must be arrays.');
+
+        $id = $contractEntry['id'] ?? null;
+        $screenshotPath = $contractEntry['screenshotPath'] ?? null;
+
+        throw_unless(is_string($id), RuntimeException::class, 'Screenshot contract entry IDs must be strings.');
+        throw_unless(is_string($screenshotPath), RuntimeException::class, 'Screenshot contract paths must be strings.');
+
+        $contractTargets[$id] = [
+            'surface' => $contractEntry['surface'] ?? null,
+            'targetType' => $contractEntry['targetType'] ?? null,
+            'target' => $contractEntry['target'] ?? null,
+            'required' => $contractEntry['required'] ?? null,
+            'screenshotPath' => str_replace('packages/media-library/', '', $screenshotPath),
+        ];
+    }
+
+    expect($contractTargets)->toBe([
+        'media-health-page' => [
+            'surface' => 'admin',
+            'targetType' => 'admin-surface',
+            'target' => 'MediaHealthPage',
+            'required' => true,
+            'screenshotPath' => 'docs/screenshots/media-health-page.png',
+        ],
+        'media-health-table' => [
+            'surface' => 'admin',
+            'targetType' => 'admin-component',
+            'target' => 'MediaHealthTable',
+            'required' => true,
+            'screenshotPath' => 'docs/screenshots/media-health-table.png',
+        ],
+        'curator-media-field-inside-a-form' => [
+            'surface' => 'admin',
+            'targetType' => 'admin-component',
+            'target' => 'CuratorMediaFieldFactory',
+            'required' => true,
+            'screenshotPath' => 'docs/screenshots/curator-media-field-inside-a-form.png',
+        ],
+        'migration-command-output-or-report' => [
+            'surface' => 'console',
+            'targetType' => 'console-command',
+            'target' => 'capell:media-migrate-to-curator',
+            'required' => true,
+            'screenshotPath' => 'docs/screenshots/migration-command-output-or-report.png',
+        ],
+    ]);
+
+    $readme = (string) file_get_contents($packagePath . '/README.md');
+    $overview = (string) file_get_contents($packagePath . '/docs/overview.md');
+
+    expect($readme)->toContain('does not generate responsive conversions')
+        ->and($readme)->toContain('The capture contract is [docs/screenshots.json](docs/screenshots.json)')
+        ->and($overview)->toContain('The committed screenshot captures remain runner evidence until they show populated Capell media workflows.')
+        ->and($overview)->toContain('Do not describe this package as generating responsive variants');
 });
 
 /**
@@ -479,6 +596,31 @@ function mediaLibraryCoverageInsertSpatieRow(array $overrides): void
         'created_at' => now(),
         'updated_at' => now(),
     ], $overrides));
+}
+
+/**
+ * @param  array<array-key, mixed>  $values
+ * @return array<array-key, mixed>
+ */
+function mediaLibraryCoverageArrayValue(array $values, string $key): array
+{
+    $value = $values[$key] ?? null;
+
+    throw_unless(is_array($value), RuntimeException::class, sprintf('Expected [%s] to be an array.', $key));
+
+    return $value;
+}
+
+/**
+ * @param  array<array-key, mixed>  $values
+ */
+function mediaLibraryCoverageStringValue(array $values, string $key): string
+{
+    $value = $values[$key] ?? null;
+
+    throw_unless(is_string($value), RuntimeException::class, sprintf('Expected [%s] to be a string.', $key));
+
+    return $value;
 }
 
 function mediaLibraryCoverageTable(): Table

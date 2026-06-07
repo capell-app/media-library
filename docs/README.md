@@ -1,6 +1,6 @@
 # Media Library Docs
 
-Media Library connects Capell to Awcodes Curator media, focal point and responsive metadata, media health reporting, rights metadata checks, duplicate and orphan cleanup reports, usage reports, and Spatie Media migration support.
+Media Library makes Awcodes Curator the media backend for Capell, adds a shared Curator media field, reports media health issues, and supports Spatie Media Library migration.
 
 Start at the [package README](../README.md) when deciding whether to install this package. Use the docs below for setup, extension, debugging, and verification details.
 
