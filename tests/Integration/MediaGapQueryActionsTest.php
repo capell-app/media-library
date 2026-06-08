@@ -9,6 +9,7 @@ use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Data\MediaUsageReferenceData;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -93,11 +94,11 @@ test('media usage drilldown returns configured owner records for a media item', 
     expect($references)->toHaveCount(2)
         ->and($references[0])->toBeInstanceOf(MediaUsageReferenceData::class)
         ->and(mediaUsageReferenceRows($references))->toBe([
-            ['test_curator_owners', 'image_id', (string) $imageOwner->getKey(), 'Hero Owner'],
-            ['test_curator_owners', 'thumbnail_id', (string) $thumbnailOwner->getKey(), 'Thumbnail Owner'],
+            ['test_curator_owners', 'image_id', mediaGapModelKey($imageOwner), 'Hero Owner'],
+            ['test_curator_owners', 'thumbnail_id', mediaGapModelKey($thumbnailOwner), 'Thumbnail Owner'],
         ])
         ->and(mediaUsageReferenceRows($limitedReferences))->toBe([
-            ['test_curator_owners', 'image_id', (string) $imageOwner->getKey(), 'Hero Owner'],
+            ['test_curator_owners', 'image_id', mediaGapModelKey($imageOwner), 'Hero Owner'],
         ]);
 });
 
@@ -282,6 +283,15 @@ function mediaGapIntAttribute(CuratorMedia $media, string $attribute): int
     $value = $media->getAttribute($attribute);
 
     return is_numeric($value) ? (int) $value : 0;
+}
+
+function mediaGapModelKey(Model $model): string
+{
+    $key = $model->getKey();
+
+    return is_string($key) || is_int($key) || is_float($key)
+        ? (string) $key
+        : '';
 }
 
 /**

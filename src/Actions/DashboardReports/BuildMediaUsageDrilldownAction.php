@@ -62,7 +62,7 @@ final class BuildMediaUsageDrilldownAction
             $selectColumns[] = $labelColumn;
         }
 
-        return DB::table($ownerForeignKey->table)
+        $references = DB::table($ownerForeignKey->table)
             ->where($ownerForeignKey->column, $mediaId)
             ->orderBy('id')
             ->limit($limit)
@@ -75,6 +75,8 @@ final class BuildMediaUsageDrilldownAction
             ))
             ->values()
             ->all();
+
+        return array_values($references);
     }
 
     private function labelColumn(string $table): ?string

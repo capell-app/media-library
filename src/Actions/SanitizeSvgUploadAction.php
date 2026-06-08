@@ -13,6 +13,9 @@ use Lorisleiva\Actions\Concerns\AsObject;
 use RuntimeException;
 use Throwable;
 
+/**
+ * @method static string run(string $contents)
+ */
 final class SanitizeSvgUploadAction
 {
     use AsObject;
