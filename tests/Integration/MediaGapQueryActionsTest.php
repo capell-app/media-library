@@ -3,8 +3,10 @@
 declare(strict_types=1);
 
 use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaUsageDrilldownAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
+use Capell\MediaLibrary\Data\MediaUsageReferenceData;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Support\Collection;
@@ -69,6 +71,34 @@ test('orphan media query discovers conventional owner foreign keys by default', 
     expect($records->keys()->all())->toContain($orphanMediaId)
         ->and($records->keys()->all())->not->toContain($usedMediaId)
         ->and(mediaGapIntAttribute(mediaGapRecord($records, $orphanMediaId), 'usage_count'))->toBe(0);
+});
+
+test('media usage drilldown returns configured owner records for a media item', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+        ['table' => 'test_curator_owners', 'column' => 'thumbnail_id'],
+        ['table' => 'test_curator_owners;drop', 'column' => 'image_id'],
+        ['table' => 'test_curator_owners', 'column' => 'missing_column'],
+    ]);
+
+    $mediaId = insertCuratorGapMedia('drilldown-used', 'media/drilldown-used.jpg');
+    $otherMediaId = insertCuratorGapMedia('drilldown-other', 'media/drilldown-other.jpg');
+    $imageOwner = TestCuratorOwner::query()->create(['name' => 'Hero Owner', 'image_id' => $mediaId]);
+    $thumbnailOwner = TestCuratorOwner::query()->create(['name' => 'Thumbnail Owner', 'thumbnail_id' => $mediaId]);
+    TestCuratorOwner::query()->create(['name' => 'Other Owner', 'image_id' => $otherMediaId]);
+
+    $references = BuildMediaUsageDrilldownAction::run($mediaId);
+    $limitedReferences = BuildMediaUsageDrilldownAction::run($mediaId, limit: 1);
+
+    expect($references)->toHaveCount(2)
+        ->and($references[0])->toBeInstanceOf(MediaUsageReferenceData::class)
+        ->and(mediaUsageReferenceRows($references))->toBe([
+            ['test_curator_owners', 'image_id', (string) $imageOwner->getKey(), 'Hero Owner'],
+            ['test_curator_owners', 'thumbnail_id', (string) $thumbnailOwner->getKey(), 'Thumbnail Owner'],
+        ])
+        ->and(mediaUsageReferenceRows($limitedReferences))->toBe([
+            ['test_curator_owners', 'image_id', (string) $imageOwner->getKey(), 'Hero Owner'],
+        ]);
 });
 
 test('orphan media query rebuilds a query from cached report rows', function (): void {
@@ -252,4 +282,21 @@ function mediaGapIntAttribute(CuratorMedia $media, string $attribute): int
     $value = $media->getAttribute($attribute);
 
     return is_numeric($value) ? (int) $value : 0;
+}
+
+/**
+ * @param  list<MediaUsageReferenceData>  $references
+ * @return list<array{string, string, string, string|null}>
+ */
+function mediaUsageReferenceRows(array $references): array
+{
+    return array_map(
+        static fn (MediaUsageReferenceData $reference): array => [
+            $reference->table,
+            $reference->column,
+            $reference->recordId,
+            $reference->label,
+        ],
+        $references,
+    );
 }
