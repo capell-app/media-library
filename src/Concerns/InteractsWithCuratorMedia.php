@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Concerns;
 
 use Capell\Core\Contracts\Media\MediaContract;
+use Capell\MediaLibrary\Actions\SanitizeSvgUploadAction;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Capell media trait for Curator-backed owners. Implements HasMediaContract
@@ -97,40 +100,47 @@ trait InteractsWithCuratorMedia
     public function addMediaFromUploadedFile(UploadedFile $file, string $collection = 'default', ?string $visibility = null): MediaContract
     {
         $this->validateMediaUpload($file);
+        [$file, $temporarySanitizedPath] = $this->sanitizeSvgUpload($file);
 
-        $visibility = $this->resolveMediaVisibility($visibility);
-        $disk = $visibility === 'private' ? 'local' : 'public';
+        try {
+            $visibility = $this->resolveMediaVisibility($visibility);
+            $disk = $visibility === 'private' ? 'local' : 'public';
 
-        $storedPath = $file->store('media', ['disk' => $disk, 'visibility' => $visibility]);
+            $storedPath = $file->store('media', ['disk' => $disk, 'visibility' => $visibility]);
 
-        $originalName = $file->getClientOriginalName();
-        $extension = $file->getClientOriginalExtension();
-        $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+            $originalName = $file->getClientOriginalName();
+            $extension = $file->getClientOriginalExtension();
+            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
 
-        /** @var CuratorMedia $media */
-        $media = CuratorMedia::query()->create([
-            'disk' => $disk,
-            'directory' => 'media',
-            'visibility' => $visibility,
-            'name' => $baseName,
-            'path' => $storedPath,
-            'size' => $file->getSize(),
-            'type' => $file->getMimeType(),
-            'ext' => $extension,
-            'alt' => null,
-            'title' => null,
-            'description' => null,
-            'caption' => null,
-            'exif' => null,
-            'curations' => null,
-        ]);
+            /** @var CuratorMedia $media */
+            $media = CuratorMedia::query()->create([
+                'disk' => $disk,
+                'directory' => 'media',
+                'visibility' => $visibility,
+                'name' => $baseName,
+                'path' => $storedPath,
+                'size' => $file->getSize(),
+                'type' => $file->getMimeType(),
+                'ext' => $extension,
+                'alt' => null,
+                'title' => null,
+                'description' => null,
+                'caption' => null,
+                'exif' => null,
+                'curations' => null,
+            ]);
 
-        $column = static::curatorMediaColumn($collection);
-        $this->setAttribute($column, $media->getKey());
-        $this->save();
-        $this->curatorMediaCache[$this->curatorMediaCacheKey($collection, $media->getKey())] = $media;
+            $column = static::curatorMediaColumn($collection);
+            $this->setAttribute($column, $media->getKey());
+            $this->save();
+            $this->curatorMediaCache[$this->curatorMediaCacheKey($collection, $media->getKey())] = $media;
 
-        return $media;
+            return $media;
+        } finally {
+            if ($temporarySanitizedPath !== null) {
+                File::delete($temporarySanitizedPath);
+            }
+        }
     }
 
     public function clearMediaCollection(string $collection = 'default'): static
@@ -194,6 +204,50 @@ trait InteractsWithCuratorMedia
                 ]),
             ]);
         }
+    }
+
+    /**
+     * @return array{0: UploadedFile, 1: string|null}
+     */
+    private function sanitizeSvgUpload(UploadedFile $file): array
+    {
+        if (! $this->isSvgUpload($file)) {
+            return [$file, null];
+        }
+
+        try {
+            $sanitized = SanitizeSvgUploadAction::run((string) File::get($file->getPathname()));
+        } catch (Throwable) {
+            throw ValidationException::withMessages([
+                'media' => [__('capell-media-library::package.validation.invalid_svg')],
+            ]);
+        }
+
+        $temporaryPath = tempnam(sys_get_temp_dir(), 'capell-svg-upload-');
+        if ($temporaryPath === false) {
+            throw ValidationException::withMessages([
+                'media' => [__('capell-media-library::package.validation.invalid_svg')],
+            ]);
+        }
+
+        File::put($temporaryPath, $sanitized);
+
+        return [
+            new UploadedFile(
+                path: $temporaryPath,
+                originalName: $file->getClientOriginalName(),
+                mimeType: 'image/svg+xml',
+                error: null,
+                test: true,
+            ),
+            $temporaryPath,
+        ];
+    }
+
+    private function isSvgUpload(UploadedFile $file): bool
+    {
+        return strtolower($file->getClientOriginalExtension()) === 'svg'
+            || strtolower((string) $file->getMimeType()) === 'image/svg+xml';
     }
 
     /**
