@@ -110,7 +110,7 @@ trait InteractsWithCuratorMedia
 
             $originalName = $file->getClientOriginalName();
             $extension = $file->getClientOriginalExtension();
-            $baseName = pathinfo($originalName, PATHINFO_FILENAME);
+            $baseName = pathinfo((string) $originalName, PATHINFO_FILENAME);
 
             /** @var CuratorMedia $media */
             $media = CuratorMedia::query()->create([
