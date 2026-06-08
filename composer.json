@@ -41,6 +41,9 @@
             "providers": [
                 "Capell\\MediaLibrary\\MediaLibraryServiceProvider"
             ]
+        },
+        "branch-alias": {
+            "dev-main": "4.x-dev"
         }
     },
     "config": {
