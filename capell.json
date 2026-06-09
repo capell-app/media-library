@@ -13,23 +13,16 @@
         "bundle": "foundation"
     },
     "namespace": "Capell\\MediaLibrary",
-    "surfaces": [
-        "admin"
-    ],
+    "surfaces": ["admin"],
     "dependencies": {
-        "requires": [
-            "capell-app/admin",
-            "capell-app/core"
-        ],
-        "supports": [],
+        "requires": ["capell-app/admin", "capell-app/core"],
+        "supports": ["capell-app/media-ai", "capell-app/seo-suite"],
         "conflicts": []
     },
     "providers": {
         "metadata": [],
         "install": [],
-        "runtime": [
-            "Capell\\MediaLibrary\\MediaLibraryServiceProvider"
-        ],
+        "runtime": ["Capell\\MediaLibrary\\MediaLibraryServiceProvider"],
         "admin": [],
         "frontend": []
     },
@@ -62,6 +55,7 @@
         "buildMediaHealthQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaHealthQueryAction",
         "buildMissingAltMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingAltMediaQueryAction",
         "buildMissingRightsMetadataQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingRightsMetadataQueryAction",
+        "buildMediaUsageDrilldown": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaUsageDrilldownAction",
         "buildOrphanMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildOrphanMediaQueryAction",
         "deleteOrphanMediaRecords": "Capell\\MediaLibrary\\Actions\\DashboardReports\\DeleteOrphanMediaRecordsAction",
         "dispatchMissingAltMediaSignals": "Capell\\MediaLibrary\\Actions\\DispatchMissingAltMediaSignalsAction",
@@ -77,6 +71,7 @@
         "media-library-responsive-metadata",
         "media-library-rights-metadata",
         "media-library-duplicate-detection",
+        "media-library-usage-drilldown",
         "media-library-usage-reports",
         "media-library-orphan-cleanup"
     ],
@@ -130,10 +125,7 @@
                 "caption": "Media Library extension preview"
             }
         ],
-        "categories": [
-            "admin",
-            "foundation"
-        ]
+        "categories": ["admin", "foundation"]
     },
     "contributionTraceability": {
         "deferredContributions": []

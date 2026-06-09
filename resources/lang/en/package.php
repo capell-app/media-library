@@ -40,6 +40,7 @@ return [
     'validation' => [
         'invalid_mime_type' => 'The media file type ":mime" is not allowed. Allowed types: :allowed.',
         'invalid_extension' => 'The media file extension ":extension" is not allowed. Allowed extensions: :allowed.',
+        'invalid_svg' => 'The SVG could not be safely parsed.',
         'max_size' => 'This media file is :actual KB and may not be larger than :max KB.',
         'no_extension' => 'none',
         'none_configured' => 'none configured',

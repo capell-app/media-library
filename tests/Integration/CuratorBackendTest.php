@@ -7,6 +7,7 @@ use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -96,6 +97,50 @@ test('upload accepts allowed files under configured validation defaults', functi
         ->and($storedMedia->size)->toBe(512 * 1024);
 
     Storage::disk('public')->assertExists($storedMedia->path);
+});
+
+test('upload sanitizes SVG files before storing media', function (): void {
+    $owner = TestCuratorOwner::query()->create(['name' => 'SVG Owner']);
+    $temporaryPath = tempnam(sys_get_temp_dir(), 'capell-test-svg-');
+
+    expect($temporaryPath)->toBeString();
+
+    File::put($temporaryPath, <<<'SVG'
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" onload="alert(1)">
+    <script>alert(2)</script>
+    <style>rect { fill: url(https://example.com/paint.svg); }</style>
+    <rect width="20" height="20" style="fill: url(javascript:alert(3))" />
+    <image href="https://example.com/remote.svg" />
+    <use href="#safe-symbol" />
+</svg>
+SVG);
+
+    try {
+        $owner->addMediaFromUploadedFile(
+            new UploadedFile(
+                path: $temporaryPath,
+                originalName: 'logo.svg',
+                mimeType: 'image/svg+xml',
+                error: null,
+                test: true,
+            ),
+            'image',
+        );
+    } finally {
+        File::delete($temporaryPath);
+    }
+
+    $storedMedia = CuratorMedia::query()->sole();
+    $storedSvg = Storage::disk('public')->get($storedMedia->path);
+
+    expect($storedMedia->type)->toBe('image/svg+xml')
+        ->and($storedMedia->ext)->toBe('svg')
+        ->and($storedSvg)->toContain('<use href="#safe-symbol"/>')
+        ->not->toContain('<script')
+        ->not->toContain('<style')
+        ->not->toContain('onload')
+        ->not->toContain('javascript:')
+        ->not->toContain('https://example.com');
 });
 
 test('upload rejects disallowed mime types before storing media', function (): void {

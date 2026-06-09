@@ -25,13 +25,13 @@ class MediaHealthPage extends Page implements HasActions, HasTable
     use InteractsWithActions;
     use InteractsWithTable;
 
+    protected static ?string $slug = 'media-library/media-health';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
 
     protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::Photo;
 
     protected string $view = 'capell-admin::components.pages.table';
-
-    protected static ?string $slug = 'media-health';
 
     #[Override]
     public static function getNavigationLabel(): string
