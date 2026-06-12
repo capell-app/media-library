@@ -88,7 +88,7 @@ final class BuildOrphanMediaQueryAction
      */
     private function cacheKey(array $knownOwnerForeignKeys): string
     {
-        return 'capell-media-library:orphans:' . sha1(json_encode([
+        return 'capell-media-library:orphans:' . hash('sha256', json_encode([
             'owner_foreign_keys' => $this->ownerForeignKeyPayload($knownOwnerForeignKeys),
         ], JSON_THROW_ON_ERROR));
     }

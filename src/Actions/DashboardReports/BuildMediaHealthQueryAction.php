@@ -113,7 +113,7 @@ final class BuildMediaHealthQueryAction
      */
     private function cacheKey(array $knownOwnerForeignKeys, int $staleAfterDays): string
     {
-        return 'capell-media-library:health:' . sha1(json_encode([
+        return 'capell-media-library:health:' . hash('sha256', json_encode([
             'owner_foreign_keys' => $this->ownerForeignKeyPayload($knownOwnerForeignKeys),
             'stale_after_days' => $staleAfterDays,
         ], JSON_THROW_ON_ERROR));
