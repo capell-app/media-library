@@ -44,7 +44,7 @@ Install the package in the host Capell application:
 composer require capell-app/media-library
 ```
 
-Publish the config when the site needs exact usage/orphan reporting, private default uploads, upload policy changes, or a different stale-media threshold:
+In the host app, publish the config when the site needs exact usage/orphan reporting, private default uploads, upload policy changes, or a different stale-media threshold:
 
 ```bash
 php artisan vendor:publish --tag=media-library-config
@@ -84,6 +84,8 @@ Media health and orphan reports cache their computed result rows briefly through
 `BuildMissingAltMediaQueryAction` returns image media with null, empty, or whitespace-only alt text, including a `usage_count` projection from configured or auto-discovered owner foreign keys. `DispatchMissingAltMediaSignalsAction` dispatches `MediaMissingAltDetected` events for that ordered queue so packages such as Media AI can generate alt text without coupling to the admin health table.
 
 ## Command
+
+Run the migration command from the host Capell app:
 
 ```bash
 php artisan capell:media-migrate-to-curator \
