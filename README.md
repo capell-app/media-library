@@ -1,151 +1,107 @@
 # Media Library
 
-Media Library makes Awcodes Curator the media backend for Capell. It gives packages one consistent media field, one Curator-backed media model, a media-health admin page, and an idempotent migration path from Spatie Media Library.
+<!-- prettier-ignore-start -->
 
-This is a free Foundation package. It is the media plumbing other Capell packages can build on; it is not a full DAM layer with folders, galleries, generated WebP/AVIF conversions, or a visual focal-point editor.
+## What This Plugin Adds
 
-## At A Glance
+Media Library is an **Available**, **No schema impact** Capell package in the **Capell Foundation** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
 
-- Package: `capell-app/media-library`
-- Namespace: `Capell\MediaLibrary\`
-- Surfaces: Filament admin and console
-- Capell dependencies: `capell-app/admin`, `capell-app/core`
-- Third-party dependency: `awcodes/filament-curator`
-- Database impact: no package-owned migrations; uses Curator's `curator` table and host-app owner FK columns
+Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.
 
-## What It Adds
+After install, admins get package-owned management or reporting surfaces inside Capell.
 
-- Registers `Capell\MediaLibrary\Models\CuratorMedia` as the Capell media model and sets `capell.media.backend` to `curator`.
-- Binds `Capell\Core\Contracts\Media\MediaFieldFactory` to `CuratorMediaFieldFactory`, which renders an Awcodes `CuratorPicker`.
-- Adds `MediaHealthPage` with `MediaHealthTable` for missing alt text, stale media, and unused asset review.
-- Adds content-hash duplicate, missing-alt, missing-rights-metadata, usage, orphan, and media-health query actions for reports.
-- Adds `DispatchMissingAltMediaSignalsAction` and `MediaMissingAltDetected` so media-ai and other packages can subscribe to prioritized missing-alt candidates.
-- Adds selected orphan cleanup through `DeleteOrphanMediaRecordsAction`, including unshared file deletion before row deletion.
-- Parses Curator `exif` JSON structurally for rights metadata reports instead of matching raw JSON text.
-- Adds configurable upload validation for mime types, extensions, max file size, and default visibility.
-- Adds `capell:media-migrate-to-curator` and `MigrateSpatieMediaToCuratorAction` for Spatie-to-Curator migrations.
-- Stores and reads Curator focal point, crop preset, and responsive image metadata when that metadata already exists.
-- Defers full DAM features, generated WebP/AVIF conversions, visual crop editing, folders, galleries, and where-used drill-down to a future Media Pro layer.
+Status details:
 
-## Current Boundaries
+- Status: Available
+- Tier: free
+- Bundle: foundation
+- Composer package: `capell-app/media-library`
+- Namespace: `Capell\MediaLibrary`
+- Theme key: not applicable
 
-- `CuratorMedia::getSrcset()` reads Curator responsive metadata or falls back to Glide thumbnail, medium, and large URLs. The package does not generate responsive conversions or modern image formats.
-- Focal points and crop presets are available through the PHP API, but the package does not ship a dedicated visual editor for them.
-- Usage and orphan reports depend on configured or auto-discovered owner FK columns. Publish the config for nonstandard schemas.
-- Duplicate reporting hashes readable storage files and groups byte-identical assets across different paths.
-- Rights metadata reporting treats null, blank, malformed JSON, missing keys, and empty configured metadata values as incomplete.
-- Private upload visibility is supported, but signed temporary URL handling is not part of this package yet.
+## Why It Matters
 
-## Install And Setup
+**For developers:** The package gives developers package-owned service providers, Actions, Data objects, models, and Filament classes instead of pushing this behaviour into core or application code.
 
-Install the package in the host Capell application:
+**For teams:** Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.
 
-```bash
-composer require capell-app/media-library
-```
+## Screens And Workflow
 
-In the host app, publish the config when the site needs exact usage/orphan reporting, private default uploads, upload policy changes, or a different stale-media threshold:
+Screenshot contract: `docs/screenshots.json`.
 
-```bash
-php artisan vendor:publish --tag=media-library-config
-```
+- Media health page (admin, required).
+- Media health table (admin, required).
+- Curator media field inside a form (admin, required).
+- Migration command output or report (console, required).
 
-Configure `capell.media_library.owner_foreign_keys` with every table and column that points at Curator media. The reports can auto-discover common column names when this list is empty, but explicit config is safer for production schemas:
+## Technical Shape
 
-```php
-'owner_foreign_keys' => [
-    ['table' => 'pages', 'column' => 'hero_image_id'],
-    ['table' => 'articles', 'column' => 'thumbnail_id'],
-],
-```
+- Service providers: `Capell\MediaLibrary\MediaLibraryServiceProvider`.
+- Config files: `packages/media-library/config/media-library.php`.
+- Models: `CuratorMedia`.
+- Filament classes: `CuratorMediaFieldFactory`, `MediaHealthPage`, `MediaHealthTable`.
+- Events: `MediaMissingAltDetected`.
+- Actions: `BuildDuplicateMediaQueryAction`, `BuildMediaHealthQueryAction`, `BuildMediaUsageDrilldownAction`, `BuildMissingAltMediaQueryAction`, `BuildMissingRightsMetadataQueryAction`, `BuildOrphanMediaQueryAction`, `DeleteOrphanMediaRecordsAction`, `DiscoverOwnerForeignKeysAction`, `ResolveOwnerForeignKeysAction`, `DispatchMissingAltMediaSignalsAction`, `MigrateSpatieMediaToCuratorAction`, `SanitizeSvgUploadAction`.
+- Data objects: `MediaOwnerForeignKeyData`, `MediaUsageReferenceData`, `MigrateSpatieMediaInput`, `MigrateSpatieMediaResult`.
+- Console command classes: `MigrateSpatieToCuratorCommand`.
+- Manifest contributions: `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`, `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`.
+- Health checks: `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`.
 
-Upload policy is controlled by:
+## Media Handling Contract
 
-- `capell.media_library.allowed_mime_types`
-- `capell.media_library.allowed_extensions`
-- `capell.media_library.max_upload_kb`
-- `capell.media_library.default_visibility`
-- `capell.media_library.stale_after_days`
-- `capell.media_library.report_cache_ttl_seconds`
+Media Library wraps Awcodes Curator as the Capell media backend and does not generate responsive conversions. Curator-backed media exposes configured URLs and metadata; responsive variant generation must come from another package or host implementation.
 
-## Admin Surface
+Evidence and wording rules:
 
-- Page: `Capell\MediaLibrary\Filament\Pages\MediaHealthPage`
-- Slug: `media-health`
-- Table: `Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable`
-- Access: Filament Shield page permissions
+- The capture contract is [docs/screenshots.json](docs/screenshots.json).
+- The committed screenshot captures remain runner evidence until they show populated Capell media workflows.
+- Do not describe this package as generating responsive variants.
+- Keep migration and media-health claims tied to the Curator model, health page, table, field factory, and migration command.
 
-The health table shows media name, size, usage count, primary issue, mime type, and last update time. It includes an issue filter and a bulk action for deleting selected orphan media after re-validating those rows through the orphan query.
+## Data Model
 
-Media health and orphan reports cache their computed result rows briefly through `report_cache_ttl_seconds`; orphan deletion bypasses that cache and revalidates live references before deleting files or rows.
+This package has no schema impact. It does not declare package-owned migrations or required tables.
 
-## Missing Alt Signals
+Docs gap: document extension points here if the package delegates persistence to a host package.
 
-`BuildMissingAltMediaQueryAction` returns image media with null, empty, or whitespace-only alt text, including a `usage_count` projection from configured or auto-discovered owner foreign keys. `DispatchMissingAltMediaSignalsAction` dispatches `MediaMissingAltDetected` events for that ordered queue so packages such as Media AI can generate alt text without coupling to the admin health table.
+## Install Impact
 
-## Command
+- Admin navigation: adds package-owned Filament classes when registered.
+- Permissions: none declared in `capell.json`.
+- Public routes: none detected in package route files.
+- Database changes: no package migrations declared.
+- Settings: no package settings declared.
+- Queues or schedules: none detected in standard package paths.
+- Cache tags: none declared.
+- Commands: console command classes detected: `MigrateSpatieToCuratorCommand`.
 
-Run the migration command from the host Capell app:
+## Common Pitfalls
 
-```bash
-php artisan capell:media-migrate-to-curator \
-    --dry-run \
-    --collection=image \
-    --owner-type="App\\Models\\Post" \
-    --chunk=500
-```
+- Verify the package is installed before expecting its provider, views, or extension contributions to run.
+- Keep `composer.json`, `composer.local.json`, `capell.json`, docs, screenshots, and tests aligned when the package surface changes.
 
-Options:
+## Troubleshooting
 
-- `--dry-run`: report what would happen without writing.
-- `--collection=*`: restrict migration to one or more Spatie collection names.
-- `--owner-type=`: restrict migration to one owner model FQCN.
-- `--chunk=200`: process Spatie media rows in batches.
+| Symptom | Likely cause | Check | Fix |
+| --- | --- | --- | --- |
+| Package surface is missing after install | Provider or manifest is not loaded | Confirm `capell.json`, package `composer.json`, and provider registration | Reinstall the package, refresh Composer autoload, and clear host caches |
 
-The migration maps Spatie rows into Curator rows, preserves supported metadata, and populates per-collection owner FK columns when those columns exist.
+## Quick Start
 
-## Screenshots
+1. Install the package: `composer require capell-app/media-library`.
+2. Run the required setup: no package migrations are declared; clear cached config and routes if the host app uses caches.
+3. Open the related Capell admin surface and verify Media Library appears.
 
-The marketplace card lives at `docs/assets/marketplace/extension-card.jpg`.
+## Next Steps
 
-Committed screenshot assets live in `docs/screenshots/` and include light and dark captures for:
+- [Package docs](docs/README.md)
+- [Overview](docs/overview.md)
+- [Screenshot contract](docs/screenshots.json)
+- [Marketplace assets](docs/assets/marketplace/)
+- [Capell content language plan](../../docs/CONTENT_LANGUAGE_PLAN.md)
+- [Capell documentation design system](../../docs/DESIGN_SYSTEM.md)
+- [Capell and package ERD notes](../../docs/erd/capell-and-package-erds.md)
+- Related packages: [Media Ai](../media-ai/README.md), [Seo Suite](../seo-suite/README.md).
+- Focused tests: `vendor/bin/pest packages/media-library/tests --configuration=phpunit.xml`.
 
-- Media health page
-- Media health table
-- Curator media field inside a form
-- Migration command output or report
-
-The capture contract is [docs/screenshots.json](docs/screenshots.json). It defines the page, component, field, and console targets that should be refreshed by the deployment screenshot runner.
-
-## Code Map
-
-| Area     | Path                       | Purpose                                                             |
-| -------- | -------------------------- | ------------------------------------------------------------------- |
-| Actions  | `src/Actions`              | Query builders, orphan cleanup, and migration operations.           |
-| Config   | `config/media-library.php` | Owner FK discovery, upload policy, visibility, and stale threshold. |
-| Data     | `src/Data`                 | Typed migration and owner-FK payloads.                              |
-| Filament | `src/Filament`             | Curator field factory and media health admin page/table.            |
-| Health   | `src/Health`               | Diagnostics for backend registration, schema, and owner FK config.  |
-| Models   | `src/Models`               | Curator-backed media model adapter.                                 |
-| Tests    | `tests`                    | Package-level Pest coverage.                                        |
-
-## Testing
-
-Run package tests from the repository root:
-
-```bash
-vendor/bin/pest packages/media-library/tests --configuration=phpunit.xml
-```
-
-For focused metadata/docs changes, start with:
-
-```bash
-vendor/bin/pest packages/media-library/tests/Unit/MediaLibraryCoverageTest.php --configuration=phpunit.xml
-```
-
-## Maintenance Notes
-
-- Put behavior changes in Actions or support classes. UI classes and commands should delegate.
-- Keep public render paths free of admin/editor metadata.
-- Use typed Data objects at boundaries instead of passing anonymous arrays between layers.
-- Do not query from public Blade. Hydrate media render data before views receive it.
+<!-- prettier-ignore-end -->
