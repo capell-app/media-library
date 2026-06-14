@@ -223,12 +223,7 @@ trait InteractsWithCuratorMedia
             ]);
         }
 
-        $temporaryPath = tempnam(sys_get_temp_dir(), 'capell-svg-upload-');
-        if ($temporaryPath === false) {
-            throw ValidationException::withMessages([
-                'media' => [__('capell-media-library::package.validation.invalid_svg')],
-            ]);
-        }
+        $temporaryPath = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'capell-svg-upload-' . Str::random(32);
 
         File::put($temporaryPath, $sanitized);
 
