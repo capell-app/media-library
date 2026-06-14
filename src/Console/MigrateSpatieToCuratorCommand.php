@@ -47,7 +47,7 @@ final class MigrateSpatieToCuratorCommand extends Command
         );
 
         if ($isDryRun) {
-            $this->info('[Dry run] No data will be written.');
+            $this->info($this->translation('commands.dry_run'));
         }
 
         $result = $action->handle($input);
@@ -62,23 +62,23 @@ final class MigrateSpatieToCuratorCommand extends Command
         $label = $isDryRun ? ' (dry run)' : '';
 
         $this->newLine();
-        $this->line(sprintf('<fg=cyan>Migration summary%s</>', $label));
+        $this->line(sprintf('<fg=cyan>%s</>', $this->translation('commands.migration_summary', ['label' => $label])));
         $this->table(
-            ['Stat', 'Count'],
+            [$this->translation('commands.stat'), $this->translation('commands.count')],
             [
-                ['Processed', $result->processed],
-                ['Curator rows created', $result->created],
-                ['Curator rows reused (idempotent)', $result->skipped],
-                ['Owner FKs populated', $result->ownersUpdated],
-                ['Warnings', count($result->warnings)],
+                [$this->translation('commands.processed'), $result->processed],
+                [$this->translation('commands.created'), $result->created],
+                [$this->translation('commands.skipped'), $result->skipped],
+                [$this->translation('commands.owners_updated'), $result->ownersUpdated],
+                [$this->translation('commands.warnings'), count($result->warnings)],
             ],
         );
 
         if ($result->warnings !== []) {
             $this->newLine();
-            $this->warn('Warnings:');
+            $this->warn($this->translation('commands.warnings_heading'));
             $this->table(
-                ['#', 'Message'],
+                [$this->translation('commands.warning_number'), $this->translation('commands.warning_message')],
                 array_map(
                     static fn (int $index, string $message): array => [$index + 1, $message],
                     array_keys($result->warnings),
@@ -86,5 +86,15 @@ final class MigrateSpatieToCuratorCommand extends Command
                 ),
             );
         }
+    }
+
+    /**
+     * @param  array<string, bool|float|int|string|null>  $replace
+     */
+    private function translation(string $key, array $replace = []): string
+    {
+        $value = __('capell-media-library::package.' . $key, $replace);
+
+        return is_string($value) ? $value : $key;
     }
 }

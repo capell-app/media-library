@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Capell\Core\Contracts\Extensions\ChecksExtensionHealth;
+use Capell\Core\Contracts\Extensions\ExtensionContribution;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction;
@@ -10,11 +12,15 @@ use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction;
 use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
+use Capell\MediaLibrary\Console\MigrateSpatieToCuratorCommand;
 use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
+use Capell\MediaLibrary\Health\MediaLibraryHealthCheck;
 use Capell\MediaLibrary\Manifest\CuratorMediaModelContribution;
 use Capell\MediaLibrary\Manifest\MediaHealthPageContribution;
+use Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution;
+use Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Tables\Contracts\HasTable;
@@ -433,6 +439,7 @@ it('declares implemented media library contributions actions and feature capabil
     $manifest = capell_json_file_array(__DIR__ . '/../../capell.json');
     $marketplace = mediaLibraryCoverageArrayValue($manifest, 'marketplace');
     $contributes = mediaLibraryCoverageArrayValue($manifest, 'contributes');
+    $commands = mediaLibraryCoverageArrayValue($manifest, 'commands');
     $actions = mediaLibraryCoverageArrayValue($manifest, 'actions');
     $capabilities = mediaLibraryCoverageArrayValue($manifest, 'capabilities');
     $contributionTraceability = mediaLibraryCoverageArrayValue($manifest, 'contributionTraceability');
@@ -451,6 +458,18 @@ it('declares implemented media library contributions actions and feature capabil
             'class' => CuratorMediaModelContribution::class,
             'modelClass' => CuratorMedia::class,
         ])
+        ->and($contributes)->toContain([
+            'type' => 'configurator',
+            'class' => MediaMigrationCommandContribution::class,
+            'command' => 'capell:media-migrate-to-curator',
+            'commandClass' => MigrateSpatieToCuratorCommand::class,
+        ])
+        ->and($contributes)->toContain([
+            'type' => 'health-check',
+            'class' => MediaLibraryHealthContribution::class,
+            'checkClass' => MediaLibraryHealthCheck::class,
+        ])
+        ->and($commands)->toHaveKey('setup', 'capell:media-migrate-to-curator')
         ->and($actions)->toHaveKey('buildDuplicateMediaQuery', BuildDuplicateMediaQueryAction::class)
         ->and($actions)->toHaveKey('buildMediaHealthQuery', BuildMediaHealthQueryAction::class)
         ->and($actions)->toHaveKey('buildMissingAltMediaQuery', BuildMissingAltMediaQueryAction::class)
@@ -469,7 +488,9 @@ it('declares implemented media library contributions actions and feature capabil
             'media-library-orphan-cleanup',
         )
         ->and($capabilities)->not->toContain('media-library-responsive-variants')
-        ->and($deferredContributions)->not->toContain('admin-page', 'model');
+        ->and($deferredContributions)->not->toContain('admin-page', 'model', 'configurator', 'health-check')
+        ->and(class_implements(MediaMigrationCommandContribution::class))->toContain(ExtensionContribution::class)
+        ->and(class_implements(MediaLibraryHealthContribution::class))->toContain(ChecksExtensionHealth::class);
 });
 
 it('keeps media library docs and screenshots aligned with committed package assets', function (): void {

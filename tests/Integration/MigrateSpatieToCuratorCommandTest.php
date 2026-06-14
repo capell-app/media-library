@@ -116,7 +116,7 @@ test('migration skips non eloquent owner classes before instantiation', function
         ->and($result->warnings)->toContain('Row id=1: model class "stdClass" is not an Eloquent model — skipped.');
 });
 
-test('dry_run_dashboard-dashboard_reports_without_writing', function (): void {
+test('dry run reports projected changes without writing', function (): void {
     seedSpatieFixture(2, ['image']);
 
     $result = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput(dryRun: true));
