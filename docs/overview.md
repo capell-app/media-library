@@ -8,7 +8,7 @@ Media Library is an **Available**, **No schema impact** Capell package in the **
 
 Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.
 
-After install, admins get the Media Health admin page plus a Curator-backed media field factory and migration command.
+After install, admins get package-owned management or reporting surfaces inside Capell.
 
 Status details:
 
@@ -44,7 +44,7 @@ Screenshot contract: `screenshots.json`.
 - Actions: `BuildDuplicateMediaQueryAction`, `BuildMediaHealthQueryAction`, `BuildMediaUsageDrilldownAction`, `BuildMissingAltMediaQueryAction`, `BuildMissingRightsMetadataQueryAction`, `BuildOrphanMediaQueryAction`, `DeleteOrphanMediaRecordsAction`, `DiscoverOwnerForeignKeysAction`, `ResolveOwnerForeignKeysAction`, `DispatchMissingAltMediaSignalsAction`, `MigrateSpatieMediaToCuratorAction`, `SanitizeSvgUploadAction`.
 - Data objects: `MediaOwnerForeignKeyData`, `MediaUsageReferenceData`, `MigrateSpatieMediaInput`, `MigrateSpatieMediaResult`.
 - Console command classes: `MigrateSpatieToCuratorCommand`.
-- Manifest contributions: `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`, `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`.
+- Manifest contributions: `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`, `configurator: Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution`, `health-check: Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution`, `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`.
 - Health checks: `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`.
 
 ## Media Handling Contract
@@ -62,18 +62,18 @@ Evidence and wording rules:
 
 This package has no schema impact. It does not declare package-owned migrations or required tables.
 
-It relies on Awcodes Curator's `curator` table and host-owned media foreign-key columns. Configure `capell.media_library.owner_foreign_keys` when the host uses non-conventional media columns.
+Docs gap: document extension points here if the package delegates persistence to a host package.
 
 ## Install Impact
 
-- Admin navigation: adds the Media Health page when the package is installed.
-- Permissions: no package permission; access is governed by the Capell admin panel.
+- Admin navigation: adds package-owned Filament classes when registered.
+- Permissions: none declared in `capell.json`.
 - Public routes: none detected in package route files.
 - Database changes: no package migrations declared.
-- Settings: no database settings; publish/configure `media-library.php` for owner FKs, upload policy, visibility, and report caching.
+- Settings: no package settings declared.
 - Queues or schedules: none detected in standard package paths.
 - Cache tags: none declared.
-- Commands: `capell:media-migrate-to-curator`.
+- Commands: console command classes detected: `MigrateSpatieToCuratorCommand`.
 
 ## Common Pitfalls
 
@@ -85,8 +85,6 @@ It relies on Awcodes Curator's `curator` table and host-owned media foreign-key 
 | Symptom | Likely cause | Check | Fix |
 | --- | --- | --- | --- |
 | Package surface is missing after install | Provider or manifest is not loaded | Confirm `capell.json`, package `composer.json`, and provider registration | Reinstall the package, refresh Composer autoload, and clear host caches |
-| Media health reports are empty | Curator table is missing or owner FK config cannot resolve host columns | Check the `curator` table and `capell.media_library.owner_foreign_keys` / discovery settings | Run Curator migrations and publish exact owner FK config for nonstandard columns |
-| Spatie migration does not update owners | Owner type or collection does not match a configured Curator FK column | Run `capell:media-migrate-to-curator --dry-run` and review warnings | Add the owner column mapping or adjust collection/owner filters before running without `--dry-run` |
 
 ## Quick Start
 
