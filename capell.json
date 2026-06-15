@@ -57,7 +57,7 @@
     },
     "commands": {
         "install": null,
-        "setup": "capell:media-migrate-to-curator",
+        "setup": null,
         "demo": null,
         "doctor": null
     },
