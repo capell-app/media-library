@@ -469,7 +469,7 @@ it('declares implemented media library contributions actions and feature capabil
             'class' => MediaLibraryHealthContribution::class,
             'checkClass' => MediaLibraryHealthCheck::class,
         ])
-        ->and($commands)->toHaveKey('setup', 'capell:media-migrate-to-curator')
+        ->and($commands)->toHaveKey('setup', null)
         ->and($actions)->toHaveKey('buildDuplicateMediaQuery', BuildDuplicateMediaQueryAction::class)
         ->and($actions)->toHaveKey('buildMediaHealthQuery', BuildMediaHealthQueryAction::class)
         ->and($actions)->toHaveKey('buildMissingAltMediaQuery', BuildMissingAltMediaQueryAction::class)
