@@ -37,6 +37,17 @@
             "type": "model",
             "class": "Capell\\MediaLibrary\\Manifest\\CuratorMediaModelContribution",
             "modelClass": "Capell\\MediaLibrary\\Models\\CuratorMedia"
+        },
+        {
+            "type": "configurator",
+            "class": "Capell\\MediaLibrary\\Manifest\\MediaMigrationCommandContribution",
+            "command": "capell:media-migrate-to-curator",
+            "commandClass": "Capell\\MediaLibrary\\Console\\MigrateSpatieToCuratorCommand"
+        },
+        {
+            "type": "health-check",
+            "class": "Capell\\MediaLibrary\\Manifest\\MediaLibraryHealthContribution",
+            "checkClass": "Capell\\MediaLibrary\\Health\\MediaLibraryHealthCheck"
         }
     ],
     "database": {
@@ -46,7 +57,7 @@
     },
     "commands": {
         "install": null,
-        "setup": null,
+        "setup": "capell:media-migrate-to-curator",
         "demo": null,
         "doctor": null
     },

@@ -4,6 +4,20 @@ declare(strict_types=1);
 
 return [
     'description' => 'Media library tools for Capell file management.',
+    'commands' => [
+        'dry_run' => '[Dry run] No data will be written.',
+        'migration_summary' => 'Migration summary:label',
+        'stat' => 'Stat',
+        'count' => 'Count',
+        'processed' => 'Processed',
+        'created' => 'Curator rows created',
+        'skipped' => 'Curator rows reused (idempotent)',
+        'owners_updated' => 'Owner FKs populated',
+        'warnings' => 'Warnings',
+        'warnings_heading' => 'Warnings:',
+        'warning_number' => '#',
+        'warning_message' => 'Message',
+    ],
     'health' => [
         'backend' => [
             'label' => 'Curator media backend registered',
