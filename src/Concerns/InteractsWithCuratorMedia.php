@@ -178,6 +178,22 @@ trait InteractsWithCuratorMedia
         $allowedExtensions = $this->allowedUploadExtensions();
         $maxUploadKilobytes = $this->maxUploadKilobytes();
 
+        // Sniff the real type from the stored bytes and validate it too, so a
+        // binary that merely claims an allowed Content-Type (e.g. the WordPress
+        // importer's test-mode UploadedFile, where getMimeType() echoes the
+        // server-supplied header) cannot slip through. SVGs that finfo reports
+        // as generic XML/text are normalised so a genuine SVG is still allowed.
+        $sniffedMimeType = $this->resolveSniffedMimeType($file);
+
+        if ($sniffedMimeType !== null && ! in_array($sniffedMimeType, $allowedMimeTypes, true)) {
+            throw ValidationException::withMessages([
+                'media' => __('capell-media-library::package.validation.invalid_mime_type', [
+                    'mime' => $sniffedMimeType,
+                    'allowed' => $this->formatAllowedUploadValues($allowedMimeTypes),
+                ]),
+            ]);
+        }
+
         if (! in_array($mimeType, $allowedMimeTypes, true)) {
             throw ValidationException::withMessages([
                 'media' => __('capell-media-library::package.validation.invalid_mime_type', [
@@ -241,8 +257,116 @@ trait InteractsWithCuratorMedia
 
     private function isSvgUpload(UploadedFile $file): bool
     {
-        return strtolower($file->getClientOriginalExtension()) === 'svg'
-            || strtolower((string) $file->getMimeType()) === 'image/svg+xml';
+        $sniffed = $this->sniffMimeType($file);
+
+        if ($sniffed !== null && str_contains($sniffed, 'svg')) {
+            return true;
+        }
+
+        // finfo frequently classifies SVG as text/plain or text/xml; fall back
+        // to a structural check on the stored bytes. Client extension/type are
+        // deliberately NOT trusted here (see M4) and used only as a last hint
+        // when the file content is genuinely XML.
+        $contents = $this->readUploadedFileContents($file);
+
+        if ($contents !== null) {
+            $prologue = ltrim(substr($contents, 0, 1024));
+
+            if (stripos($prologue, '<svg') !== false) {
+                return true;
+            }
+
+            $declaredSvg = strtolower($file->getClientOriginalExtension()) === 'svg'
+                || strtolower((string) $file->getMimeType()) === 'image/svg+xml';
+
+            if ($declaredSvg && stripos($contents, '<svg') !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The concrete sniffed MIME type to validate against the allow-list, or
+     * null when the content is inconclusive (e.g. empty fixtures sniffed as
+     * application/x-empty) — in which case validation falls back to the
+     * declared type. Genuine SVGs are normalised to image/svg+xml because
+     * finfo commonly reports SVG markup as text/xml or text/plain.
+     */
+    private function resolveSniffedMimeType(UploadedFile $file): ?string
+    {
+        if ($this->isSvgUpload($file)) {
+            return 'image/svg+xml';
+        }
+
+        $sniffed = $this->sniffMimeType($file);
+
+        if ($sniffed === null || in_array($sniffed, $this->inconclusiveSniffedTypes(), true)) {
+            return null;
+        }
+
+        return $sniffed;
+    }
+
+    /**
+     * Sniffed types that carry no security signal (empty or undetermined
+     * content). These must not override the declared-type validation path.
+     *
+     * @return list<string>
+     */
+    private function inconclusiveSniffedTypes(): array
+    {
+        return [
+            'application/x-empty',
+            'inode/x-empty',
+        ];
+    }
+
+    /**
+     * Sniffs the real MIME type from the stored bytes rather than trusting the
+     * client-supplied Content-Type / extension (which Symfony's UploadedFile
+     * returns verbatim when constructed with test: true, as the WordPress
+     * importer does). Returns null when the type cannot be determined.
+     */
+    private function sniffMimeType(UploadedFile $file): ?string
+    {
+        $path = $file->getPathname();
+
+        if ($path === '' || ! is_file($path)) {
+            return null;
+        }
+
+        if (! function_exists('finfo_open')) {
+            return null;
+        }
+
+        $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
+
+        if ($fileInfo === false) {
+            return null;
+        }
+
+        try {
+            $mimeType = finfo_file($fileInfo, $path);
+        } finally {
+            finfo_close($fileInfo);
+        }
+
+        return is_string($mimeType) && $mimeType !== '' ? strtolower($mimeType) : null;
+    }
+
+    private function readUploadedFileContents(UploadedFile $file): ?string
+    {
+        $path = $file->getPathname();
+
+        if ($path === '' || ! is_file($path)) {
+            return null;
+        }
+
+        $contents = @file_get_contents($path);
+
+        return $contents === false ? null : $contents;
     }
 
     /**

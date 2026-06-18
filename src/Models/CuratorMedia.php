@@ -6,6 +6,7 @@ namespace Capell\MediaLibrary\Models;
 
 use Awcodes\Curator\Models\Media as BaseCuratorMedia;
 use Capell\Core\Contracts\Media\MediaContract;
+use Capell\MediaLibrary\Actions\SanitizeSvgUploadAction;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
@@ -295,6 +296,103 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
         }
 
         return $this->getFocalPoint();
+    }
+
+    /**
+     * Sanitize SVG blobs on the interactive upload path.
+     *
+     * Curator's modal Uploader stores the raw uploaded file to disk and then
+     * creates this media row directly (bypassing the InteractsWithCuratorMedia
+     * trait). To harden interactive admin uploads we re-read the stored bytes
+     * after the row is created, and if they are an SVG (sniffed from content,
+     * never from the client-supplied type/extension) we rewrite the stored
+     * file with the sanitized markup. A failed sanitize removes the unsafe
+     * blob so a dangerous SVG is never left served.
+     */
+    protected static function booted(): void
+    {
+        self::created(static function (self $media): void {
+            $media->sanitizeStoredSvgInPlace();
+        });
+    }
+
+    /**
+     * Re-read this row's stored blob and, when it is genuinely an SVG (sniffed
+     * from the bytes rather than trusting the declared type/extension),
+     * overwrite it with sanitized markup. If sanitization fails the blob is
+     * deleted so an unsafe SVG can never be served.
+     */
+    private function sanitizeStoredSvgInPlace(): void
+    {
+        $disk = $this->getAttribute('disk');
+        $path = $this->getAttribute('path');
+
+        if (! is_string($disk) || $disk === '' || ! is_string($path) || $path === '') {
+            return;
+        }
+
+        try {
+            $storageDisk = Storage::disk($disk);
+
+            if (! $storageDisk->exists($path)) {
+                return;
+            }
+
+            $contents = $storageDisk->get($path);
+
+            if (! is_string($contents) || ! $this->bytesLookLikeSvg($contents)) {
+                return;
+            }
+
+            $sanitized = SanitizeSvgUploadAction::run($contents);
+
+            $storageDisk->put($path, $sanitized, $this->getAttribute('visibility') === 'private' ? 'private' : 'public');
+        } catch (Throwable) {
+            // The blob could not be safely sanitized; remove it rather than
+            // leave a potentially dangerous SVG in place.
+            try {
+                Storage::disk($disk)->delete($path);
+            } catch (Throwable) {
+                // Disk unavailable; nothing further we can safely do here.
+            }
+        }
+    }
+
+    private function bytesLookLikeSvg(string $contents): bool
+    {
+        $sniffed = $this->sniffMimeType($contents);
+
+        if ($sniffed !== null && str_contains($sniffed, 'svg')) {
+            return true;
+        }
+
+        // finfo classifies many SVGs as text/plain or text/xml; fall back to a
+        // structural check on the leading bytes.
+        $prologue = ltrim(substr($contents, 0, 1024));
+
+        return stripos($prologue, '<svg') !== false
+            || (stripos($prologue, '<?xml') !== false && stripos($contents, '<svg') !== false);
+    }
+
+    private function sniffMimeType(string $contents): ?string
+    {
+        if (! function_exists('finfo_open')) {
+            return null;
+        }
+
+        $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
+
+        if ($fileInfo === false) {
+            return null;
+        }
+
+        try {
+            $mimeType = finfo_buffer($fileInfo, $contents);
+        } finally {
+            finfo_close($fileInfo);
+        }
+
+        return is_string($mimeType) && $mimeType !== '' ? strtolower($mimeType) : null;
     }
 
     private function isPrivateMedia(): bool
