@@ -14,11 +14,33 @@ use RuntimeException;
 use Throwable;
 
 /**
+ * Defensive, dependency-free SVG sanitizer for uploaded markup.
+ *
+ * This is a hardening layer, not a full XML security suite. For
+ * defence-in-depth a vetted library such as enshrined/svg-sanitize is
+ * recommended in addition to this action; it is implemented inline here to
+ * avoid adding a runtime dependency to the package. Stored SVGs should also be
+ * served defensively (Content-Disposition: attachment and/or a sandboxed CSP)
+ * by the host application — Curator/the host controls the serving route, so
+ * that header policy is out of this package's scope.
+ *
  * @method static string run(string $contents)
  */
 final class SanitizeSvgUploadAction
 {
     use AsObject;
+
+    /**
+     * Elements whose href/xlink:href may pull in external or data-URI
+     * documents (SVG-in-SVG / external-use XSS vectors). For these we only
+     * permit same-document fragment references (e.g. "#icon").
+     *
+     * @var list<string>
+     */
+    private const array REFERENCE_ELEMENTS = [
+        'use',
+        'image',
+    ];
 
     /** @var list<string> */
     private const array DANGEROUS_TAGS = [
@@ -105,6 +127,9 @@ final class SanitizeSvgUploadAction
             }
         }
 
+        $elementName = strtolower($element->localName);
+        $isReferenceElement = in_array($elementName, self::REFERENCE_ELEMENTS, true);
+
         foreach ($attributes as $attribute) {
             $name = strtolower($attribute->name);
             $value = $attribute->value;
@@ -115,8 +140,17 @@ final class SanitizeSvgUploadAction
                 continue;
             }
 
-            if (($name === 'href' || $name === 'xlink:href') && $this->isUnsafeReferenceUrl($value)) {
-                $element->removeAttributeNode($attribute);
+            if ($name === 'href' || $name === 'xlink:href') {
+                // <use>/<image> may only reference same-document fragments;
+                // any external or data-URI document reference is stripped to
+                // close SVG-in-SVG and external-use injection vectors.
+                $unsafe = $isReferenceElement
+                    ? ! $this->isSameDocumentFragment($value)
+                    : $this->isUnsafeReferenceUrl($value);
+
+                if ($unsafe) {
+                    $element->removeAttributeNode($attribute);
+                }
 
                 continue;
             }
@@ -154,6 +188,22 @@ final class SanitizeSvgUploadAction
         }
 
         return false;
+    }
+
+    /**
+     * True only for same-document fragment references like "#icon". Empty,
+     * external (http/data/etc.), and cross-document fragment ("file.svg#x")
+     * references are rejected for <use>/<image>.
+     */
+    private function isSameDocumentFragment(string $url): bool
+    {
+        $normalized = $this->normalizeUrl($url);
+
+        if ($normalized === '' || ! str_starts_with($normalized, '#')) {
+            return false;
+        }
+
+        return preg_match('/^#[A-Za-z0-9._:-]+$/', $normalized) === 1;
     }
 
     private function isUnsafeReferenceUrl(string $url): bool

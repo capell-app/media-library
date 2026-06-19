@@ -10,34 +10,91 @@ use Capell\MediaLibrary\Support\CuratorMediaQueryFactory;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Throwable;
 
+/**
+ * @method static Builder<CuratorMedia> run(bool $useCache = true)
+ */
 final class BuildDuplicateMediaQueryAction
 {
     use AsAction;
 
     /**
+     * Builds the duplicate-media report query.
+     *
+     * Hashing reads each blob off disk, so the computed result is cached for
+     * the configured TTL rather than re-hashed on every request. Files are
+     * streamed (hashStorageFile) and processed in bounded chunks to keep
+     * memory flat on large libraries.
+     *
+     * NOTE: the durable fix is a persisted content_hash column on the curator
+     * table, populated on upload (and backfilled via a one-time command), so
+     * duplicates can be found with a single GROUP BY and no disk reads. That is
+     * a larger schema change; this action eliminates the unbounded synchronous
+     * full-library read on the request path in the meantime by chunking the
+     * scan and caching the result.
+     *
      * @return Builder<CuratorMedia>
      */
-    public function handle(): Builder
+    public function handle(bool $useCache = true): Builder
     {
         if (! resolve(RuntimeSchemaState::class)->hasTable('curator')) {
             return resolve(CuratorMediaQueryFactory::class)->emptyQuery($this->emptySelects());
         }
 
-        /** @var Collection<int, CuratorMedia> $media */
-        $media = CuratorMedia::query()
+        if (! $useCache || $this->cacheTtlSeconds() < 1) {
+            return $this->buildQueryFromRows($this->computeDuplicateRows());
+        }
+
+        /** @var list<array{id: int, duplicate_count: int, duplicate_hash: string}> $rows */
+        $rows = Cache::remember(
+            'capell-media-library:duplicates',
+            $this->cacheTtlSeconds(),
+            fn (): array => $this->computeDuplicateRows(),
+        );
+
+        return $this->buildQueryFromRows($rows);
+    }
+
+    /**
+     * @param  list<array{id: int, duplicate_count: int, duplicate_hash: string}>  $rows
+     * @return Builder<CuratorMedia>
+     */
+    private function buildQueryFromRows(array $rows): Builder
+    {
+        return resolve(CuratorMediaQueryFactory::class)->cachedReportRowsQuery($rows, [
+            'duplicate_count' => 0,
+            'duplicate_hash' => '',
+        ]);
+    }
+
+    /**
+     * @return list<array{id: int, duplicate_count: int, duplicate_hash: string}>
+     */
+    private function computeDuplicateRows(): array
+    {
+        /** @var Collection<int, array{id: int, duplicate_hash: string}> $candidates */
+        $candidates = new Collection;
+
+        CuratorMedia::query()
             ->select(['id', 'disk', 'path'])
             ->whereNotNull('path')
             ->where('path', '<>', '')
-            ->get();
+            ->orderBy('id')
+            ->chunk(200, function (Collection $mediaChunk) use ($candidates): void {
+                foreach ($mediaChunk as $media) {
+                    $candidateRow = $this->duplicateCandidateRow($media);
 
-        /** @var list<array{id: int, duplicate_count: int, duplicate_hash: string}> $rows */
-        $rows = array_values($media
-            ->map(fn (CuratorMedia $media): ?array => $this->duplicateCandidateRow($media))
-            ->filter()
+                    if ($candidateRow !== null) {
+                        $candidates->push($candidateRow);
+                    }
+                }
+            });
+
+        return array_values($candidates
             ->groupBy('duplicate_hash')
             ->filter(static fn (Collection $duplicateRows): bool => $duplicateRows->count() > 1)
             ->flatMap(static function (Collection $duplicateRows, string $duplicateHash): array {
@@ -59,11 +116,13 @@ final class BuildDuplicateMediaQueryAction
             ])
             ->values()
             ->all());
+    }
 
-        return resolve(CuratorMediaQueryFactory::class)->cachedReportRowsQuery($rows, [
-            'duplicate_count' => 0,
-            'duplicate_hash' => '',
-        ]);
+    private function cacheTtlSeconds(): int
+    {
+        $ttlSeconds = config('capell.media_library.report_cache_ttl_seconds', 60);
+
+        return is_numeric($ttlSeconds) ? max(0, (int) $ttlSeconds) : 60;
     }
 
     /**

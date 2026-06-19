@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\MediaLibrary;
 
+use Awcodes\Curator\Models\Media as BaseCuratorMedia;
 use Capell\Admin\Facades\CapellAdmin;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\Core\Facades\CapellCore;
@@ -78,6 +79,13 @@ final class MediaLibraryServiceProvider extends ServiceProvider
     {
         config()->set('capell.media.backend', 'curator');
         config()->set('capell.media.model', CuratorMedia::class);
+        config()->set('curator.model', CuratorMedia::class);
+
+        // Curator's interactive panel creates media rows via
+        // App::make(Awcodes\Curator\Models\Media::class). Aliasing it to
+        // CuratorMedia routes those rows through CuratorMedia's saved hook so
+        // interactive SVG uploads are sanitized, not just trait-based ones.
+        $this->app->bind(BaseCuratorMedia::class, CuratorMedia::class);
 
         $this->app->bind(MediaFieldFactory::class, CuratorMediaFieldFactory::class);
     }

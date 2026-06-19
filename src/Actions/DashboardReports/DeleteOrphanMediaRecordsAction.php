@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Actions\DashboardReports;
 
 use Capell\MediaLibrary\Models\CuratorMedia;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Throwable;
@@ -49,22 +50,44 @@ final class DeleteOrphanMediaRecordsAction
 
         $orphanIds = $orphans->map(static fn (CuratorMedia $media): int => (int) $media->getKey())->all();
 
-        foreach ($orphans as $orphan) {
-            $this->deleteUnsharedFile($orphan, $orphanIds);
-        }
+        // Run the shared-reference check and the row deletion inside a single
+        // transaction, holding row locks on the candidate rows for the duration.
+        // Without this, a concurrent request could attach one of these media
+        // rows to an owner (or insert another row pointing at the same blob)
+        // between the "is it shared?" check and the file delete (TOCTOU),
+        // leaving a still-referenced asset with its blob removed.
+        return DB::transaction(function () use ($orphanIds): int {
+            $lockedOrphans = CuratorMedia::query()
+                ->whereIn((new CuratorMedia)->getKeyName(), $orphanIds)
+                ->lockForUpdate()
+                ->get();
 
-        return CuratorMedia::query()
-            ->whereIn((new CuratorMedia)->getQualifiedKeyName(), $orphanIds)
-            ->delete();
+            $lockedOrphanIds = $lockedOrphans
+                ->map(static fn (CuratorMedia $media): int => (int) $media->getKey())
+                ->all();
+
+            if ($lockedOrphanIds === []) {
+                return 0;
+            }
+
+            foreach ($lockedOrphans as $orphan) {
+                $this->deleteUnsharedFiles($orphan, $lockedOrphanIds);
+            }
+
+            return CuratorMedia::query()
+                ->whereIn((new CuratorMedia)->getQualifiedKeyName(), $lockedOrphanIds)
+                ->delete();
+        });
     }
 
     /**
-     * Removes the blob only when no other Curator row (outside the set being
-     * deleted) references the same disk+path.
+     * Removes the original blob plus any derived/conversion blobs, but only
+     * when no other Curator row (outside the set being deleted) references the
+     * same disk+path.
      *
      * @param  array<int, int>  $orphanIds
      */
-    private function deleteUnsharedFile(CuratorMedia $media, array $orphanIds): void
+    private function deleteUnsharedFiles(CuratorMedia $media, array $orphanIds): void
     {
         $disk = $media->getAttribute('disk');
         $path = $media->getAttribute('path');
@@ -73,6 +96,8 @@ final class DeleteOrphanMediaRecordsAction
             return;
         }
 
+        // The shared-reference query joins the locked candidate set, so it sees
+        // a consistent snapshot under the surrounding transaction's row locks.
         $sharedByOtherRow = CuratorMedia::query()
             ->where('disk', $disk)
             ->where('path', $path)
@@ -86,12 +111,94 @@ final class DeleteOrphanMediaRecordsAction
         try {
             $storageDisk = Storage::disk($disk);
 
-            if ($storageDisk->exists($path)) {
-                $storageDisk->delete($path);
+            foreach ($this->blobPathsToDelete($media, $path) as $blobPath) {
+                if ($blobPath !== '' && $storageDisk->exists($blobPath)) {
+                    $storageDisk->delete($blobPath);
+                }
             }
         } catch (Throwable) {
             // A missing or misconfigured disk must not abort the row cleanup;
-            // the orphan record is still removed below.
+            // the orphan record is still removed by the caller.
+        }
+    }
+
+    /**
+     * Original path plus any derived/conversion blob paths recorded on the
+     * media row (responsive_images / generated_conversions). De-duplicated.
+     *
+     * @return list<string>
+     */
+    private function blobPathsToDelete(CuratorMedia $media, string $originalPath): array
+    {
+        $paths = [$originalPath];
+
+        foreach ($this->derivedPathCandidates($media) as $derivedPath) {
+            $paths[] = $derivedPath;
+        }
+
+        return array_values(array_unique(array_filter(
+            $paths,
+            static fn (string $path): bool => $path !== '',
+        )));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function derivedPathCandidates(CuratorMedia $media): array
+    {
+        $candidates = [];
+
+        foreach (['responsive_images', 'generated_conversions'] as $metadataKey) {
+            $value = $media->getAttribute($metadataKey);
+
+            if (is_string($value) && $value !== '') {
+                $value = json_decode($value, true);
+            }
+
+            if (is_array($value)) {
+                $this->collectStringPaths($value, $candidates);
+            }
+        }
+
+        return $candidates;
+    }
+
+    /**
+     * Recursively collect file-path-looking strings from nested conversion
+     * metadata, ignoring full URLs and srcset width descriptors.
+     *
+     * @param  array<array-key, mixed>  $value
+     * @param  list<string>  $candidates
+     */
+    private function collectStringPaths(array $value, array &$candidates): void
+    {
+        foreach ($value as $entry) {
+            if (is_array($entry)) {
+                $this->collectStringPaths($entry, $candidates);
+
+                continue;
+            }
+
+            if (! is_string($entry) || $entry === '') {
+                continue;
+            }
+
+            foreach (preg_split('/[\s,]+/', $entry) ?: [] as $token) {
+                $token = trim($token);
+
+                // Skip width descriptors (e.g. "1024w") and absolute URLs; only
+                // keep relative storage paths that the disk can resolve.
+                if ($token === '' || preg_match('/^\d+w$/', $token) === 1) {
+                    continue;
+                }
+
+                if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $token) === 1 || str_starts_with($token, '//')) {
+                    continue;
+                }
+
+                $candidates[] = ltrim($token, '/');
+            }
         }
     }
 
