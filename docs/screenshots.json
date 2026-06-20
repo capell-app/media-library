@@ -29,7 +29,10 @@
             "notes": "Capture the table inside MediaHealthPage after installing capell-app/media-library in the isolated demo harness and seeding missing-alt, stale, and unused Curator records.",
             "useCase": "An administrator scans individual media health rows and remediation state.",
             "screenshotPath": "packages/media-library/docs/screenshots/media-health-table.png",
-            "darkScreenshotPath": "packages/media-library/docs/screenshots/media-health-table-dark.png"
+            "darkScreenshotPath": "packages/media-library/docs/screenshots/media-health-table-dark.png",
+            "covers": [
+                "packages/media-library/src/Filament/Pages/Tables/MediaHealthTable.php"
+            ]
         },
         {
             "id": "curator-media-field-inside-a-form",

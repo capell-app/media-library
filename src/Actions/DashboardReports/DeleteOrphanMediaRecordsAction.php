@@ -48,7 +48,7 @@ final class DeleteOrphanMediaRecordsAction
             return 0;
         }
 
-        $orphanIds = $orphans->map(static fn (CuratorMedia $media): int => (int) $media->getKey())->all();
+        $orphanIds = $orphans->map($this->mediaKey(...))->all();
 
         // Run the shared-reference check and the row deletion inside a single
         // transaction, holding row locks on the candidate rows for the duration.
@@ -63,7 +63,7 @@ final class DeleteOrphanMediaRecordsAction
                 ->get();
 
             $lockedOrphanIds = $lockedOrphans
-                ->map(static fn (CuratorMedia $media): int => (int) $media->getKey())
+                ->map($this->mediaKey(...))
                 ->all();
 
             if ($lockedOrphanIds === []) {
@@ -74,10 +74,19 @@ final class DeleteOrphanMediaRecordsAction
                 $this->deleteUnsharedFiles($orphan, $lockedOrphanIds);
             }
 
-            return CuratorMedia::query()
+            $deleted = CuratorMedia::query()
                 ->whereIn((new CuratorMedia)->getQualifiedKeyName(), $lockedOrphanIds)
                 ->delete();
+
+            return is_int($deleted) ? $deleted : 0;
         });
+    }
+
+    private function mediaKey(CuratorMedia $media): int
+    {
+        $key = $media->getKey();
+
+        return is_numeric($key) ? (int) $key : 0;
     }
 
     /**

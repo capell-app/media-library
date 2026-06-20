@@ -127,7 +127,7 @@ final class SanitizeSvgUploadAction
             }
         }
 
-        $elementName = strtolower($element->localName);
+        $elementName = strtolower($element->localName ?? '');
         $isReferenceElement = in_array($elementName, self::REFERENCE_ELEMENTS, true);
 
         foreach ($attributes as $attribute) {
