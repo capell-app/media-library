@@ -30,10 +30,10 @@ test('duplicate media query returns byte-identical curator rows across different
 
     expect($records->keys()->all())->toContain($firstDuplicateId, $secondDuplicateId)
         ->and($records->keys()->all())->not->toContain($uniqueMediaId, $missingFileMediaId)
-        ->and((int) $records->get($firstDuplicateId)->getAttribute('duplicate_count'))->toBe(2)
-        ->and((int) $records->get($secondDuplicateId)->getAttribute('duplicate_count'))->toBe(2)
-        ->and((string) $records->get($firstDuplicateId)->getAttribute('duplicate_hash'))->toBe(hash('sha256', 'same-image-bytes'))
-        ->and((string) $records->get($secondDuplicateId)->getAttribute('duplicate_hash'))->toBe(hash('sha256', 'same-image-bytes'));
+        ->and(mediaGapIntAttribute(mediaGapRecord($records, $firstDuplicateId), 'duplicate_count'))->toBe(2)
+        ->and(mediaGapIntAttribute(mediaGapRecord($records, $secondDuplicateId), 'duplicate_count'))->toBe(2)
+        ->and(mediaGapStringAttribute(mediaGapRecord($records, $firstDuplicateId), 'duplicate_hash'))->toBe(hash('sha256', 'same-image-bytes'))
+        ->and(mediaGapStringAttribute(mediaGapRecord($records, $secondDuplicateId), 'duplicate_hash'))->toBe(hash('sha256', 'same-image-bytes'));
 });
 
 test('orphan media query returns unused media from configured owner foreign keys', function (): void {
@@ -283,6 +283,15 @@ function mediaGapIntAttribute(CuratorMedia $media, string $attribute): int
     $value = $media->getAttribute($attribute);
 
     return is_numeric($value) ? (int) $value : 0;
+}
+
+function mediaGapStringAttribute(CuratorMedia $media, string $attribute): string
+{
+    $value = $media->getAttribute($attribute);
+
+    return is_string($value) || is_int($value) || is_float($value)
+        ? (string) $value
+        : '';
 }
 
 function mediaGapModelKey(Model $model): string
