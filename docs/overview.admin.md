@@ -1,7 +1,3 @@
-# Media Library
-
-<!-- prettier-ignore-start -->
-
 ## What it does for you
 
 Media Library is where you keep your images and files in one place and reuse them anywhere on your site. You upload media, organise it into folders, search instead of re-uploading, add alt text for accessibility, and pick media when filling in a page or widget.
@@ -29,10 +25,3 @@ Go to **Media Library** in the admin, or open it from any image field while edit
 - Upload images once and reuse them anywhere, instead of re-uploading.
 - Add **alt text** so images are accessible and better for search.
 - Search the library before uploading, so you don't create duplicates.
-
----
-
-For how to use Media Library, see the [admin guide](admin-guide.md).
-For developers: see the [README](../README.md).
-
-<!-- prettier-ignore-end -->
