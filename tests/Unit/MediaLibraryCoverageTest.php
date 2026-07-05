@@ -585,12 +585,11 @@ it('keeps media library docs and screenshots aligned with committed package asse
     ]);
 
     $readme = (string) file_get_contents($packagePath . '/README.md');
-    $overview = (string) file_get_contents($packagePath . '/docs/overview.md');
 
     expect($readme)->toContain('does not generate responsive conversions')
         ->and($readme)->toContain('The capture contract is [docs/screenshots.json](docs/screenshots.json)')
-        ->and($overview)->toContain('The committed screenshot captures remain runner evidence until they show populated Capell media workflows.')
-        ->and($overview)->toContain('Do not describe this package as generating responsive variants');
+        ->and($readme)->toContain('The committed screenshot captures remain runner evidence until they show populated Capell media workflows.')
+        ->and($readme)->toContain('Do not describe this package as generating responsive variants');
 });
 
 /**
