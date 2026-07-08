@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 
-## What This Plugin Adds
+## What This Extension Adds
 
 Media Library is an **Available**, **No schema impact** Capell package in the **Capell Foundation** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
 
