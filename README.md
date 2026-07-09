@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 
-## What This Plugin Adds
+## What This Extension Adds
 
 Media Library is an **Available**, **No schema impact** Capell package in the **Capell Foundation** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
 
@@ -62,7 +62,7 @@ Evidence and wording rules:
 
 This package has no schema impact. It does not declare package-owned migrations or required tables.
 
-Docs gap: document extension points here if the package delegates persistence to a host package.
+Media usage, missing-alt, and orphan reports depend on Curator owner foreign-key references configured in `config/media-library.php` or discovered from conventional owner columns. `MediaUsageQueryExpressions` validates configured table and column names against the live schema, wraps identifiers through the active query grammar, and builds correlated count subqueries against the Curator media id. Package tests exercise the query contract with SQLite; host apps using MySQL or PostgreSQL should verify the configured owner-key list during rollout, especially after adding custom media owner tables or nonstandard foreign-key names.
 
 ## Install Impact
 
