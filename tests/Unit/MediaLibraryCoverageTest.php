@@ -16,6 +16,7 @@ use Capell\MediaLibrary\Console\MigrateSpatieToCuratorCommand;
 use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
+use Capell\MediaLibrary\Enums\MediaLibraryPermission;
 use Capell\MediaLibrary\Health\MediaLibraryHealthCheck;
 use Capell\MediaLibrary\Manifest\CuratorMediaModelContribution;
 use Capell\MediaLibrary\Manifest\MediaHealthPageContribution;
@@ -442,6 +443,7 @@ it('declares implemented media library contributions actions and feature capabil
     $commands = mediaLibraryCoverageArrayValue($manifest, 'commands');
     $actions = mediaLibraryCoverageArrayValue($manifest, 'actions');
     $capabilities = mediaLibraryCoverageArrayValue($manifest, 'capabilities');
+    $permissions = mediaLibraryCoverageArrayValue($manifest, 'permissions');
     $contributionTraceability = mediaLibraryCoverageArrayValue($manifest, 'contributionTraceability');
     $deferredContributions = mediaLibraryCoverageArrayValue($contributionTraceability, 'deferredContributions');
 
@@ -478,6 +480,7 @@ it('declares implemented media library contributions actions and feature capabil
         ->and($actions)->toHaveKey('deleteOrphanMediaRecords', DeleteOrphanMediaRecordsAction::class)
         ->and($actions)->toHaveKey('dispatchMissingAltMediaSignals', DispatchMissingAltMediaSignalsAction::class)
         ->and($actions)->toHaveKey('migrateSpatieMediaToCurator', MigrateSpatieMediaToCuratorAction::class)
+        ->and($permissions)->toEqualCanonicalizing(MediaLibraryPermission::names())
         ->and($capabilities)->toContain(
             'media-library-focal-points',
             'media-library-missing-alt-signal',

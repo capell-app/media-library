@@ -5,9 +5,10 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Filament\Pages;
 
 use BackedEnum;
-use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Capell\Admin\Filament\Concerns\HasNavigationBadge;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
+use Capell\MediaLibrary\Enums\MediaLibraryPermission;
+use Capell\MediaLibrary\Support\MediaLibraryAuthorization;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Pages\Page;
@@ -21,7 +22,6 @@ use Override;
 class MediaHealthPage extends Page implements HasActions, HasTable
 {
     use HasNavigationBadge;
-    use HasPageShield;
     use InteractsWithActions;
     use InteractsWithTable;
 
@@ -43,6 +43,12 @@ class MediaHealthPage extends Page implements HasActions, HasTable
     public static function getNavigationGroup(): ?string
     {
         return (string) (__('capell-admin::navigation.group_system'));
+    }
+
+    #[Override]
+    public static function canAccess(): bool
+    {
+        return MediaLibraryAuthorization::allows(MediaLibraryPermission::ViewMediaHealthPage->value);
     }
 
     public static function table(Table $table): Table

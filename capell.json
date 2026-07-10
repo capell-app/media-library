@@ -73,7 +73,10 @@
         "migrateSpatieMediaToCurator": "Capell\\MediaLibrary\\Actions\\MigrateSpatieMediaToCuratorAction"
     },
     "settings": [],
-    "permissions": [],
+    "permissions": [
+        "View:MediaHealthPage",
+        "Delete:MediaHealthPage"
+    ],
     "capabilities": [
         "media-library",
         "media-library-curator-backend",
@@ -116,7 +119,10 @@
         },
         "adminSurface": {
             "authorization": "panel-auth",
-            "permissions": []
+            "permissions": [
+                "View:MediaHealthPage",
+                "Delete:MediaHealthPage"
+            ]
         }
     },
     "performance": {

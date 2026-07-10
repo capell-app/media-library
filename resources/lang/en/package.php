@@ -38,10 +38,15 @@ return [
             'remediation' => 'Set capell.media_library.owner_foreign_keys with each [table, column] referencing Curator media, and ensure each configured table and column exists.',
         ],
     ],
+    'permission_levels' => [
+        'delete' => 'Destructive access',
+        'read' => 'Read access',
+    ],
     'media_health' => [
         'delete_orphan_media' => 'Delete unused media',
         'delete_orphan_media_description' => 'Only selected media that are unused by configured owner records will be deleted. Missing-alt and stale media that are still referenced will be kept.',
         'delete_orphan_media_heading' => 'Delete selected unused media?',
+        'read_only_prompt' => 'You can review media health, but deleting unused media requires destructive access.',
         'issue' => 'Issue',
         'issues' => [
             'healthy' => 'Healthy',

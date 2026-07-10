@@ -15,6 +15,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Role;
+
+beforeEach(function (): void {
+    Role::findOrCreate(config('capell.roles.super_admin', 'super_admin'));
+    $this->actingAs($this->createUserWithRole(config('capell.roles.super_admin', 'super_admin')));
+});
 
 test('duplicate media query returns byte-identical curator rows across different paths', function (): void {
     Storage::disk('public')->put('media/first-duplicate.jpg', 'same-image-bytes');

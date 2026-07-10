@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Capell\MediaLibrary\Actions\DashboardReports;
 
+use Capell\MediaLibrary\Enums\MediaLibraryPermission;
 use Capell\MediaLibrary\Models\CuratorMedia;
+use Capell\MediaLibrary\Support\MediaLibraryAuthorization;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
@@ -29,6 +31,8 @@ final class DeleteOrphanMediaRecordsAction
      */
     public function handle(?array $ownerForeignKeys = null, int $limit = 100, ?array $mediaIds = null): int
     {
+        MediaLibraryAuthorization::authorize(MediaLibraryPermission::DeleteMediaHealthPage->value);
+
         $limit = max(1, min($limit, 1000));
         $mediaIds = $this->normalizeMediaIds($mediaIds);
 

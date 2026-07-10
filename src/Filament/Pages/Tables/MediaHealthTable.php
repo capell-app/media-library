@@ -8,8 +8,10 @@ use Capell\Admin\Filament\Components\Tables\Columns\DateColumn;
 use Capell\Admin\Filament\Contracts\TableConfigurator;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
+use Capell\MediaLibrary\Enums\MediaLibraryPermission;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
+use Capell\MediaLibrary\Support\MediaLibraryAuthorization;
 use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
 use Filament\Tables\Columns\TextColumn;
@@ -71,7 +73,10 @@ class MediaHealthTable implements TableConfigurator
                     ->requiresConfirmation()
                     ->modalHeading(__('capell-media-library::package.media_health.delete_orphan_media_heading'))
                     ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description'))
+                    ->visible(fn (): bool => MediaLibraryAuthorization::allows(MediaLibraryPermission::DeleteMediaHealthPage->value))
                     ->action(function (EloquentCollection $records): void {
+                        MediaLibraryAuthorization::authorize(MediaLibraryPermission::DeleteMediaHealthPage->value);
+
                         $deletedCount = DeleteOrphanMediaRecordsAction::run(
                             limit: $records->count(),
                             mediaIds: $records->modelKeys(),
