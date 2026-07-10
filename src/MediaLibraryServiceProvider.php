@@ -6,9 +6,9 @@ namespace Capell\MediaLibrary;
 
 use Awcodes\Curator\Models\Media as BaseCuratorMedia;
 use Capell\Admin\Facades\CapellAdmin;
-use Capell\Core\Support\Database\RuntimeSchemaState;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\Core\Facades\CapellCore;
+use Capell\Core\Support\Database\RuntimeSchemaState;
 use Capell\MediaLibrary\Actions\EnsureMediaLibraryPermissionsAction;
 use Capell\MediaLibrary\Console\MigrateSpatieToCuratorCommand;
 use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;

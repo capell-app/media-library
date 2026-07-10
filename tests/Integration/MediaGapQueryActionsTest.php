@@ -11,6 +11,7 @@ use Capell\MediaLibrary\Enums\MediaLibraryPermission;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\MediaHealthTestUser;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Capell\Tests\Support\Concerns\CreatesAdminUser;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Role;
+
+uses(CreatesAdminUser::class);
 
 beforeEach(function (): void {
     Role::findOrCreate(config('capell.roles.super_admin', 'super_admin'));

@@ -22,7 +22,7 @@ beforeEach(function (): void {
 });
 
 it('matches media health access to the read permission', function (): void {
-    $user = $this->createUserWithPermission(MediaLibraryPermission::ViewMediaHealthPage->value);
+    $user = $this->createUserWithPermission(MediaLibraryPermission::ViewMediaHealth->value);
     $this->actingAs($user);
 
     expect(MediaHealthPage::canAccess())->toBeTrue();
@@ -42,15 +42,15 @@ it('matches media health cleanup visibility to the destructive permission', func
 
     $livewire->assertTableBulkActionHidden('delete_orphan_media');
 })->with([
-    'view-only' => [false, [MediaLibraryPermission::ViewMediaHealthPage->value]],
+    'view-only' => [false, [MediaLibraryPermission::ViewMediaHealth->value]],
     'view-and-delete' => [true, [
-        MediaLibraryPermission::ViewMediaHealthPage->value,
-        MediaLibraryPermission::DeleteMediaHealthPage->value,
+        MediaLibraryPermission::ViewMediaHealth->value,
+        MediaLibraryPermission::DeleteOrphanMedia->value,
     ]],
 ]);
 
 it('blocks orphan cleanup without destructive permission', function (): void {
-    $user = $this->createUserWithPermission(MediaLibraryPermission::ViewMediaHealthPage->value);
+    $user = $this->createUserWithPermission(MediaLibraryPermission::ViewMediaHealth->value);
     $this->actingAs($user);
 
     expect(fn (): int => DeleteOrphanMediaRecordsAction::run())->toThrow(AuthorizationException::class);
