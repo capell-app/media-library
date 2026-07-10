@@ -59,42 +59,6 @@
             "useCase": "A developer reviews the Spatie-to-Curator migration report before or after migration.",
             "screenshotPath": "packages/media-library/docs/screenshots/migration-command-output-or-report.png",
             "darkScreenshotPath": "packages/media-library/docs/screenshots/migration-command-output-or-report-dark.png"
-        },
-        {
-            "id": "media-health-missing-alt-drilldown",
-            "title": "Media health missing-alt drilldown.",
-            "package": "media-library",
-            "surface": "admin",
-            "targetType": "admin-surface",
-            "target": "MediaHealthPage",
-            "required": false,
-            "notes": "Follow-up capture for the missing-alt drilldown with seeded image records, remediation filters, and any bulk-fix affordances exposed by the page.",
-            "useCase": "An administrator focuses only on images that still need alt text before content goes live.",
-            "screenshotPath": "packages/media-library/docs/screenshots/media-health-missing-alt-drilldown.png"
-        },
-        {
-            "id": "curator-media-detail-edit-state",
-            "title": "Curator media detail and metadata edit state.",
-            "package": "media-library",
-            "surface": "admin",
-            "targetType": "admin-component",
-            "target": "CuratorMediaFieldFactory",
-            "required": false,
-            "notes": "Follow-up capture for the selected-media detail state with alt text, focal point, rights metadata, and preview/edit controls visible inside a host Capell form.",
-            "useCase": "An editor reviews and edits media metadata while attaching an asset to content.",
-            "screenshotPath": "packages/media-library/docs/screenshots/curator-media-detail-edit-state.png"
-        },
-        {
-            "id": "svg-upload-sanitization-warning",
-            "title": "SVG upload sanitization warning.",
-            "package": "media-library",
-            "surface": "admin",
-            "targetType": "admin-component",
-            "target": "CuratorMediaFieldFactory",
-            "required": false,
-            "notes": "Follow-up capture for the upload warning or validation state shown when an unsafe SVG requires sanitization or is rejected before it can enter Curator storage.",
-            "useCase": "An editor understands why a media upload was blocked or sanitized before it can be reused across the site.",
-            "screenshotPath": "packages/media-library/docs/screenshots/svg-upload-sanitization-warning.png"
         }
     ]
 }

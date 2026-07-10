@@ -6,8 +6,8 @@ namespace Capell\MediaLibrary\Filament\Pages;
 
 use BackedEnum;
 use Capell\Admin\Filament\Concerns\HasNavigationBadge;
-use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Enums\MediaLibraryPermission;
+use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Support\MediaLibraryAuthorization;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
