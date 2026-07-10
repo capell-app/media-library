@@ -7,7 +7,9 @@ use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaUsageDrilldownAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Data\MediaUsageReferenceData;
+use Capell\MediaLibrary\Enums\MediaLibraryPermission;
 use Capell\MediaLibrary\Models\CuratorMedia;
+use Capell\MediaLibrary\Tests\Fixtures\MediaHealthTestUser;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
@@ -148,7 +150,7 @@ test('orphan media cleanup deletes only unused curator records', function (): vo
 
     TestCuratorOwner::query()->create(['name' => 'Owner', 'image_id' => $usedMediaId]);
 
-    $deleted = DeleteOrphanMediaRecordsAction::run([
+    $deleted = DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
     ], limit: 1);
 
@@ -171,7 +173,7 @@ test('orphan media cleanup bypasses cached report rows before deleting', functio
 
     TestCuratorOwner::query()->create(['name' => 'Late Owner', 'image_id' => $mediaId]);
 
-    $deleted = DeleteOrphanMediaRecordsAction::run([
+    $deleted = DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
     ]);
 
@@ -189,7 +191,7 @@ test('orphan media cleanup accepts selected media ids but deletes only unused re
 
     TestCuratorOwner::query()->create(['name' => 'Selected Owner', 'image_id' => $usedMediaId]);
 
-    $deleted = DeleteOrphanMediaRecordsAction::run([
+    $deleted = DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
     ], mediaIds: [$usedMediaId, $orphanMediaId]);
 
@@ -204,7 +206,7 @@ test('orphan media cleanup accepts selected media ids but deletes only unused re
 test('orphan media cleanup does nothing without known owner keys', function (): void {
     insertCuratorGapMedia('orphan-without-owners', 'media/orphan-without-owners.jpg');
 
-    expect(DeleteOrphanMediaRecordsAction::run([]))->toBe(0)
+    expect(DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), []))->toBe(0)
         ->and(DB::table('curator')->count())->toBe(1);
 });
 
@@ -215,7 +217,7 @@ test('orphan media cleanup deletes the underlying storage file', function (): vo
 
     expect(Storage::disk('public')->exists('media/orphan-file.jpg'))->toBeTrue();
 
-    $deleted = DeleteOrphanMediaRecordsAction::run([
+    $deleted = DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
     ]);
 
@@ -232,7 +234,7 @@ test('orphan media cleanup keeps files still referenced by another curator row',
 
     TestCuratorOwner::query()->create(['name' => 'Sharing Owner', 'image_id' => $usedMediaId]);
 
-    $deleted = DeleteOrphanMediaRecordsAction::run([
+    $deleted = DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
     ]);
 
@@ -263,6 +265,13 @@ function insertCuratorGapMedia(string $name, string $path): int
         'curations' => null,
         'created_at' => now(),
         'updated_at' => now(),
+    ]);
+}
+
+function mediaGapDeleteActor(): MediaHealthTestUser
+{
+    return new MediaHealthTestUser(global: true, permissions: [
+        MediaLibraryPermission::DeleteOrphanMedia->value,
     ]);
 }
 

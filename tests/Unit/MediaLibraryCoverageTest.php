@@ -14,6 +14,7 @@ use Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction;
 use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
 use Capell\MediaLibrary\Console\MigrateSpatieToCuratorCommand;
 use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
+use Capell\MediaLibrary\Enums\MediaLibraryPermission;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Health\MediaLibraryHealthCheck;
@@ -441,6 +442,7 @@ it('declares implemented media library contributions actions and feature capabil
     $contributes = mediaLibraryCoverageArrayValue($manifest, 'contributes');
     $commands = mediaLibraryCoverageArrayValue($manifest, 'commands');
     $actions = mediaLibraryCoverageArrayValue($manifest, 'actions');
+    $permissions = $manifest['permissions'] ?? [];
     $capabilities = mediaLibraryCoverageArrayValue($manifest, 'capabilities');
     $contributionTraceability = mediaLibraryCoverageArrayValue($manifest, 'contributionTraceability');
     $deferredContributions = mediaLibraryCoverageArrayValue($contributionTraceability, 'deferredContributions');
@@ -452,6 +454,7 @@ it('declares implemented media library contributions actions and feature capabil
             'class' => MediaHealthPageContribution::class,
             'pageClass' => MediaHealthPage::class,
             'labelKey' => 'capell-admin::navigation.media_health',
+            'permission' => MediaLibraryPermission::ViewMediaHealth->value,
         ])
         ->and($contributes)->toContain([
             'type' => 'model',
@@ -478,6 +481,7 @@ it('declares implemented media library contributions actions and feature capabil
         ->and($actions)->toHaveKey('deleteOrphanMediaRecords', DeleteOrphanMediaRecordsAction::class)
         ->and($actions)->toHaveKey('dispatchMissingAltMediaSignals', DispatchMissingAltMediaSignalsAction::class)
         ->and($actions)->toHaveKey('migrateSpatieMediaToCurator', MigrateSpatieMediaToCuratorAction::class)
+        ->and($permissions)->toBe(MediaLibraryPermission::names())
         ->and($capabilities)->toContain(
             'media-library-focal-points',
             'media-library-missing-alt-signal',

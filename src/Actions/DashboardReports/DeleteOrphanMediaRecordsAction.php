@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Actions\DashboardReports;
 
 use Capell\MediaLibrary\Models\CuratorMedia;
+use Capell\MediaLibrary\Support\MediaHealthAuthorization;
+use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Throwable;
 
 /**
- * @method static int run(array<int, array{table: string, column: string}>|null $ownerForeignKeys = null, int $limit = 100, array<int, int|string>|null $mediaIds = null)
+ * @method static int run(Authenticatable|null $actor, array<int, array{table: string, column: string}>|null $ownerForeignKeys = null, int $limit = 100, array<int, int|string>|null $mediaIds = null)
  */
 final class DeleteOrphanMediaRecordsAction
 {
@@ -27,12 +30,20 @@ final class DeleteOrphanMediaRecordsAction
      * @param  array<int, int|string>|null  $mediaIds
      * @return int Number of database rows deleted.
      */
-    public function handle(?array $ownerForeignKeys = null, int $limit = 100, ?array $mediaIds = null): int
+    public function handle(?Authenticatable $actor, ?array $ownerForeignKeys = null, int $limit = 100, ?array $mediaIds = null): int
     {
+        MediaHealthAuthorization::authorizeOrphanMediaDeletion($actor);
+
         $limit = max(1, min($limit, 1000));
         $mediaIds = $this->normalizeMediaIds($mediaIds);
 
         if ($mediaIds !== null && $mediaIds === []) {
+            return 0;
+        }
+
+        $knownOwnerForeignKeys = ResolveOwnerForeignKeysAction::run($ownerForeignKeys);
+
+        if ($knownOwnerForeignKeys === []) {
             return 0;
         }
 
@@ -50,15 +61,17 @@ final class DeleteOrphanMediaRecordsAction
 
         $orphanIds = $orphans->map($this->mediaKey(...))->all();
 
-        // Run the shared-reference check and the row deletion inside a single
-        // transaction, holding row locks on the candidate rows for the duration.
-        // Without this, a concurrent request could attach one of these media
-        // rows to an owner (or insert another row pointing at the same blob)
-        // between the "is it shared?" check and the file delete (TOCTOU),
-        // leaving a still-referenced asset with its blob removed.
-        return DB::transaction(function () use ($orphanIds): int {
+        // Revalidate owner usage under the same transaction that locks and
+        // deletes candidates. A row can gain an owner after the report query
+        // runs, so candidate selection alone is never sufficient authority to
+        // remove a physical blob.
+        return DB::transaction(function () use ($knownOwnerForeignKeys, $orphanIds): int {
+            $usageCountExpression = resolve(MediaUsageQueryExpressions::class)
+                ->usageCountExpression($knownOwnerForeignKeys);
+
             $lockedOrphans = CuratorMedia::query()
-                ->whereIn((new CuratorMedia)->getKeyName(), $orphanIds)
+                ->whereIn((new CuratorMedia)->getQualifiedKeyName(), $orphanIds)
+                ->whereRaw('(' . $usageCountExpression . ') = 0')
                 ->lockForUpdate()
                 ->get();
 
