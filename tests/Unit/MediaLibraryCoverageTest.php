@@ -533,9 +533,16 @@ it('keeps media library docs and screenshots aligned with committed package asse
     );
     sort($shippedScreenshotPaths);
 
-    expect($marketplaceScreenshotPaths[0])->toBe('docs/assets/marketplace/extension-card.jpg')
-        ->and($marketplaceScreenshotPaths)->toHaveCount(1)
-        ->and($shippedScreenshotPaths)->not->toBeEmpty();
+    expect($marketplaceScreenshotPaths)->toBe([
+        'docs/screenshots/media-health-page.png',
+        'docs/screenshots/curator-media-field-inside-a-form.png',
+        'docs/screenshots/migration-command-output-or-report.png',
+    ])->and($shippedScreenshotPaths)->toBe([
+        'docs/screenshots/curator-media-field-inside-a-form.png',
+        'docs/screenshots/media-health-page.png',
+        'docs/screenshots/media-health-table.png',
+        'docs/screenshots/migration-command-output-or-report.png',
+    ])->and($screenshotContract['requiredEvidencePolicy'] ?? null)->toBe('distinct-required-surfaces');
 
     $contractTargets = [];
 
@@ -592,7 +599,7 @@ it('keeps media library docs and screenshots aligned with committed package asse
 
     expect($readme)->toContain('does not generate responsive conversions')
         ->and($readme)->toContain('The capture contract is [docs/screenshots.json](docs/screenshots.json)')
-        ->and($readme)->toContain('The committed screenshot captures remain runner evidence until they show populated Capell media workflows.')
+        ->and($readme)->toContain('The committed screenshot captures show seeded media-health, Curator field, and migration-report workflows from the package workbench.')
         ->and($readme)->toContain('Do not describe this package as generating responsive variants');
 });
 
