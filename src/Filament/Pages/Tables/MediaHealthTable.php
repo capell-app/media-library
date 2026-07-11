@@ -9,6 +9,7 @@ use Capell\Admin\Filament\Contracts\TableConfigurator;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Models\CuratorMedia;
+use Capell\MediaLibrary\Support\MediaHealthAuthorization;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
 use Filament\Actions\BulkAction;
 use Filament\Notifications\Notification;
@@ -71,8 +72,13 @@ class MediaHealthTable implements TableConfigurator
                     ->requiresConfirmation()
                     ->modalHeading(__('capell-media-library::package.media_health.delete_orphan_media_heading'))
                     ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description'))
+                    ->authorize(static fn (): bool => MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()))
+                    ->visible(static fn (): bool => MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()))
                     ->action(function (EloquentCollection $records): void {
+                        MediaHealthAuthorization::authorizeOrphanMediaDeletion(auth()->user());
+
                         $deletedCount = DeleteOrphanMediaRecordsAction::run(
+                            auth()->user(),
                             limit: $records->count(),
                             mediaIds: $records->modelKeys(),
                         );

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Filament\Pages;
 
 use BackedEnum;
-use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Capell\Admin\Filament\Concerns\HasNavigationBadge;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
+use Capell\MediaLibrary\Support\MediaHealthAuthorization;
 use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Pages\Page;
@@ -21,7 +21,6 @@ use Override;
 class MediaHealthPage extends Page implements HasActions, HasTable
 {
     use HasNavigationBadge;
-    use HasPageShield;
     use InteractsWithActions;
     use InteractsWithTable;
 
@@ -32,6 +31,12 @@ class MediaHealthPage extends Page implements HasActions, HasTable
     protected static string|BackedEnum|null $activeNavigationIcon = Heroicon::Photo;
 
     protected string $view = 'capell-admin::components.pages.table';
+
+    #[Override]
+    public static function canAccess(): bool
+    {
+        return MediaHealthAuthorization::canView(auth()->user());
+    }
 
     #[Override]
     public static function getNavigationLabel(): string

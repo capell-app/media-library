@@ -54,7 +54,7 @@ Media Library wraps Awcodes Curator as the Capell media backend and does not gen
 Evidence and wording rules:
 
 - The capture contract is [docs/screenshots.json](docs/screenshots.json).
-- The committed screenshot captures remain runner evidence until they show populated Capell media workflows.
+- The committed screenshot captures show seeded media-health, Curator field, and migration-report workflows from the package workbench.
 - Do not describe this package as generating responsive variants.
 - Keep migration and media-health claims tied to the Curator model, health page, table, field factory, and migration command.
 
@@ -67,7 +67,7 @@ Media usage, missing-alt, and orphan reports depend on Curator owner foreign-key
 ## Install Impact
 
 - Admin navigation: adds package-owned Filament classes when registered.
-- Permissions: none declared in `capell.json`.
+- Permissions: `View:MediaHealthPage`, `Delete:MediaHealthPage`.
 - Public routes: none detected in package route files.
 - Database changes: no package migrations declared.
 - Settings: no package settings declared.
