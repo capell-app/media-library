@@ -4,7 +4,7 @@ All notable changes to `capell-app/media-library` will be documented in this fil
 
 ## Unreleased
 
-- Prepared package metadata and documentation for ongoing Capell 4.x package work.
+- Prepared package metadata and documentation for ongoing Capell 0.0.x package work.
 - Documented the `owner_foreign_keys` config shape and covered configured owner FK columns in both media health and orphan query tests.
 - Added configurable upload validation for `addMediaFromUploadedFile()` (`allowed_mime_types`, `allowed_extensions`, and `max_upload_kb`) so package callers cannot store unchecked executable or oversized uploads.
 - Media health rows now expose a translated issue label (`missing_alt`, `stale`, or `unused`) and the stale threshold uses `capell.media_library.stale_after_days` instead of a hardcoded 90 days.
