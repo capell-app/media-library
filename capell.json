@@ -1,0 +1,188 @@
+{
+    "manifest-version": 3,
+    "name": "capell-app/media-library",
+    "slug": "media-library",
+    "displayName": "Media Library",
+    "kind": "package",
+    "capellApiVersion": "^0.0.1",
+    "version": "0.0.x-dev",
+    "description": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
+    "product": {
+        "group": "Capell Foundation",
+        "tier": "free",
+        "bundle": "foundation"
+    },
+    "namespace": "Capell\\MediaLibrary",
+    "surfaces": ["admin"],
+    "dependencies": {
+        "requires": ["capell-app/admin", "capell-app/core"],
+        "supports": ["capell-app/media-ai", "capell-app/seo-suite"],
+        "conflicts": []
+    },
+    "providers": {
+        "metadata": [],
+        "install": [],
+        "runtime": ["Capell\\MediaLibrary\\MediaLibraryServiceProvider"],
+        "admin": [],
+        "frontend": []
+    },
+    "contributes": [
+        {
+            "type": "admin-page",
+            "class": "Capell\\MediaLibrary\\Manifest\\MediaHealthPageContribution",
+            "pageClass": "Capell\\MediaLibrary\\Filament\\Pages\\MediaHealthPage",
+            "labelKey": "capell-admin::navigation.media_health",
+            "permission": "View:MediaHealthPage"
+        },
+        {
+            "type": "model",
+            "class": "Capell\\MediaLibrary\\Manifest\\CuratorMediaModelContribution",
+            "modelClass": "Capell\\MediaLibrary\\Models\\CuratorMedia"
+        },
+        {
+            "type": "configurator",
+            "class": "Capell\\MediaLibrary\\Manifest\\MediaMigrationCommandContribution",
+            "command": "capell:media-migrate-to-curator",
+            "commandClass": "Capell\\MediaLibrary\\Console\\MigrateSpatieToCuratorCommand"
+        },
+        {
+            "type": "health-check",
+            "class": "Capell\\MediaLibrary\\Manifest\\MediaLibraryHealthContribution",
+            "checkClass": "Capell\\MediaLibrary\\Health\\MediaLibraryHealthCheck"
+        }
+    ],
+    "database": {
+        "migrations": false,
+        "settings": false,
+        "requiredTables": []
+    },
+    "commands": {
+        "install": null,
+        "setup": null,
+        "demo": null,
+        "doctor": null
+    },
+    "actions": {
+        "buildDuplicateMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildDuplicateMediaQueryAction",
+        "buildMediaHealthQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaHealthQueryAction",
+        "buildMissingAltMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingAltMediaQueryAction",
+        "buildMissingRightsMetadataQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingRightsMetadataQueryAction",
+        "buildMediaUsageDrilldown": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaUsageDrilldownAction",
+        "buildOrphanMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildOrphanMediaQueryAction",
+        "deleteOrphanMediaRecords": "Capell\\MediaLibrary\\Actions\\DashboardReports\\DeleteOrphanMediaRecordsAction",
+        "dispatchMissingAltMediaSignals": "Capell\\MediaLibrary\\Actions\\DispatchMissingAltMediaSignalsAction",
+        "migrateSpatieMediaToCurator": "Capell\\MediaLibrary\\Actions\\MigrateSpatieMediaToCuratorAction"
+    },
+    "settings": [],
+    "permissions": ["View:MediaHealthPage", "Delete:MediaHealthPage"],
+    "capabilities": [
+        "media-library",
+        "media-library-curator-backend",
+        "media-library-focal-points",
+        "media-library-missing-alt-signal",
+        "media-library-responsive-metadata",
+        "media-library-rights-metadata",
+        "media-library-duplicate-detection",
+        "media-library-usage-drilldown",
+        "media-library-usage-reports",
+        "media-library-orphan-cleanup"
+    ],
+    "security": {
+        "riskTier": "low",
+        "publicSurface": {
+            "routeNames": [],
+            "auth": "none",
+            "csrfExemptRoutes": [],
+            "signedRoutes": [],
+            "tokenizedRoutes": [],
+            "webhookRoutes": [],
+            "throttledRoutes": []
+        },
+        "sensitiveData": {
+            "encryptedFields": [],
+            "hashedTokenFields": [],
+            "redactedOutputClasses": [],
+            "plaintextJustifications": []
+        },
+        "publicOutput": {
+            "cacheSafe": true,
+            "forbidAuthoringSurface": true,
+            "forbidSecrets": true,
+            "forbidPublicBladeQueries": true
+        },
+        "externalHttpClients": {
+            "requiresTimeouts": false,
+            "requiresSecretRedaction": false,
+            "clients": []
+        },
+        "adminSurface": {
+            "authorization": "permissions",
+            "permissions": ["View:MediaHealthPage", "Delete:MediaHealthPage"]
+        }
+    },
+    "performance": {
+        "frontendRenderBudgetMs": 0,
+        "adminQueryBudget": 40,
+        "cacheTags": [],
+        "cacheSafety": {
+            "cacheable": false,
+            "variesBy": [],
+            "sensitiveOutput": false,
+            "invalidationSources": [],
+            "queueInvalidation": false
+        }
+    },
+    "healthChecks": [
+        {
+            "key": "media-library.curator-backend",
+            "label": "Curator media backend is registered as the Capell media model and field factory.",
+            "class": "Capell\\MediaLibrary\\Health\\MediaLibraryHealthCheck",
+            "severity": "critical",
+            "surface": "admin"
+        },
+        {
+            "key": "media-library.health-report",
+            "label": "Media health report identifies missing alt text, stale media, and unused assets.",
+            "class": "Capell\\MediaLibrary\\Health\\MediaLibraryHealthCheck",
+            "severity": "warning",
+            "surface": "admin"
+        },
+        {
+            "key": "media-library.spatie-migration",
+            "label": "Spatie Media Library migration preserves metadata and owner foreign keys.",
+            "class": "Capell\\MediaLibrary\\Health\\MediaLibraryHealthCheck",
+            "severity": "warning",
+            "surface": "console"
+        }
+    ],
+    "commercial": {
+        "proposedLicense": "free",
+        "requestedCertification": "first-party",
+        "supportPolicy": "capell-first-party",
+        "privateDocsRequested": false
+    },
+    "marketplace": {
+        "summary": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
+        "screenshots": [
+            {
+                "path": "docs/screenshots/media-health-page.png",
+                "alt": "Seeded Media Library health page showing missing alt text, stale, and unused assets",
+                "caption": "The seeded health report separates missing-alt, stale, and unused Curator records with usage evidence."
+            },
+            {
+                "path": "docs/screenshots/curator-media-field-inside-a-form.png",
+                "alt": "Curator-backed Add media fields inside the Capell site edit form",
+                "caption": "Media Library replaces shared Capell media fields with Curator-backed selectors inside normal editor forms."
+            },
+            {
+                "path": "docs/screenshots/migration-command-output-or-report.png",
+                "alt": "Seeded Spatie to Curator migration dry-run report",
+                "caption": "The seeded dry run projects two Curator rows and two owner updates with zero warnings before any data is written."
+            }
+        ],
+        "categories": ["admin", "foundation"]
+    },
+    "contributionTraceability": {
+        "deferredContributions": []
+    }
+}

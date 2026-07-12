@@ -1,0 +1,60 @@
+{
+    "package": "media-library",
+    "composerName": "capell-app/media-library",
+    "generatedFor": "deployment-screenshot-runner",
+    "requiresInstalledPackage": true,
+    "outputDirectory": "packages/media-library/docs/screenshots",
+    "entries": [
+        {
+            "id": "media-health-page",
+            "title": "Media health page.",
+            "package": "media-library",
+            "surface": "admin",
+            "targetType": "admin-surface",
+            "target": "MediaHealthPage",
+            "required": true,
+            "notes": "Captured from the isolated Capell package workbench with missing-alt, stale, unused, and healthy Curator records. The table shows the three actionable records and omits the healthy record.",
+            "useCase": "An administrator reviews media health status for stale, missing, or incomplete assets.",
+            "screenshotPath": "packages/media-library/docs/screenshots/media-health-page.png"
+        },
+        {
+            "id": "media-health-table",
+            "title": "Media health table.",
+            "package": "media-library",
+            "surface": "admin",
+            "targetType": "admin-component",
+            "target": "MediaHealthTable",
+            "required": true,
+            "notes": "Cropped from the seeded MediaHealthPage capture to prove filename, size, usage count, issue, media type, and last-used columns for three distinct health states.",
+            "useCase": "An administrator scans individual media health rows and remediation state.",
+            "screenshotPath": "packages/media-library/docs/screenshots/media-health-table.png",
+            "covers": [
+                "packages/media-library/src/Filament/Pages/Tables/MediaHealthTable.php"
+            ]
+        },
+        {
+            "id": "curator-media-field-inside-a-form",
+            "title": "Curator media field inside a form.",
+            "package": "media-library",
+            "surface": "admin",
+            "targetType": "admin-component",
+            "target": "CuratorMediaFieldFactory",
+            "required": true,
+            "notes": "Captured from the seeded Capell site edit form after MediaLibraryServiceProvider rebound MediaFieldFactory to CuratorMediaFieldFactory. The Image, Logo, and Inverted logo controls are Curator-backed Add media fields.",
+            "useCase": "An editor selects media through the Curator field embedded in a Capell form.",
+            "screenshotPath": "packages/media-library/docs/screenshots/curator-media-field-inside-a-form.png"
+        },
+        {
+            "id": "migration-command-output-or-report",
+            "title": "Migration command output or report.",
+            "package": "media-library",
+            "surface": "console",
+            "targetType": "console-command",
+            "target": "capell:media-migrate-to-curator",
+            "required": true,
+            "notes": "Actual --dry-run output captured from the package workbench after seeding two Spatie Media Library rows owned by the testbench admin user. The command projects two Curator rows and two owner foreign-key updates with zero warnings.",
+            "useCase": "A developer reviews the Spatie-to-Curator migration report before or after migration.",
+            "screenshotPath": "packages/media-library/docs/screenshots/migration-command-output-or-report.png"
+        }
+    ]
+}
