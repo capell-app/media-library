@@ -19,7 +19,7 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
 {
     public static function compatibleCapellApiVersion(): string
     {
-        return '^0.0';
+        return '^4.0';
     }
 
     /**

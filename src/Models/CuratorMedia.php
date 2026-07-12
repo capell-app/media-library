@@ -7,6 +7,7 @@ namespace Capell\MediaLibrary\Models;
 use Awcodes\Curator\Models\Media as BaseCuratorMedia;
 use Capell\Core\Contracts\Media\MediaContract;
 use Capell\MediaLibrary\Actions\SanitizeSvgUploadAction;
+use Capell\MediaLibrary\Jobs\CalculateMediaChecksumJob;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
@@ -313,6 +314,7 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
     {
         self::created(static function (self $media): void {
             $media->sanitizeStoredSvgInPlace();
+            CalculateMediaChecksumJob::dispatch($media->getKey())->afterCommit();
         });
     }
 

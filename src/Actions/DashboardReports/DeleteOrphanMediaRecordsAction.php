@@ -9,6 +9,7 @@ use Capell\MediaLibrary\Support\MediaHealthAuthorization;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Lorisleiva\Actions\Concerns\AsAction;
 use Throwable;
@@ -65,7 +66,7 @@ final class DeleteOrphanMediaRecordsAction
         // deletes candidates. A row can gain an owner after the report query
         // runs, so candidate selection alone is never sufficient authority to
         // remove a physical blob.
-        return DB::transaction(function () use ($knownOwnerForeignKeys, $orphanIds): int {
+        return DB::transaction(function () use ($actor, $knownOwnerForeignKeys, $orphanIds): int {
             $usageCountExpression = resolve(MediaUsageQueryExpressions::class)
                 ->usageCountExpression($knownOwnerForeignKeys);
 
@@ -90,6 +91,12 @@ final class DeleteOrphanMediaRecordsAction
             $deleted = CuratorMedia::query()
                 ->whereIn((new CuratorMedia)->getQualifiedKeyName(), $lockedOrphanIds)
                 ->delete();
+
+            Log::notice('Orphan media records deleted.', [
+                'actor_id' => $actor?->getAuthIdentifier(),
+                'media_ids' => $lockedOrphanIds,
+                'count' => count($lockedOrphanIds),
+            ]);
 
             return is_int($deleted) ? $deleted : 0;
         });

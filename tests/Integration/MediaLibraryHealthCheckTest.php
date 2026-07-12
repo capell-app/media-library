@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Schema;
 
 test('reports a compatible capell api version', function (): void {
-    expect(MediaLibraryHealthCheck::compatibleCapellApiVersion())->toBe('^0.0');
+    expect(MediaLibraryHealthCheck::compatibleCapellApiVersion())->toBe('^4.0');
 });
 
 test('runs real diagnostics returning check results', function (): void {
