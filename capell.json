@@ -4,7 +4,7 @@
     "slug": "media-library",
     "displayName": "Media Library",
     "kind": "package",
-    "capellApiVersion": "^4.0",
+    "capellApiVersion": "^0.0",
     "version": "0.0.x-dev",
     "description": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
     "product": {
@@ -165,9 +165,19 @@
         "summary": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
         "screenshots": [
             {
-                "path": "docs/assets/marketplace/extension-card.jpg",
-                "alt": "Media Library extension preview image",
-                "caption": "Media Library extension preview"
+                "path": "docs/screenshots/media-health-page.png",
+                "alt": "Seeded Media Library health page showing missing alt text, stale, and unused assets",
+                "caption": "The seeded health report separates missing-alt, stale, and unused Curator records with usage evidence."
+            },
+            {
+                "path": "docs/screenshots/curator-media-field-inside-a-form.png",
+                "alt": "Curator-backed Add media fields inside the Capell site edit form",
+                "caption": "Media Library replaces shared Capell media fields with Curator-backed selectors inside normal editor forms."
+            },
+            {
+                "path": "docs/screenshots/migration-command-output-or-report.png",
+                "alt": "Seeded Spatie to Curator migration dry-run report",
+                "caption": "The seeded dry run projects two Curator rows and two owner updates with zero warnings before any data is written."
             }
         ],
         "categories": ["admin", "foundation"]
