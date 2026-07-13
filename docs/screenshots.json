@@ -3,6 +3,7 @@
     "composerName": "capell-app/media-library",
     "generatedFor": "deployment-screenshot-runner",
     "requiresInstalledPackage": true,
+    "requiredEvidencePolicy": "distinct-required-surfaces",
     "outputDirectory": "packages/media-library/docs/screenshots",
     "entries": [
         {
