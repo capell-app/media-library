@@ -26,7 +26,6 @@ Go to **Media Library** in the admin, or open it from any image field while edit
 
 ## Good to know
 
-- Media Health is a global operator tool because Curator assets may be shared across sites. Viewing health findings and deleting unused assets are separate global permissions.
 - Upload images once and reuse them anywhere, instead of re-uploading.
 - Add **alt text** so images are accessible and better for search.
 - Search the library before uploading, so you don't create duplicates.

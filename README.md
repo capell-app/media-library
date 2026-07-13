@@ -47,6 +47,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Events: `MediaMissingAltDetected`.
 - Actions: `BuildDuplicateMediaQueryAction`, `BuildMediaHealthQueryAction`, `BuildMediaUsageDrilldownAction`, `BuildMissingAltMediaQueryAction`, `BuildMissingRightsMetadataQueryAction`, `BuildOrphanMediaQueryAction`, `DeleteOrphanMediaRecordsAction`, `DiscoverOwnerForeignKeysAction`, `ResolveOwnerForeignKeysAction`, `DispatchMissingAltMediaSignalsAction`, `EnsureMediaLibraryPermissionsAction`, `MigrateSpatieMediaToCuratorAction`, `and 1 more`.
 - Data objects: `MediaOwnerForeignKeyData`, `MediaUsageReferenceData`, `MigrateSpatieMediaInput`, `MigrateSpatieMediaResult`.
+- Jobs: `CalculateMediaChecksumJob`.
 - Console command classes: `MigrateSpatieToCuratorCommand`.
 - Manifest contributions: `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`, `configurator: Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution`, `health-check: Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution`, `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`.
 - Health checks: `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`.
@@ -75,7 +76,7 @@ Docs gap: document extension points here if the package delegates persistence to
 - Public routes: none detected in package route files.
 - Database changes: no package migrations declared.
 - Settings: no package settings declared.
-- Queues or schedules: none detected in standard package paths.
+- Queues or schedules: review package jobs or schedules before install.
 - Cache tags: none declared.
 - Commands: console command classes detected: `MigrateSpatieToCuratorCommand`.
 
@@ -89,6 +90,7 @@ Docs gap: document extension points here if the package delegates persistence to
 | Symptom | Likely cause | Check | Fix |
 | --- | --- | --- | --- |
 | Package surface is missing after install | Provider or manifest is not loaded | Confirm `capell.json`, package `composer.json`, and provider registration | Reinstall the package, refresh Composer autoload, and clear host caches |
+| Background work does not run | Queue worker or scheduled command is not active | Check package jobs, commands, and host scheduler configuration | Start the queue or scheduler, then run the focused command or package test |
 
 ## Quick Start
 
