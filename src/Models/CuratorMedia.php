@@ -314,7 +314,11 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
     {
         self::created(static function (self $media): void {
             $media->sanitizeStoredSvgInPlace();
-            CalculateMediaChecksumJob::dispatch($media->getKey())->afterCommit();
+            $mediaKey = $media->getKey();
+
+            if (is_int($mediaKey) || is_string($mediaKey)) {
+                CalculateMediaChecksumJob::dispatch($mediaKey)->afterCommit();
+            }
         });
     }
 

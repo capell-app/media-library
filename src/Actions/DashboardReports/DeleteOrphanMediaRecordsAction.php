@@ -177,9 +177,10 @@ final class DeleteOrphanMediaRecordsAction
     private function derivedPathCandidates(CuratorMedia $media): array
     {
         $candidates = [];
+        $attributes = $media->getAttributes();
 
         foreach (['responsive_images', 'generated_conversions'] as $metadataKey) {
-            $value = $media->getAttribute($metadataKey);
+            $value = $attributes[$metadataKey] ?? null;
 
             if (is_string($value) && $value !== '') {
                 $value = json_decode($value, true);

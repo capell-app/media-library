@@ -5,19 +5,21 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Tests;
 
 use Awcodes\Curator\CuratorServiceProvider;
+use Capell\Admin\Providers\AdminServiceProvider;
+use Capell\Admin\Providers\Filament\AdminPanelProvider;
 use Capell\Core\Facades\CapellCore;
 use Capell\MediaLibrary\MediaLibraryServiceProvider;
+use Capell\Tests\AbstractTestCase;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\ConnectionResolverInterface;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Storage;
 use Livewire\LivewireServiceProvider;
-use Orchestra\Testbench\TestCase as OrchestraTestCase;
 use RuntimeException;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider as SpatieMediaLibraryServiceProvider;
 
-class MediaLibraryTestCase extends OrchestraTestCase
+class MediaLibraryTestCase extends AbstractTestCase
 {
     protected function setUp(): void
     {
@@ -28,6 +30,11 @@ class MediaLibraryTestCase extends OrchestraTestCase
         parent::setUp();
 
         Storage::fake('public');
+    }
+
+    protected function getPackageServiceName(): string
+    {
+        return 'capell-media-library';
     }
 
     /**
@@ -41,6 +48,9 @@ class MediaLibraryTestCase extends OrchestraTestCase
         }
 
         return [
+            ...parent::getPackageProviders($app),
+            AdminServiceProvider::class,
+            AdminPanelProvider::class,
             LivewireServiceProvider::class,
             SpatieMediaLibraryServiceProvider::class,
             CuratorServiceProvider::class,
@@ -53,6 +63,8 @@ class MediaLibraryTestCase extends OrchestraTestCase
      */
     protected function getEnvironmentSetUp($app): void
     {
+        parent::getEnvironmentSetUp($app);
+
         $app->make(Repository::class)->set('database.default', 'testing');
         $app->make(Repository::class)->set('database.connections.testing', [
             'driver' => 'sqlite',
@@ -67,6 +79,8 @@ class MediaLibraryTestCase extends OrchestraTestCase
 
     protected function defineDatabaseMigrations(): void
     {
+        parent::defineDatabaseMigrations();
+
         $app = $this->app;
 
         throw_unless($app instanceof Application, RuntimeException::class, 'Expected media library test application to be available.');

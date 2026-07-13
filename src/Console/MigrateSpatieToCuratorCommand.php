@@ -38,10 +38,15 @@ final class MigrateSpatieToCuratorCommand extends Command
         $chunkSize = (int) ($this->option('chunk') ?? 200);
 
         $ownerType = $this->option('owner-type');
+        $collectionOption = $this->option('collection') ?? [];
+        $collections = array_values(array_filter(
+            is_array($collectionOption) ? $collectionOption : [],
+            static fn (mixed $collection): bool => is_string($collection),
+        ));
 
         $input = new MigrateSpatieMediaInput(
             dryRun: $isDryRun,
-            collections: (array) ($this->option('collection') ?? []),
+            collections: $collections,
             chunkSize: $chunkSize > 0 ? $chunkSize : 200,
             ownerType: is_string($ownerType) && $ownerType !== '' ? $ownerType : null,
         );

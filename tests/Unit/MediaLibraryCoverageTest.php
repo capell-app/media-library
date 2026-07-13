@@ -283,7 +283,7 @@ it('filters migration rows and handles invalid curation metadata', function (): 
 });
 
 it('implements curator media contract fallbacks', function (): void {
-    $media = new CuratorMedia([
+    $media = (new CuratorMedia)->forceFill([
         'disk' => 'public',
         'directory' => 'media',
         'visibility' => 'public',

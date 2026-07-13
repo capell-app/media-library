@@ -14,7 +14,8 @@ use Spatie\Permission\Models\Role;
 uses(CreatesAdminUser::class);
 
 beforeEach(function (): void {
-    Role::findOrCreate(config('capell.roles.super_admin', 'super_admin'));
+    $configuredRole = config('capell.roles.super_admin', 'super_admin');
+    Role::findOrCreate(is_string($configuredRole) ? $configuredRole : 'super_admin');
 
     foreach (MediaLibraryPermission::cases() as $permission) {
         Permission::findOrCreate($permission->value);
@@ -22,14 +23,14 @@ beforeEach(function (): void {
 });
 
 it('matches media health access to the read permission', function (): void {
-    $user = $this->createUserWithPermission(MediaLibraryPermission::ViewMediaHealth->value);
+    $user = $this->createUserWithPermission(MediaLibraryPermission::ViewMediaHealth->value)->assignRole('super_admin');
     $this->actingAs($user);
 
     expect(MediaHealthPage::canAccess())->toBeTrue();
 });
 
 it('matches media health cleanup visibility to the destructive permission', function (bool $expectedVisible, array $permissionNames): void {
-    $user = $this->createUserWithPermission($permissionNames);
+    $user = $this->createUserWithPermission($permissionNames)->assignRole('super_admin');
     $this->actingAs($user);
 
     $livewire = Livewire::test(MediaHealthPage::class)->assertOk();
@@ -50,8 +51,8 @@ it('matches media health cleanup visibility to the destructive permission', func
 ]);
 
 it('blocks orphan cleanup without destructive permission', function (): void {
-    $user = $this->createUserWithPermission(MediaLibraryPermission::ViewMediaHealth->value);
+    $user = $this->createUserWithPermission(MediaLibraryPermission::ViewMediaHealth->value)->assignRole('super_admin');
     $this->actingAs($user);
 
-    expect(fn (): int => DeleteOrphanMediaRecordsAction::run())->toThrow(AuthorizationException::class);
+    expect(fn (): int => DeleteOrphanMediaRecordsAction::run($user))->toThrow(AuthorizationException::class);
 });
