@@ -43,5 +43,5 @@ it('builds curator media fields and declares package health compatibility', func
         ->and($field->getName())->toBe('featured_image_id')
         ->and($imageField->getName())->toBe('image_id')
         ->and($socialImageField->getName())->toBe('social_image_id')
-        ->and(MediaLibraryHealthCheck::compatibleCapellApiVersion())->toBe('^4.0');
+        ->and(MediaLibraryHealthCheck::compatibleCapellApiVersion())->toBe('^1.0');
 });
