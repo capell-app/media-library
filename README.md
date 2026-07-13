@@ -2,7 +2,7 @@
 
 <!-- prettier-ignore-start -->
 
-## What This Extension Adds
+## What This Plugin Adds
 
 Media Library is an **Available**, **No schema impact** Capell package in the **Capell Foundation** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
 
@@ -41,8 +41,9 @@ Screenshot contract: `docs/screenshots.json`.
 - Models: `CuratorMedia`.
 - Filament classes: `CuratorMediaFieldFactory`, `MediaHealthPage`, `MediaHealthTable`.
 - Events: `MediaMissingAltDetected`.
-- Actions: `BuildDuplicateMediaQueryAction`, `BuildMediaHealthQueryAction`, `BuildMediaUsageDrilldownAction`, `BuildMissingAltMediaQueryAction`, `BuildMissingRightsMetadataQueryAction`, `BuildOrphanMediaQueryAction`, `DeleteOrphanMediaRecordsAction`, `DiscoverOwnerForeignKeysAction`, `ResolveOwnerForeignKeysAction`, `DispatchMissingAltMediaSignalsAction`, `MigrateSpatieMediaToCuratorAction`, `SanitizeSvgUploadAction`.
+- Actions: `BuildDuplicateMediaQueryAction`, `BuildMediaHealthQueryAction`, `BuildMediaUsageDrilldownAction`, `BuildMissingAltMediaQueryAction`, `BuildMissingRightsMetadataQueryAction`, `BuildOrphanMediaQueryAction`, `DeleteOrphanMediaRecordsAction`, `DiscoverOwnerForeignKeysAction`, `ResolveOwnerForeignKeysAction`, `DispatchMissingAltMediaSignalsAction`, `EnsureMediaLibraryPermissionsAction`, `MigrateSpatieMediaToCuratorAction`, `and 1 more`.
 - Data objects: `MediaOwnerForeignKeyData`, `MediaUsageReferenceData`, `MigrateSpatieMediaInput`, `MigrateSpatieMediaResult`.
+- Jobs: `CalculateMediaChecksumJob`.
 - Console command classes: `MigrateSpatieToCuratorCommand`.
 - Manifest contributions: `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`, `configurator: Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution`, `health-check: Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution`, `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`.
 - Health checks: `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`.
@@ -62,7 +63,7 @@ Evidence and wording rules:
 
 This package has no schema impact. It does not declare package-owned migrations or required tables.
 
-Media usage, missing-alt, and orphan reports depend on Curator owner foreign-key references configured in `config/media-library.php` or discovered from conventional owner columns. `MediaUsageQueryExpressions` validates configured table and column names against the live schema, wraps identifiers through the active query grammar, and builds correlated count subqueries against the Curator media id. Package tests exercise the query contract with SQLite; host apps using MySQL or PostgreSQL should verify the configured owner-key list during rollout, especially after adding custom media owner tables or nonstandard foreign-key names.
+Docs gap: document extension points here if the package delegates persistence to a host package.
 
 ## Install Impact
 
@@ -71,7 +72,7 @@ Media usage, missing-alt, and orphan reports depend on Curator owner foreign-key
 - Public routes: none detected in package route files.
 - Database changes: no package migrations declared.
 - Settings: no package settings declared.
-- Queues or schedules: none detected in standard package paths.
+- Queues or schedules: review package jobs or schedules before install.
 - Cache tags: none declared.
 - Commands: console command classes detected: `MigrateSpatieToCuratorCommand`.
 
@@ -85,6 +86,7 @@ Media usage, missing-alt, and orphan reports depend on Curator owner foreign-key
 | Symptom | Likely cause | Check | Fix |
 | --- | --- | --- | --- |
 | Package surface is missing after install | Provider or manifest is not loaded | Confirm `capell.json`, package `composer.json`, and provider registration | Reinstall the package, refresh Composer autoload, and clear host caches |
+| Background work does not run | Queue worker or scheduled command is not active | Check package jobs, commands, and host scheduler configuration | Start the queue or scheduler, then run the focused command or package test |
 
 ## Quick Start
 
