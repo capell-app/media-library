@@ -6,9 +6,11 @@
 
 Media Library is an **Available**, **No schema impact** Capell package in the **Capell Foundation** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
 
-Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.
+Media Library provides a Curator-backed asset library with shared picking, folders, search, alt text, rights metadata, and media health checks.
 
-After install, admins get package-owned management or reporting surfaces inside Capell.
+Editors can upload, organize, find, describe, and reuse assets from one library. The media health page identifies missing metadata, duplicates, and orphaned records.
+
+Evidence: [`src/MediaLibraryServiceProvider.php`](src/MediaLibraryServiceProvider.php), [`src/Models/CuratorMedia.php`](src/Models/CuratorMedia.php), [`src/Filament/Pages/MediaHealthPage.php`](src/Filament/Pages/MediaHealthPage.php), [`tests/Integration/CuratorBackendTest.php`](tests/Integration/CuratorBackendTest.php), [`docs/overview.admin.md`](docs/overview.admin.md), [`src/Actions/DashboardReports/BuildMediaHealthQueryAction.php`](src/Actions/DashboardReports/BuildMediaHealthQueryAction.php), [`src/Actions/DashboardReports/BuildDuplicateMediaQueryAction.php`](src/Actions/DashboardReports/BuildDuplicateMediaQueryAction.php), [`src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php`](src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php).
 
 Status details:
 
@@ -21,9 +23,11 @@ Status details:
 
 ## Why It Matters
 
-**For developers:** The package gives developers package-owned service providers, Actions, Data objects, models, and Filament classes instead of pushing this behaviour into core or application code.
+**For developers:** The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions.
 
-**For teams:** Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.
+**For teams:** Teams can reuse approved assets, improve alt-text coverage, and find media records that need cleanup from one admin workflow.
+
+Evidence: [`src/Models/CuratorMedia.php`](src/Models/CuratorMedia.php), [`src/Support/CuratorMediaQueryFactory.php`](src/Support/CuratorMediaQueryFactory.php), [`src/Actions/MigrateSpatieMediaToCuratorAction.php`](src/Actions/MigrateSpatieMediaToCuratorAction.php), [`src/Actions/SanitizeSvgUploadAction.php`](src/Actions/SanitizeSvgUploadAction.php), [`tests/Integration/MediaHealthTest.php`](tests/Integration/MediaHealthTest.php), [`tests/Integration/MediaRightsMetadataQueryTest.php`](tests/Integration/MediaRightsMetadataQueryTest.php), [`tests/Feature/FilamentSaveTest.php`](tests/Feature/FilamentSaveTest.php).
 
 ## Screens And Workflow
 
@@ -48,6 +52,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Actions: `BuildDuplicateMediaQueryAction`, `BuildMediaHealthQueryAction`, `BuildMediaUsageDrilldownAction`, `BuildMissingAltMediaQueryAction`, `BuildMissingRightsMetadataQueryAction`, `BuildOrphanMediaQueryAction`, `DeleteOrphanMediaRecordsAction`, `DiscoverOwnerForeignKeysAction`, `ResolveOwnerForeignKeysAction`, `DispatchMissingAltMediaSignalsAction`, `EnsureMediaLibraryPermissionsAction`, `MigrateSpatieMediaToCuratorAction`, `and 1 more`.
 - Data objects: `MediaOwnerForeignKeyData`, `MediaUsageReferenceData`, `MigrateSpatieMediaInput`, `MigrateSpatieMediaResult`.
 - Jobs: `CalculateMediaChecksumJob`.
+- Manifest action API: `buildDuplicateMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction`, `buildMediaHealthQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction`, `buildMediaUsageDrilldown: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaUsageDrilldownAction`, `buildMissingAltMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction`, `buildMissingRightsMetadataQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction`, `buildOrphanMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction`, `deleteOrphanMediaRecords: Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction`, `dispatchMissingAltMediaSignals: Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction`, `migrateSpatieMediaToCurator: Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction`.
 - Console command classes: `MigrateSpatieToCuratorCommand`.
 - Manifest contributions: `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`, `configurator: Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution`, `health-check: Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution`, `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`.
 - Health checks: `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`.
@@ -65,43 +70,47 @@ Evidence and wording rules:
 
 ## Data Model
 
-This package has no schema impact. It does not declare package-owned migrations or required tables.
-
-Docs gap: document extension points here if the package delegates persistence to a host package.
+This package has no schema impact. It extends Capell through `admin-page` contributions, `configurator` contributions, `health-check` contributions, and `model` contributions instead of declaring package-owned tables.
 
 ## Install Impact
 
-- Admin navigation: adds package-owned Filament classes when registered.
+- Required packages: `capell-app/admin`, `capell-app/core`.
+- Admin navigation: declares `admin-page: MediaHealthPageContribution`; each Filament page or resource controls its own navigation visibility.
+- Admin/editor extensions: `configurator: MediaMigrationCommandContribution`.
 - Permissions: `View:MediaHealthPage`, `Delete:MediaHealthPage`.
-- Public routes: none detected in package route files.
+- Public routes: none declared.
 - Database changes: no package migrations declared.
+- Config: `config/media-library.php`.
 - Settings: no package settings declared.
-- Queues or schedules: review package jobs or schedules before install.
+- Queues or schedules: queue jobs `CalculateMediaChecksumJob`.
 - Cache tags: none declared.
 - Commands: console command classes detected: `MigrateSpatieToCuratorCommand`.
 
 ## Common Pitfalls
 
-- Verify the package is installed before expecting its provider, views, or extension contributions to run.
-- Keep `composer.json`, `composer.local.json`, `capell.json`, docs, screenshots, and tests aligned when the package surface changes.
+- Keep required Capell packages on compatible v4 releases: `capell-app/admin`, `capell-app/core`.
+- Review package configuration before production-like verification: `config/media-library.php`.
 
 ## Troubleshooting
 
 | Symptom | Likely cause | Check | Fix |
 | --- | --- | --- | --- |
 | Package surface is missing after install | Provider or manifest is not loaded | Confirm `capell.json`, package `composer.json`, and provider registration | Reinstall the package, refresh Composer autoload, and clear host caches |
-| Background work does not run | Queue worker or scheduled command is not active | Check package jobs, commands, and host scheduler configuration | Start the queue or scheduler, then run the focused command or package test |
+| Background work does not run | Queue worker or declared schedule is not active | Check the jobs and scheduled commands listed in `Technical Shape` | Start the queue worker or host scheduler, then run the focused command or package test |
 
 ## Quick Start
 
 1. Install the package: `composer require capell-app/media-library`.
-2. Run the required setup: no package migrations are declared; clear cached config and routes if the host app uses caches.
-3. Open the related Capell admin surface and verify Media Library appears.
+2. Review `config/media-library.php` before enabling the package.
+3. Open the Media health page and confirm the admin workflow loads.
 
 ## Next Steps
 
 - [Package docs](docs/README.md)
 - [Overview](docs/overview.md)
+- [Admin guide](docs/admin-guide.md)
+- Configuration files: [`config/media-library.php`](config/media-library.php).
+- [Troubleshooting](#troubleshooting)
 - [Screenshot contract](docs/screenshots.json)
 - [Marketplace assets](docs/assets/marketplace/)
 - [Capell content language plan](../../docs/CONTENT_LANGUAGE_PLAN.md)

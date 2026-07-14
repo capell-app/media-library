@@ -1,0 +1,39 @@
+{
+    "whatThisPluginAdds": {
+        "text": "Media Library provides a Curator-backed asset library with shared picking, folders, search, alt text, rights metadata, and media health checks.",
+        "evidence": [
+            "src/MediaLibraryServiceProvider.php",
+            "src/Models/CuratorMedia.php",
+            "src/Filament/Pages/MediaHealthPage.php",
+            "tests/Integration/CuratorBackendTest.php"
+        ]
+    },
+    "surfaceOutcome": {
+        "text": "Editors can upload, organize, find, describe, and reuse assets from one library. The media health page identifies missing metadata, duplicates, and orphaned records.",
+        "evidence": [
+            "docs/overview.admin.md",
+            "src/Actions/DashboardReports/BuildMediaHealthQueryAction.php",
+            "src/Actions/DashboardReports/BuildDuplicateMediaQueryAction.php",
+            "src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php"
+        ]
+    },
+    "whyItMatters": {
+        "developers": {
+            "text": "The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions.",
+            "evidence": [
+                "src/Models/CuratorMedia.php",
+                "src/Support/CuratorMediaQueryFactory.php",
+                "src/Actions/MigrateSpatieMediaToCuratorAction.php",
+                "src/Actions/SanitizeSvgUploadAction.php"
+            ]
+        },
+        "teams": {
+            "text": "Teams can reuse approved assets, improve alt-text coverage, and find media records that need cleanup from one admin workflow.",
+            "evidence": [
+                "tests/Integration/MediaHealthTest.php",
+                "tests/Integration/MediaRightsMetadataQueryTest.php",
+                "tests/Feature/FilamentSaveTest.php"
+            ]
+        }
+    }
+}
