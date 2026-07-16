@@ -11,7 +11,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 use Throwable;
 
 /**
@@ -19,7 +20,8 @@ use Throwable;
  */
 final class DeleteOrphanMediaRecordsAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * Deletes orphaned Curator media rows AND their underlying storage blobs.

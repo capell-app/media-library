@@ -9,14 +9,16 @@ use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Support\CuratorMediaQueryFactory;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
 use Illuminate\Database\Eloquent\Builder;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 /**
  * @method static Builder<CuratorMedia> run(array<int, array{table: string, column: string}>|null $ownerForeignKeys = null, bool $onlyImages = true)
  */
 final class BuildMissingAltMediaQueryAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * @param  array<int, array{table: string, column: string}>|null  $ownerForeignKeys

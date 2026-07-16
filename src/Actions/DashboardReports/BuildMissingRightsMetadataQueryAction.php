@@ -9,11 +9,13 @@ use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Support\CuratorMediaQueryFactory;
 use Illuminate\Database\Eloquent\Builder;
 use JsonException;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 final class BuildMissingRightsMetadataQueryAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * @param  array<int, string>|null  $metadataKeys

@@ -11,14 +11,16 @@ use Capell\MediaLibrary\Support\CuratorMediaQueryFactory;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 /**
  * @method static Builder<CuratorMedia> run(array<int, array{table: string, column: string}>|null $ownerForeignKeys = null, bool $useCache = true)
  */
 final class BuildOrphanMediaQueryAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * @param  array<int, array{table: string, column: string}>|null  $ownerForeignKeys

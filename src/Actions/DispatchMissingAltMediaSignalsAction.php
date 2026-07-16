@@ -7,11 +7,13 @@ namespace Capell\MediaLibrary\Actions;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction;
 use Capell\MediaLibrary\Events\MediaMissingAltDetected;
 use Capell\MediaLibrary\Models\CuratorMedia;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 final class DispatchMissingAltMediaSignalsAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * @param  array<int, array{table: string, column: string}>|null  $ownerForeignKeys

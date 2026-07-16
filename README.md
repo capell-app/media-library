@@ -8,7 +8,7 @@ Media Library is an **Available**, **No schema impact** Capell package in the **
 
 Media Library provides a Curator-backed asset library with shared picking, folders, search, alt text, rights metadata, and media health checks.
 
-Editors can upload, organize, find, describe, and reuse assets from one library. The media health page identifies missing metadata, duplicates, and orphaned records.
+Editors can upload, organize, find, describe, and reuse assets from one library. The media health page identifies missing alt text, stale assets, and unused records.
 
 Evidence: [`src/MediaLibraryServiceProvider.php`](src/MediaLibraryServiceProvider.php), [`src/Models/CuratorMedia.php`](src/Models/CuratorMedia.php), [`src/Filament/Pages/MediaHealthPage.php`](src/Filament/Pages/MediaHealthPage.php), [`tests/Integration/CuratorBackendTest.php`](tests/Integration/CuratorBackendTest.php), [`docs/overview.admin.md`](docs/overview.admin.md), [`src/Actions/DashboardReports/BuildMediaHealthQueryAction.php`](src/Actions/DashboardReports/BuildMediaHealthQueryAction.php), [`src/Actions/DashboardReports/BuildDuplicateMediaQueryAction.php`](src/Actions/DashboardReports/BuildDuplicateMediaQueryAction.php), [`src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php`](src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php).
 

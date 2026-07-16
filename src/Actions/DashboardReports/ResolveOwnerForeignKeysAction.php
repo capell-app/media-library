@@ -6,14 +6,16 @@ namespace Capell\MediaLibrary\Actions\DashboardReports;
 
 use Capell\MediaLibrary\Data\MediaOwnerForeignKeyData;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 
 /**
  * @method static array<int, MediaOwnerForeignKeyData> run(array<int, array{table: string, column: string}>|null $ownerForeignKeys = null)
  */
 final class ResolveOwnerForeignKeysAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * @param  array<int, array{table: string, column: string}>|null  $ownerForeignKeys

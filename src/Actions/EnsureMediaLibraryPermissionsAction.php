@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Actions;
 
 use Capell\MediaLibrary\Enums\MediaLibraryPermission;
+use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
 
 final class EnsureMediaLibraryPermissionsAction
 {
+    use AsFake;
     use AsObject;
 
     public function handle(?string $guardName = null): void

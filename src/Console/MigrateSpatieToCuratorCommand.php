@@ -55,7 +55,7 @@ final class MigrateSpatieToCuratorCommand extends Command
             $this->info($this->translation('commands.dry_run'));
         }
 
-        $result = $action->handle($input);
+        $result = MigrateSpatieMediaToCuratorAction::run($input);
 
         $this->printSummary($result, $isDryRun);
 

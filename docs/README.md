@@ -8,10 +8,11 @@ Start at the [package README](../README.md) when deciding whether to install thi
 
 | Doc                                                             | Use it for                                                                         |
 | --------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| [Admin Guide](admin-guide.md)                                   | Use the Curator media workflow and resolve media health issues.                    |
 | [Credits And Acknowledgements](credits-and-acknowledgements.md) | Upstream services, dependencies, and acknowledgements.                             |
 | [Overview](overview.md)                                         | Package boundary, runtime surfaces, install notes, and first troubleshooting path. |
 
-## Read Next
+## Next
 
 | Related doc                                                 | Why                                                   |
 | ----------------------------------------------------------- | ----------------------------------------------------- |

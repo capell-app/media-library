@@ -38,17 +38,17 @@ This guide is for editors who manage images and files and owners deciding how to
 
 ### How to review media health
 
-1. Open the **Media health** page.
-2. Read the summary at the top to see how many assets are stale, missing, or incomplete.
-3. Work through the list and fix what is flagged, such as adding alt text or replacing a missing file.
+1. Open **System > Media health**.
+2. Review the table's filename, size, usage count, issue, type, and last-used columns.
+3. Filter by **Missing alt text**, **Stale asset**, or **Unused asset** to focus the report.
 
 ![An administrator reviews media health status for stale, missing, or incomplete assets.](screenshots/media-health-page.png)
 
 ### How to fix flagged media
 
-1. On the **Media health** page, scan the rows for items that need attention.
-2. Each row shows what is wrong and its remediation state.
-3. Open a flagged item, fix it, and the row clears once the issue is resolved.
+1. On **System > Media health**, filter the report to the issue you need to resolve.
+2. Use the main Media Library to update metadata or replace the relevant asset; the health report itself does not open or edit individual records.
+3. If you have destructive access, select confirmed unused records and use **Delete unused media**. That action only removes records that are unused by configured owner records.
 
 ![An administrator scans individual media health rows and their remediation state.](screenshots/media-health-table.png)
 
@@ -74,13 +74,13 @@ This guide is for editors who manage images and files and owners deciding how to
 | Role       | First useful screen                                     |
 | ---------- | ------------------------------------------------------- |
 | Editor     | **Media Library**: upload, organise, and add alt text   |
-| Site owner | **Media Library**: review folder hygiene and duplicates |
+| Site owner | **System > Media health**: review missing-alt, stale, and unused assets |
 
 ## Troubleshooting for editors
 
 | What you see                             | What it means                                   | What to do                                                      |
 | ---------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
-| I have two copies of the same image      | A duplicate was uploaded instead of reused      | Search before uploading; delete the copy you don't need         |
+| I have two copies of the same image      | A duplicate was uploaded instead of reused      | Search before uploading; review each asset's use before removing an unneeded copy |
 | An image looks wrong after I replaced it | The page is showing a cached version            | Wait a moment, or ask whoever manages caching to clear the page |
 | A screen reader skips my image           | It has no alt text                              | Open the image and add **alt text**                             |
 | I can't find an image I uploaded         | It is in a different folder, or named unclearly | Search by name, or rename it so it is easier to find            |

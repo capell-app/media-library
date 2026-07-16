@@ -29,6 +29,11 @@ Go to **Media Library** in the admin, or open it from any image field while edit
 - Upload images once and reuse them anywhere, instead of re-uploading.
 - Add **alt text** so images are accessible and better for search.
 - Search the library before uploading, so you don't create duplicates.
+- Use **System > Media health** to filter missing-alt, stale, and unused media. By default, an otherwise healthy asset becomes stale after 90 days without an update.
+- Media health is a global report: it requires `View:MediaHealthPage` and is not available to site-scoped operators. Deleting selected unused records also requires `Delete:MediaHealthPage`.
+- Orphan cleanup re-checks current references before it deletes a record, so a file that was attached after the report loaded is retained. It removes the underlying storage file only for records that are still unused.
+- Media health depends on the known media-owner fields in the application. If owner-key discovery is disabled and no owner fields are configured, the unused-media report is intentionally empty rather than guessing.
+- Diagnostics verifies that the Curator media backend and shared media field factory are registered; it also reports the health-report and Spatie migration capabilities.
 
 ---
 

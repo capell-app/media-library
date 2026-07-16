@@ -9,6 +9,7 @@ use DOMDocument;
 use DOMElement;
 use DOMNode;
 use DOMXPath;
+use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
 use RuntimeException;
 use Throwable;
@@ -28,6 +29,7 @@ use Throwable;
  */
 final class SanitizeSvgUploadAction
 {
+    use AsFake;
     use AsObject;
 
     /**

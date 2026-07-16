@@ -11,7 +11,8 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as SpatieMedia;
 use stdClass;
 use Throwable;
@@ -33,7 +34,8 @@ use Throwable;
  */
 final class MigrateSpatieMediaToCuratorAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     public function handle(MigrateSpatieMediaInput $input): MigrateSpatieMediaResult
     {

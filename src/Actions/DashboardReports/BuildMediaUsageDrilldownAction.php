@@ -8,7 +8,8 @@ use Capell\Core\Support\Database\RuntimeSchemaState;
 use Capell\MediaLibrary\Data\MediaOwnerForeignKeyData;
 use Capell\MediaLibrary\Data\MediaUsageReferenceData;
 use Illuminate\Support\Facades\DB;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 use stdClass;
 
 /**
@@ -16,7 +17,8 @@ use stdClass;
  */
 final class BuildMediaUsageDrilldownAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * @param  array<int, array{table: string, column: string}>|null  $ownerForeignKeys

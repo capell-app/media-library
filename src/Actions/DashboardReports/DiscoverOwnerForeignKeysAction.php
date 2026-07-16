@@ -6,12 +6,14 @@ namespace Capell\MediaLibrary\Actions\DashboardReports;
 
 use Illuminate\Database\Schema\Builder;
 use Illuminate\Support\Facades\Schema;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 use Throwable;
 
 final class DiscoverOwnerForeignKeysAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * @return array<int, array{table: string, column: string}>

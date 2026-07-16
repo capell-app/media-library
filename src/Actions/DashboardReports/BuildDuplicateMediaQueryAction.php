@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
-use Lorisleiva\Actions\Concerns\AsAction;
+use Lorisleiva\Actions\Concerns\AsFake;
+use Lorisleiva\Actions\Concerns\AsObject;
 use Throwable;
 
 /**
@@ -20,7 +21,8 @@ use Throwable;
  */
 final class BuildDuplicateMediaQueryAction
 {
-    use AsAction;
+    use AsFake;
+    use AsObject;
 
     /**
      * Builds the duplicate-media report query.

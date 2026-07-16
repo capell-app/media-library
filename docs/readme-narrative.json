@@ -9,7 +9,7 @@
         ]
     },
     "surfaceOutcome": {
-        "text": "Editors can upload, organize, find, describe, and reuse assets from one library. The media health page identifies missing metadata, duplicates, and orphaned records.",
+        "text": "Editors can upload, organize, find, describe, and reuse assets from one library. The media health page identifies missing alt text, stale assets, and unused records.",
         "evidence": [
             "docs/overview.admin.md",
             "src/Actions/DashboardReports/BuildMediaHealthQueryAction.php",
