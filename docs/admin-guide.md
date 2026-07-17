@@ -71,16 +71,16 @@ This guide is for editors who manage images and files and owners deciding how to
 
 ### Who does what
 
-| Role       | First useful screen                                     |
-| ---------- | ------------------------------------------------------- |
-| Editor     | **Media Library**: upload, organise, and add alt text   |
+| Role       | First useful screen                                                     |
+| ---------- | ----------------------------------------------------------------------- |
+| Editor     | **Media Library**: upload, organise, and add alt text                   |
 | Site owner | **System > Media health**: review missing-alt, stale, and unused assets |
 
 ## Troubleshooting for editors
 
-| What you see                             | What it means                                   | What to do                                                      |
-| ---------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------- |
+| What you see                             | What it means                                   | What to do                                                                        |
+| ---------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------- |
 | I have two copies of the same image      | A duplicate was uploaded instead of reused      | Search before uploading; review each asset's use before removing an unneeded copy |
-| An image looks wrong after I replaced it | The page is showing a cached version            | Wait a moment, or ask whoever manages caching to clear the page |
-| A screen reader skips my image           | It has no alt text                              | Open the image and add **alt text**                             |
-| I can't find an image I uploaded         | It is in a different folder, or named unclearly | Search by name, or rename it so it is easier to find            |
+| An image looks wrong after I replaced it | The page is showing a cached version            | Wait a moment, or ask whoever manages caching to clear the page                   |
+| A screen reader skips my image           | It has no alt text                              | Open the image and add **alt text**                                               |
+| I can't find an image I uploaded         | It is in a different folder, or named unclearly | Search by name, or rename it so it is easier to find                              |
