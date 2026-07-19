@@ -189,7 +189,6 @@ test('media_health_query_is_empty_when_curator_table_has_not_been_installed', fu
 
 test('media health page registers as an extension page', function (): void {
     app()->singleton(ExtensionPageRegistry::class, fn (): ExtensionPageRegistry => new ExtensionPageRegistry);
-    app()->singleton(CapellAdminManager::class, fn (): CapellAdminManager => new CapellAdminManager);
 
     resolve(CapellAdminManager::class)->registerExtensionPage(
         'capell-app/media-library',
