@@ -4,6 +4,7 @@
     "generatedFor": "deployment-screenshot-runner",
     "requiresInstalledPackage": true,
     "requiredEvidencePolicy": "distinct-required-surfaces",
+    "colorSchemes": ["light"],
     "outputDirectory": "packages/media-library/docs/screenshots",
     "entries": [
         {

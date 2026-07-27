@@ -154,7 +154,8 @@ test('migration preserves a private source disk visibility instead of forcing pu
     $reflection = new ReflectionMethod($action, 'resolveSourceDiskVisibility');
 
     expect($reflection->invoke($action, 'private_source'))->toBe('private')
-        ->and($reflection->invoke($action, 'public'))->toBe('public');
+        ->and($reflection->invoke($action, 'public'))->toBe('public')
+        ->and($reflection->invoke($action, 'local'))->toBe('private');
 });
 
 function mediaVisibilityCuratorMedia(mixed $media): CuratorMedia

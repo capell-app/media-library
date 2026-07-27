@@ -568,13 +568,13 @@ final class MigrateSpatieMediaToCuratorAction
     {
         $configuredVisibility = config(sprintf('filesystems.disks.%s.visibility', $disk));
 
-        if ($configuredVisibility === 'private') {
-            return 'private';
+        if (in_array($configuredVisibility, ['public', 'private'], true)) {
+            return $configuredVisibility;
         }
 
         $root = config(sprintf('filesystems.disks.%s.root', $disk));
 
-        if (is_string($root) && str_contains($root, DIRECTORY_SEPARATOR . 'private')) {
+        if (is_string($root) && rtrim($root, DIRECTORY_SEPARATOR) === rtrim(storage_path('app/private'), DIRECTORY_SEPARATOR)) {
             return 'private';
         }
 
