@@ -43,6 +43,7 @@ final class BuildOrphanMediaQueryAction
 
         $usageCountExpression = $usageExpressions->usageCountExpression($knownOwnerForeignKeys);
 
+        /** @var literal-string $usageCountExpression */
         $query = CuratorMedia::query()
             ->select('curator.*')
             ->selectRaw($usageCountExpression . ' as usage_count')

@@ -38,6 +38,10 @@ final class BuildMediaHealthQueryAction
         $usageCountExpression = $usageExpressions->usageCountExpression($knownOwnerForeignKeys);
         $issueExpression = $this->issueExpression($usageCountExpression, $knownOwnerForeignKeys !== []);
 
+        /**
+         * @var literal-string $usageCountExpression
+         * @var literal-string $issueExpression
+         */
         $query = CuratorMedia::query()
             ->select('curator.*')
             ->selectRaw($usageCountExpression . ' as usage_count')

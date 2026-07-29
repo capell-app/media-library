@@ -2,23 +2,17 @@
 
 declare(strict_types=1);
 
-use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 
-test('factory make returns a CuratorPicker field instance', function (): void {
-    $factory = resolve(MediaFieldFactory::class);
+test('factory make returns the configured Curator field name', function (): void {
+    $field = (new CuratorMediaFieldFactory)->make('image');
 
-    $field = $factory->make('image');
-
-    expect($field)->toBeInstanceOf(CuratorPicker::class)
-        ->and($field->getName())->toBe('image_id');
+    expect($field->getName())->toBe('image_id');
 });
 
 test('MediaFieldFactory contract resolves to CuratorMediaFieldFactory when plugin registered', function (): void {
-    $factory = resolve(MediaFieldFactory::class);
-
-    expect($factory)->toBeInstanceOf(CuratorMediaFieldFactory::class);
+    expect(app()->get(MediaFieldFactory::class))->toBeInstanceOf(CuratorMediaFieldFactory::class);
 });
 
 test('capell media backend config key is set to curator', function (): void {

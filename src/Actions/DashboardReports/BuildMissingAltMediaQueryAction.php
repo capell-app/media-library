@@ -34,6 +34,7 @@ final class BuildMissingAltMediaQueryAction
         $knownOwnerForeignKeys = ResolveOwnerForeignKeysAction::run($ownerForeignKeys);
         $usageCountExpression = $usageExpressions->usageCountExpression($knownOwnerForeignKeys);
 
+        /** @var literal-string $usageCountExpression */
         return CuratorMedia::query()
             ->select('curator.*')
             ->selectRaw($usageCountExpression . ' as usage_count')

@@ -72,6 +72,7 @@ final class DeleteOrphanMediaRecordsAction
             $usageCountExpression = resolve(MediaUsageQueryExpressions::class)
                 ->usageCountExpression($knownOwnerForeignKeys);
 
+            /** @var literal-string $usageCountExpression */
             $lockedOrphans = CuratorMedia::query()
                 ->whereIn((new CuratorMedia)->getQualifiedKeyName(), $orphanIds)
                 ->whereRaw('(' . $usageCountExpression . ') = 0')

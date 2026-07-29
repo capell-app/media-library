@@ -291,8 +291,8 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 
         if (is_array($crop)) {
             return [
-                'x' => $this->normalizePercentage($crop['x'] ?? null),
-                'y' => $this->normalizePercentage($crop['y'] ?? null),
+                'x' => $this->normalizePercentage($crop['x']),
+                'y' => $this->normalizePercentage($crop['y']),
             ];
         }
 

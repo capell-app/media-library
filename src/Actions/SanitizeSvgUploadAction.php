@@ -61,6 +61,10 @@ final class SanitizeSvgUploadAction
 
     public function handle(string $contents): string
     {
+        if ($contents === '') {
+            throw new RuntimeException('SVG upload could not be parsed safely.');
+        }
+
         throw_if($this->containsDoctype($contents), RuntimeException::class, 'SVG uploads may not contain a DOCTYPE or ENTITY declaration.');
 
         $document = new DOMDocument('1.0', 'UTF-8');

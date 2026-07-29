@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Capell\MediaLibrary\Support;
 
+use Capell\Core\Data\Database\SqlFragment;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -17,16 +18,16 @@ final class CuratorMediaQueryFactory
     public function emptyQuery(array $extraSelects = []): Builder
     {
         $query = CuratorMedia::query();
-        $emptyCuratorTable = DB::query()
-            ->selectRaw($this->emptyCuratorColumns())
-            ->whereRaw('1 = 0');
+        $emptyCuratorTable = DB::query();
+        (new SqlFragment($this->emptyCuratorColumns()))->applySelect($emptyCuratorTable);
+        $emptyCuratorTable->whereRaw('1 = 0');
 
         $query->getQuery()->fromSub($emptyCuratorTable, 'curator');
 
         $query->select('curator.*');
 
         foreach ($extraSelects as $extraSelect) {
-            $query->selectRaw($extraSelect);
+            (new SqlFragment($extraSelect))->applySelect($query->getQuery());
         }
 
         return $query;
@@ -59,8 +60,9 @@ final class CuratorMediaQueryFactory
 
         foreach ($extraColumnDefaults as $column => $defaultValue) {
             [$expression, $bindings] = $this->caseExpression($rows, $column, $defaultValue);
+            $selectExpression = $expression . ' as ' . DB::connection()->getQueryGrammar()->wrap($column);
 
-            $query->selectRaw($expression . ' as ' . DB::connection()->getQueryGrammar()->wrap($column), $bindings);
+            (new SqlFragment($selectExpression, $bindings))->applySelect($query->getQuery());
         }
 
         [$orderExpression, $orderBindings] = $this->caseExpression(
@@ -73,7 +75,9 @@ final class CuratorMediaQueryFactory
             count($rows),
         );
 
-        return $query->orderByRaw($orderExpression, $orderBindings);
+        (new SqlFragment($orderExpression, $orderBindings))->applyOrder($query->getQuery());
+
+        return $query;
     }
 
     private function emptyCuratorColumns(): string

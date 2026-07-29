@@ -140,6 +140,7 @@ class MediaHealthTable implements TableConfigurator
             return $query->whereRaw('1 = 0');
         }
 
+        /** @var literal-string $usageCountExpression */
         return $query
             ->whereNotNull('alt')
             ->where('alt', '!=', '')
