@@ -37,10 +37,10 @@ Screenshot contract: `docs/screenshots.json`.
 
 ![Media health table](docs/screenshots/media-health-table.png)
 
-- Media health page (admin, required).
-- Media health table (admin, required).
-- Curator media field inside a form (admin, required).
-- Migration command output or report (console, required).
+- Media health page (admin, required evidence).
+- Media health table (admin, required evidence).
+- Curator media field inside a form (admin, required evidence).
+- Migration command output or report (console, required evidence).
 
 ## Technical Shape
 
@@ -102,7 +102,7 @@ This package has no schema impact. It extends Capell through `admin-page` contri
 
 1. Install the package: `composer require capell-app/media-library`.
 2. Review `config/media-library.php` before enabling the package.
-3. Open the Media health page and confirm the admin workflow loads.
+3. Open a verified package admin surface and confirm Media Library is available.
 
 ## Next Steps
 
