@@ -62,10 +62,31 @@
             "surface": "console",
             "targetType": "console-command",
             "target": "capell:media-migrate-to-curator",
-            "required": true,
-            "notes": "Actual --dry-run output captured from the package workbench after seeding two Spatie Media Library rows owned by the testbench admin user. The command projects two Curator rows and two owner foreign-key updates with zero warnings.",
+            "required": false,
+            "notes": "Deferred: the current console evidence has been retired. Replace it with an authentic installed-App route capture before Marketplace promotion.",
             "useCase": "A developer reviews the Spatie-to-Curator migration report before or after migration.",
             "screenshotPath": "packages/media-library/docs/screenshots/migration-command-output-or-report.png"
+        },
+        {
+            "id": "media-library-admin-sidebar-menu-open",
+            "title": "Media health page with admin sidebar menu open.",
+            "package": "media-library",
+            "surface": "admin",
+            "targetType": "admin-surface",
+            "target": "MediaHealthPage",
+            "scenario": "admin-index",
+            "url": "/media-library/media-health",
+            "waitFor": "table",
+            "required": false,
+            "notes": "Captured from the isolated Capell package workbench with seeded Curator records covering missing-alt, stale, and unused media states. Capture this same admin surface with the fully collapsible sidebar opened.",
+            "useCase": "An administrator reviews media health status for stale, missing, or incomplete assets.",
+            "screenshotPath": "packages/media-library/docs/screenshots/media-library-admin-sidebar-menu-open.png",
+            "interactions": [
+                {
+                    "type": "click",
+                    "selector": ".fi-topbar-open-collapse-sidebar-btn"
+                }
+            ]
         }
     ]
 }

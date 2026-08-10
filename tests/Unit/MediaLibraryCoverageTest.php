@@ -536,12 +536,10 @@ it('keeps media library docs and screenshots aligned with committed package asse
     expect($marketplaceScreenshotPaths)->toBe([
         'docs/screenshots/media-health-page.png',
         'docs/screenshots/curator-media-field-inside-a-form.png',
-        'docs/screenshots/migration-command-output-or-report.png',
     ])->and($shippedScreenshotPaths)->toBe([
         'docs/screenshots/curator-media-field-inside-a-form.png',
         'docs/screenshots/media-health-page.png',
         'docs/screenshots/media-health-table.png',
-        'docs/screenshots/migration-command-output-or-report.png',
     ])->and($screenshotContract['requiredEvidencePolicy'] ?? null)->toBe('distinct-required-surfaces');
 
     $contractTargets = [];
@@ -590,8 +588,15 @@ it('keeps media library docs and screenshots aligned with committed package asse
             'surface' => 'console',
             'targetType' => 'console-command',
             'target' => 'capell:media-migrate-to-curator',
-            'required' => true,
+            'required' => false,
             'screenshotPath' => 'docs/screenshots/migration-command-output-or-report.png',
+        ],
+        'media-library-admin-sidebar-menu-open' => [
+            'surface' => 'admin',
+            'targetType' => 'admin-surface',
+            'target' => 'MediaHealthPage',
+            'required' => false,
+            'screenshotPath' => 'docs/screenshots/media-library-admin-sidebar-menu-open.png',
         ],
     ]);
 
@@ -599,7 +604,7 @@ it('keeps media library docs and screenshots aligned with committed package asse
 
     expect($readme)->toContain('does not generate responsive conversions')
         ->and($readme)->toContain('The capture contract is [docs/screenshots.json](docs/screenshots.json)')
-        ->and($readme)->toContain('The committed screenshot captures show seeded media-health, Curator field, and migration-report workflows from the package workbench.')
+        ->and($readme)->toContain('The committed screenshot captures show seeded media-health and Curator field workflows.')
         ->and($readme)->toContain('Do not describe this package as generating responsive variants');
 });
 

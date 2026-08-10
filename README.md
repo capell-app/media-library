@@ -40,7 +40,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Media health page (admin, required evidence).
 - Media health table (admin, required evidence).
 - Curator media field inside a form (admin, required evidence).
-- Migration command output or report (console, required evidence).
+- Migration command output or report (console, supplementary evidence).
 
 ## Technical Shape
 
@@ -64,7 +64,7 @@ Media Library wraps Awcodes Curator as the Capell media backend and does not gen
 Evidence and wording rules:
 
 - The capture contract is [docs/screenshots.json](docs/screenshots.json).
-- The committed screenshot captures show seeded media-health, Curator field, and migration-report workflows from the package workbench.
+- The committed screenshot captures show seeded media-health and Curator field workflows.
 - Do not describe this package as generating responsive variants.
 - Keep migration and media-health claims tied to the Curator model, health page, table, field factory, and migration command.
 
@@ -102,7 +102,7 @@ This package has no schema impact. It extends Capell through `admin-page` contri
 
 1. Install the package: `composer require capell-app/media-library`.
 2. Review `config/media-library.php` before enabling the package.
-3. Open a verified package admin surface and confirm Media Library is available.
+3. Open the package admin surface at `/media-library/media-health` and confirm Media Library is available.
 
 ## Next Steps
 
