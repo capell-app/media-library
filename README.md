@@ -41,6 +41,7 @@ Screenshot contract: `docs/screenshots.json`.
 - Media health table (admin, required evidence).
 - Curator media field inside a form (admin, required evidence).
 - Migration command output or report (console, supplementary evidence).
+- Media health page with admin sidebar menu open (admin, supplementary evidence).
 
 ## Technical Shape
 
