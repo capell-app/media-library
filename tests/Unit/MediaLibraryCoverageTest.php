@@ -6,6 +6,7 @@ use Capell\Core\Contracts\Extensions\ChecksExtensionHealth;
 use Capell\Core\Contracts\Extensions\ExtensionContribution;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthTotalsAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
@@ -423,7 +424,7 @@ it('builds the media health table columns and default sort', function (): void {
             'name',
             'size',
             'usage_count',
-            'media_health_issue',
+            'media_health_issues',
             'type',
             'updated_at',
         ])
@@ -432,6 +433,12 @@ it('builds the media health table columns and default sort', function (): void {
             ->filter()
             ->values()
             ->all())->toContain('delete_orphan_media')
+        ->and($table->getHeaderActions())->not->toBeEmpty()
+        ->and(collect($table->getRecordActions())
+            ->map(static fn (mixed $action): ?string => method_exists($action, 'getName') ? $action->getName() : null)
+            ->filter()
+            ->values()
+            ->all())->toBe(['edit_metadata', 'review_usage', 'guarded_delete', 'inspect'])
         ->and(array_keys($table->getFilters()))->toBe(['media_health_issue'])
         ->and($table->getFilters()['media_health_issue'])->toBeInstanceOf(SelectFilter::class);
 });
@@ -475,6 +482,7 @@ it('declares implemented media library contributions actions and feature capabil
         ->and($commands)->toHaveKey('setup', null)
         ->and($actions)->toHaveKey('buildDuplicateMediaQuery', BuildDuplicateMediaQueryAction::class)
         ->and($actions)->toHaveKey('buildMediaHealthQuery', BuildMediaHealthQueryAction::class)
+        ->and($actions)->toHaveKey('buildMediaHealthTotals', BuildMediaHealthTotalsAction::class)
         ->and($actions)->toHaveKey('buildMissingAltMediaQuery', BuildMissingAltMediaQueryAction::class)
         ->and($actions)->toHaveKey('buildMissingRightsMetadataQuery', BuildMissingRightsMetadataQueryAction::class)
         ->and($actions)->toHaveKey('buildOrphanMediaQuery', BuildOrphanMediaQueryAction::class)

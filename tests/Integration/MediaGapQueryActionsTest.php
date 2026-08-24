@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
@@ -246,6 +247,42 @@ test('orphan media cleanup keeps files still referenced by another curator row',
         ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse()
         ->and(DB::table('curator')->where('id', $usedMediaId)->exists())->toBeTrue()
         ->and(Storage::disk('public')->exists('media/shared-file.jpg'))->toBeTrue();
+});
+
+test('orphan media cleanup rolls back every row when the transaction fails', function (): void {
+    Storage::disk('public')->put('media/rollback-first.jpg', 'first-image-bytes');
+    Storage::disk('public')->put('media/rollback-second.jpg', 'second-image-bytes');
+
+    $firstOrphanMediaId = insertCuratorGapMedia('rollback-first', 'media/rollback-first.jpg');
+    $secondOrphanMediaId = insertCuratorGapMedia('rollback-second', 'media/rollback-second.jpg');
+
+    // The audit log write happens inside the delete transaction, so a failure
+    // there must leave every candidate row intact.
+    Log::shouldReceive('notice')->andThrow(new RuntimeException('Audit log unavailable.'));
+
+    expect(fn (): int => DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]))->toThrow(RuntimeException::class);
+
+    expect(DB::table('curator')->whereIn('id', [$firstOrphanMediaId, $secondOrphanMediaId])->count())->toBe(2);
+});
+
+test('orphan media cleanup still removes the database row when the storage disk is unavailable', function (): void {
+    $orphanMediaId = insertCuratorGapMedia('storage-unavailable', 'media/storage-unavailable.jpg');
+
+    // The blob is never written, so Storage::disk('public') behaves the same
+    // way it would for a misconfigured or unreachable disk: every file
+    // operation fails. The row must still be removed; only the storage
+    // administrator's blob reconciliation is left undone (documented in
+    // docs/overview.md under "Media health and cleanup").
+    Storage::shouldReceive('disk')->with('public')->andThrow(new RuntimeException('Disk unavailable.'));
+
+    $deleted = DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), [
+        ['table' => 'test_curator_owners', 'column' => 'image_id'],
+    ]);
+
+    expect($deleted)->toBe(1)
+        ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse();
 });
 
 function insertCuratorGapMedia(string $name, string $path): int

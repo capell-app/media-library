@@ -65,6 +65,7 @@
     "actions": {
         "buildDuplicateMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildDuplicateMediaQueryAction",
         "buildMediaHealthQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaHealthQueryAction",
+        "buildMediaHealthTotals": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaHealthTotalsAction",
         "buildMissingAltMediaQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingAltMediaQueryAction",
         "buildMissingRightsMetadataQuery": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMissingRightsMetadataQueryAction",
         "buildMediaUsageDrilldown": "Capell\\MediaLibrary\\Actions\\DashboardReports\\BuildMediaUsageDrilldownAction",
