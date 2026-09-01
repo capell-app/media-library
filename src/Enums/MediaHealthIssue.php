@@ -41,6 +41,10 @@ enum MediaHealthIssue: string
 
     public function reviewLabel(int $count): string
     {
-        return (string) __('capell-media-library::package.media_health.review.' . $this->value, ['count' => $count]);
+        return match ($this) {
+            self::MissingAlt => (string) __('capell-media-library::package.media_health.review.missing_alt', ['count' => $count]),
+            self::Stale => (string) __('capell-media-library::package.media_health.review.stale', ['count' => $count]),
+            self::Unused => (string) __('capell-media-library::package.media_health.review.unused', ['count' => $count]),
+        };
     }
 }
