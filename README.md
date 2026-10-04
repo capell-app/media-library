@@ -10,8 +10,6 @@ Media Library provides a Curator-backed asset library with shared picking, folde
 
 Editors can upload, organize, find, describe, and reuse assets from one library. The media health page identifies missing alt text, stale assets, and unused records.
 
-Evidence: [`src/MediaLibraryServiceProvider.php`](src/MediaLibraryServiceProvider.php), [`src/Models/CuratorMedia.php`](src/Models/CuratorMedia.php), [`src/Filament/Pages/MediaHealthPage.php`](src/Filament/Pages/MediaHealthPage.php), [`tests/Integration/CuratorBackendTest.php`](tests/Integration/CuratorBackendTest.php), [`docs/overview.admin.md`](docs/overview.admin.md), [`src/Actions/DashboardReports/BuildMediaHealthQueryAction.php`](src/Actions/DashboardReports/BuildMediaHealthQueryAction.php), [`src/Actions/DashboardReports/BuildDuplicateMediaQueryAction.php`](src/Actions/DashboardReports/BuildDuplicateMediaQueryAction.php), [`src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php`](src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php).
-
 Status details:
 
 - Status: Available
@@ -26,8 +24,6 @@ Status details:
 **For developers:** The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions.
 
 **For teams:** Teams can reuse approved assets, improve alt-text coverage, and find media records that need cleanup from one admin workflow.
-
-Evidence: [`src/Models/CuratorMedia.php`](src/Models/CuratorMedia.php), [`src/Support/CuratorMediaQueryFactory.php`](src/Support/CuratorMediaQueryFactory.php), [`src/Actions/MigrateSpatieMediaToCuratorAction.php`](src/Actions/MigrateSpatieMediaToCuratorAction.php), [`src/Actions/SanitizeSvgUploadAction.php`](src/Actions/SanitizeSvgUploadAction.php), [`tests/Integration/MediaHealthTest.php`](tests/Integration/MediaHealthTest.php), [`tests/Integration/MediaRightsMetadataQueryTest.php`](tests/Integration/MediaRightsMetadataQueryTest.php), [`tests/Feature/FilamentSaveTest.php`](tests/Feature/FilamentSaveTest.php).
 
 ## Screens And Workflow
 
@@ -170,7 +166,7 @@ This package has no schema impact. It extends Capell through `admin-page` contri
 ## Quick Start
 
 1. Install the package: `composer require capell-app/media-library`.
-2. Open the package admin surface at `/media-library/media-health` and confirm Media Library is available.
+2. Open the package admin surface at `/admin/media-library/media-health` and confirm Media Library is available.
 
 ## Next Steps
 
@@ -186,6 +182,5 @@ This package has no schema impact. It extends Capell through `admin-page` contri
 - [Capell documentation design system](../../docs/DESIGN_SYSTEM.md)
 - [Capell and package ERD notes](../../docs/erd/capell-and-package-erds.md)
 - Related packages: [Media Ai](../media-ai/README.md), [Seo Suite](../seo-suite/README.md).
-- Focused tests: `vendor/bin/pest packages/media-library/tests --configuration=phpunit.xml`.
 
 <!-- prettier-ignore-end -->
