@@ -18,4 +18,4 @@ Awcodes Curator integration, media health admin, media fields, and Spatie media 
 - Do not invent a second media backend; wrap Curator cleanly.
 - Migration from Spatie media belongs in actions/commands.
 - Keep media health dashboard reports read-only unless explicitly mutating.
-- Run `vendor/bin/pest packages/media-library/tests`.
+- Verify customisations in the consuming application's test suite.
