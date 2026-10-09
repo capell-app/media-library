@@ -57,7 +57,14 @@
             "required": true,
             "notes": "Captured from the seeded Capell site edit form after MediaLibraryServiceProvider rebound MediaFieldFactory to CuratorMediaFieldFactory. The Image, Logo, and Inverted logo controls are Curator-backed Add media fields.",
             "useCase": "An editor selects media through the Curator field embedded in a Capell form.",
-            "screenshotPath": "packages/media-library/docs/screenshots/curator-media-field-inside-a-form.png"
+            "screenshotPath": "packages/media-library/docs/screenshots/curator-media-field-inside-a-form.png",
+            "beforeWait": [
+                {
+                    "type": "scrollIntoView",
+                    "selector": "button:has-text(\"Add media\")",
+                    "block": "center"
+                }
+            ]
         },
         {
             "id": "migration-command-output-or-report",
