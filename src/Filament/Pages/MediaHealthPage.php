@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Filament\Pages;
 
 use BackedEnum;
+use Capell\Admin\Contracts\Diagnostics\SiteHealthSubpage;
 use Capell\Admin\Filament\Concerns\HasNavigationBadge;
+use Capell\Admin\Filament\Pages\SiteHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Support\MediaHealthAuthorization;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -18,11 +20,13 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Override;
 
-class MediaHealthPage extends Page implements HasActions, HasTable
+class MediaHealthPage extends Page implements HasActions, HasTable, SiteHealthSubpage
 {
     use HasNavigationBadge;
     use InteractsWithActions;
     use InteractsWithTable;
+
+    protected static bool $shouldRegisterNavigation = true;
 
     protected static ?string $slug = 'media-library/media-health';
 
@@ -45,9 +49,15 @@ class MediaHealthPage extends Page implements HasActions, HasTable
     }
 
     #[Override]
+    public static function getNavigationParentItem(): ?string
+    {
+        return SiteHealthPage::canAccess() ? SiteHealthPage::getNavigationLabel() : null;
+    }
+
+    #[Override]
     public static function getNavigationGroup(): ?string
     {
-        return (string) (__('capell-admin::navigation.group_system'));
+        return (string) (__('capell-admin::navigation.group_monitoring'));
     }
 
     public static function table(Table $table): Table

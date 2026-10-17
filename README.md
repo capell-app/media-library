@@ -4,7 +4,7 @@
 
 ## What This Plugin Adds
 
-Media Library is an **Available**, **No schema impact** Capell package in the **Capell Foundation** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
+Media Library is an **Available**, **Schema-owning** Capell package in the **Capell Foundation** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
 
 Media Library provides a Curator-backed asset library with shared picking, folders, search, alt text, rights metadata, and media health checks.
 
@@ -21,7 +21,7 @@ Status details:
 
 ## Why It Matters
 
-**For developers:** The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions.
+**For developers:** The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions. Package migrations create the Curator storage table on fresh installs and upgrades. Existing Curator tables, keys and media are preserved, including on rollback.
 
 **For teams:** Teams can reuse approved assets, improve alt-text coverage, and find media records that need cleanup from one admin workflow.
 
@@ -49,6 +49,10 @@ Screenshot contract: `docs/screenshots.json`.
 
 - `packages/media-library/config/media-library.php`
 
+### Migrations
+
+- `packages/media-library/database/migrations/2026_10_15_000001_create_curator_table.php`
+
 ### Models
 
 - `CuratorMedia`
@@ -58,6 +62,10 @@ Screenshot contract: `docs/screenshots.json`.
 - `CuratorMediaFieldFactory`
 - `MediaHealthPage`
 - `MediaHealthTable`
+
+### Livewire components
+
+- `CuratorPanel`
 
 ### Events
 
@@ -135,7 +143,11 @@ Evidence and wording rules:
 
 ## Data Model
 
-This package has no schema impact. It extends Capell through `admin-page` contributions, `configurator` contributions, `health-check` contributions, and `model` contributions instead of declaring package-owned tables.
+- Required tables: `curator`.
+- Models: `CuratorMedia`.
+- Migration files: `2026_10_15_000001_create_curator_table.php`.
+- Migration impact: run host migrations through the package install flow before opening package surfaces.
+- Deletion/retention behaviour: Docs gap: migrations and manifest contributions do not prove a cascade, pruning command, or timed retention policy.
 
 ## Install Impact
 
@@ -144,7 +156,7 @@ This package has no schema impact. It extends Capell through `admin-page` contri
 - Admin/editor extensions: `configurator: MediaMigrationCommandContribution`.
 - Permissions: `View:MediaHealthPage`, `Delete:MediaHealthPage`.
 - Public routes: none declared.
-- Database changes: no package migrations declared.
+- Database changes: package migrations are declared.
 - Config: `config/media-library.php`.
 - Settings: no package settings declared.
 - Queues or schedules: queue jobs `CalculateMediaChecksumJob`.
@@ -154,6 +166,7 @@ This package has no schema impact. It extends Capell through `admin-page` contri
 ## Common Pitfalls
 
 - Keep required Capell packages on compatible v4 releases: `capell-app/admin`, `capell-app/core`.
+- Run migrations before opening package resources or public routes.
 - Review package configuration before production-like verification: `config/media-library.php`.
 
 ## Troubleshooting
@@ -161,6 +174,7 @@ This package has no schema impact. It extends Capell through `admin-page` contri
 | Symptom | Likely cause | Check | Fix |
 | --- | --- | --- | --- |
 | Package surface is missing after install | Provider or manifest is not loaded | Confirm `capell.json`, package `composer.json`, and provider registration | Reinstall the package, refresh Composer autoload, and clear host caches |
+| Admin screen or command fails on missing table | Package migrations have not run | Check the tables listed in `Data Model` | Run host migrations and rerun the focused package test |
 | Background work does not run | Queue worker or declared schedule is not active | Check the jobs and scheduled commands listed in `Technical Shape` | Start the queue worker or host scheduler, then run the focused command or package test |
 
 ## Quick Start

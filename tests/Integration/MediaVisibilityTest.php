@@ -3,10 +3,12 @@
 declare(strict_types=1);
 
 use Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction;
+use Capell\MediaLibrary\Data\MigrateSpatieMediaInput;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 test('upload defaults to public visibility, preserving historic behaviour', function (): void {
@@ -142,21 +144,34 @@ test('private media without temporary URL support does not fall back to public s
         ->and($media->hasResponsiveImages())->toBeFalse();
 });
 
-test('migration preserves a private source disk visibility instead of forcing public', function (): void {
+test('migration preserves source visibility on persisted curator assets and owner links', function (string $disk, string $visibility): void {
     Config::set('filesystems.disks.private_source', [
         'driver' => 'local',
         'root' => storage_path('app/private-source'),
         'visibility' => 'private',
     ]);
+    $owner = TestCuratorOwner::query()->create(['name' => 'Migrated owner']);
+    DB::table('media')->insert([
+        'model_type' => TestCuratorOwner::class,
+        'model_id' => $owner->getKey(),
+        'collection_name' => 'image',
+        'name' => 'source-image',
+        'file_name' => 'source.jpg',
+        'disk' => $disk,
+        'size' => 123,
+        'manipulations' => '[]', 'custom_properties' => '[]', 'generated_conversions' => '[]', 'responsive_images' => '[]',
+    ]);
 
-    $action = new MigrateSpatieMediaToCuratorAction;
+    $result = MigrateSpatieMediaToCuratorAction::run(new MigrateSpatieMediaInput);
+    $media = CuratorMedia::query()->sole();
 
-    $reflection = new ReflectionMethod($action, 'resolveSourceDiskVisibility');
-
-    expect($reflection->invoke($action, 'private_source'))->toBe('private')
-        ->and($reflection->invoke($action, 'public'))->toBe('public')
-        ->and($reflection->invoke($action, 'local'))->toBe('private');
-});
+    expect($result->warnings)->toBe([])
+        ->and($result->created)->toBe(1)
+        ->and($result->ownersUpdated)->toBe(1)
+        ->and($media->getAttribute('disk'))->toBe($disk)
+        ->and($media->getAttribute('visibility'))->toBe($visibility)
+        ->and($owner->refresh()->image_id)->toBe($media->getKey());
+})->with(['configured private' => ['private_source', 'private'], 'public' => ['public', 'public'], 'local private root' => ['local', 'private']]);
 
 function mediaVisibilityCuratorMedia(mixed $media): CuratorMedia
 {

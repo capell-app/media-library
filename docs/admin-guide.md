@@ -84,3 +84,30 @@ This guide is for editors who manage images and files and owners deciding how to
 | An image looks wrong after I replaced it | The page is showing a cached version            | Wait a moment, or ask whoever manages caching to clear the page                   |
 | A screen reader skips my image           | It has no alt text                              | Open the image and add **alt text**                                               |
 | I can't find an image I uploaded         | It is in a different folder, or named unclearly | Search by name, or rename it so it is easier to find                              |
+
+## Upload storage
+
+Interactive picker, library create and bulk uploads use the public disk and public
+visibility unless overridden through `capell.media_library.default_disk` and
+`capell.media_library.default_visibility`. Set these in the published
+`config/capell/media-library.php`; the application
+filesystem default may remain `local`. With `default_disk` left `null`, an explicit
+`CURATOR_DEFAULT_DISK` or a `curator.default_disk` override that differs from its
+inherited filesystem default wins; otherwise interactive uploads use `public`.
+Explicit Curator facade configuration and field/panel settings take precedence. Private uploads retain private filesystem visibility.
+`addMediaFromUploadedFile()` continues to choose `public` or `local` from visibility.
+
+Curator's signed `/curator/{path}` route reads the stored media row's disk. Keep
+`CURATOR_GLIDE_TOKEN` configured; an unsigned URL is rejected with 403. Public
+thumbnails use signed permanent URLs. Private thumbnails use signed expiring URLs;
+permanent URLs cannot serve private rows. Custom Glide `serverConfig()` source
+settings must read the disk used for the media rather than assume `storage/app/public`.
+
+Changing upload defaults does not move existing files or rewrite rows. Saved picker
+selections retain their recorded disk, including private `local` media; new selections
+are limited to the configured picker disk. The existing command
+`php artisan capell:media-migrate-to-curator --dry-run` previews migration from Spatie
+rows to Curator owner foreign keys; remove `--dry-run` to apply it. It preserves source
+disks and visibility and does not relocate existing Curator files. Existing private
+assets therefore require an explicit, separately reviewed relocation if they need to
+become public; changing a default never publishes them.

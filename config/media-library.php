@@ -70,16 +70,39 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Interactive upload disk
+    |--------------------------------------------------------------------------
+    |
+    | Use a disk here (e.g. S3), or leave null to honour an explicit Curator
+    | disk. Curator's inherited FILESYSTEM_DISK is not an interactive choice;
+    | without an override, interactive uploads use the public disk.
+    | Explicit Curator facade,
+    | picker and panel settings still override these package defaults.
+    |
+    | @var string|null
+    */
+    'default_disk' => env('CURATOR_DEFAULT_DISK'),
+
+    // Capture Curator's implicit fallback at config-build time, including when
+    // config is cached. Null means CURATOR_DEFAULT_DISK was explicitly set.
+    'inherited_filesystem_disk' => env('CURATOR_DEFAULT_DISK') === null
+        ? env('FILESYSTEM_DISK', 'public')
+        : null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Default upload visibility
     |--------------------------------------------------------------------------
     |
-    | Visibility applied to files stored via addMediaFromUploadedFile() when no
-    | explicit visibility is passed. Defaults to "public" to preserve historic
-    | behaviour. Set to "private" for disks that must not be world-readable.
+    | Visibility applied to interactive library uploads and files stored via
+    | addMediaFromUploadedFile() when no explicit visibility is passed. For
+    | interactive uploads, null honours curator.default_visibility with a public
+    | fallback. Programmatic attachments retain their historic public default.
+    | Set to "private" for disks that must not be world-readable.
     |
-    | @var 'public'|'private'
+    | @var 'public'|'private'|null
     */
-    'default_visibility' => 'public',
+    'default_visibility' => null,
 
     /*
     |--------------------------------------------------------------------------

@@ -29,7 +29,7 @@ return [
             'label' => 'Curator media table',
             'passed' => 'The "curator" media table is present.',
             'failed' => 'The "curator" media table is missing.',
-            'remediation' => 'Run the Awcodes Curator migrations to create the "curator" table.',
+            'remediation' => 'Run the Capell package migrations to create the "curator" table.',
         ],
         'owner_foreign_keys' => [
             'label' => 'Media usage owner foreign keys',

@@ -19,12 +19,13 @@
     },
     "whyItMatters": {
         "developers": {
-            "text": "The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions.",
+            "text": "The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions. Package migrations create the Curator storage table on fresh installs and upgrades. Existing Curator tables, keys and media are preserved, including on rollback.",
             "evidence": [
                 "src/Models/CuratorMedia.php",
                 "src/Support/CuratorMediaQueryFactory.php",
                 "src/Actions/MigrateSpatieMediaToCuratorAction.php",
-                "src/Actions/SanitizeSvgUploadAction.php"
+                "src/Actions/SanitizeSvgUploadAction.php",
+                "database/migrations/2026_10_15_000001_create_curator_table.php"
             ]
         },
         "teams": {

@@ -52,9 +52,9 @@
         }
     ],
     "database": {
-        "migrations": false,
+        "migrations": true,
         "settings": false,
-        "requiredTables": []
+        "requiredTables": ["curator"]
     },
     "commands": {
         "install": null,

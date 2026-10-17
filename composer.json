@@ -18,8 +18,11 @@
     "require": {
         "php": "^8.4",
         "awcodes/filament-curator": "^1.0|^5.0",
-        "capell-app/admin": "^1.0",
+        "capell-app/admin": "^1.0.71",
         "capell-app/core": "^1.0.66"
+    },
+    "conflict": {
+        "capell-app/frontend": "<1.0.72"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0|^10.0 || ^11.0",

@@ -11,6 +11,7 @@ use Capell\MediaLibrary\Jobs\CalculateMediaChecksumJob;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
+use Override;
 use Throwable;
 
 /**
@@ -310,6 +311,7 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
      * file with the sanitized markup. A failed sanitize removes the unsafe
      * blob so a dangerous SVG is never left served.
      */
+    #[Override]
     protected static function booted(): void
     {
         self::created(static function (self $media): void {
@@ -317,7 +319,7 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
             $mediaKey = $media->getKey();
 
             if (is_int($mediaKey) || is_string($mediaKey)) {
-                CalculateMediaChecksumJob::dispatch($mediaKey)->afterCommit();
+                dispatch(new CalculateMediaChecksumJob($mediaKey))->afterCommit();
             }
         });
     }
@@ -452,13 +454,7 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
     {
         $normalizedValue = strtolower($value);
 
-        foreach ($this->unsafePublicOutputMarkers() as $marker) {
-            if (str_contains($normalizedValue, $marker)) {
-                return true;
-            }
-        }
-
-        return false;
+        return array_any($this->unsafePublicOutputMarkers(), fn (string $marker): bool => str_contains($normalizedValue, $marker));
     }
 
     /**

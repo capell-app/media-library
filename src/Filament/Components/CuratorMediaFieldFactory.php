@@ -7,6 +7,7 @@ namespace Capell\MediaLibrary\Filament\Components;
 use Awcodes\Curator\Components\Forms\CuratorPicker;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Illuminate\Support\Str;
+use Override;
 
 /**
  * MediaFieldFactory implementation that returns a CuratorPicker Filament
@@ -16,6 +17,7 @@ use Illuminate\Support\Str;
  */
 final class CuratorMediaFieldFactory implements MediaFieldFactory
 {
+    #[Override]
     public function make(string $name): CuratorPicker
     {
         return CuratorPicker::make($this->resolveFieldName($name))

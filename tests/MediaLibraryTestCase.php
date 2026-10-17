@@ -85,28 +85,6 @@ class MediaLibraryTestCase extends AbstractTestCase
 
         throw_unless($app instanceof Application, RuntimeException::class, 'Expected media library test application to be available.');
 
-        $app->make(ConnectionResolverInterface::class)->getSchemaBuilder()->create('curator', function (Blueprint $table): void {
-            $table->id();
-            $table->string('disk');
-            $table->string('directory')->nullable();
-            $table->string('visibility')->default('public');
-            $table->string('name');
-            $table->string('path')->index();
-            $table->unsignedInteger('width')->nullable();
-            $table->unsignedInteger('height')->nullable();
-            $table->unsignedInteger('size')->nullable();
-            $table->string('type');
-            $table->string('ext');
-            $table->string('alt')->nullable();
-            $table->string('title')->nullable();
-            $table->text('description')->nullable();
-            $table->text('caption')->nullable();
-            $table->text('pretty_name')->nullable();
-            $table->text('exif')->nullable();
-            $table->longText('curations')->nullable();
-            $table->timestamps();
-        });
-
         $app->make(ConnectionResolverInterface::class)->getSchemaBuilder()->create('test_curator_owners', function (Blueprint $table): void {
             $table->id();
             $table->string('name');
