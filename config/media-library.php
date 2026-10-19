@@ -2,6 +2,12 @@
 
 declare(strict_types=1);
 
+// Preserve host configuration provenance before Laravel merges Curator's
+// vendor defaults. This marker is stored in the compiled config as well.
+$curatorConfigPath = config_path('curator.php');
+$curatorConfig = is_file($curatorConfigPath) ? require $curatorConfigPath : [];
+$hasExplicitCuratorDisk = is_array($curatorConfig) && array_key_exists('default_disk', $curatorConfig);
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -84,8 +90,8 @@ return [
     'default_disk' => env('CURATOR_DEFAULT_DISK'),
 
     // Capture Curator's implicit fallback at config-build time, including when
-    // config is cached. Null means CURATOR_DEFAULT_DISK was explicitly set.
-    'inherited_filesystem_disk' => env('CURATOR_DEFAULT_DISK') === null
+    // config is cached. Null means the host explicitly configured a Curator disk.
+    'inherited_filesystem_disk' => ! $hasExplicitCuratorDisk && env('CURATOR_DEFAULT_DISK') === null
         ? env('FILESYSTEM_DISK', 'public')
         : null,
 

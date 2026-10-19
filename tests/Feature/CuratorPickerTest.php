@@ -279,3 +279,33 @@ it('stores picker uploads on the environment Curator disk', function (): void {
         Storage::disk('public')->assertMissing($media->path);
     }
 });
+
+it('keeps an explicit local Curator config for real picker uploads', function (): void {
+    $configDirectory = sys_get_temp_dir() . '/capell-curator-config-' . bin2hex(random_bytes(6));
+    mkdir($configDirectory);
+    file_put_contents($configDirectory . '/curator.php', "<?php\ndeclare(strict_types=1);\nreturn ['default_disk' => 'local'];\n");
+    $originalConfigPath = app()->configPath();
+    try {
+        app()->useConfigPath($configDirectory);
+        config()->set('curator.default_disk', 'local');
+        config()->set('capell.media_library', require dirname(__DIR__, 2) . '/config/media-library.php');
+    } finally {
+        app()->useConfigPath($originalConfigPath);
+        unlink($configDirectory . '/curator.php');
+        rmdir($configDirectory);
+    }
+
+    Storage::fake('local');
+    $page = Page::factory()->create();
+    $form = Livewire::test(PageMediaPickerForm::class, ['record' => $page]);
+    $picker = pageMediaPickerField($form->instance());
+    expect($picker->getDiskName())->toBe('local');
+    Livewire::test('curator-panel', ['settings' => pageMediaPickerSettings($picker)])
+        ->set('panelData.files_to_add', [UploadedFile::fake()->image('explicit-local.png')])
+        ->callAction('addFiles')->assertHasNoErrors();
+
+    $media = CuratorMedia::query()->sole();
+    expect($media->disk)->toBe('local');
+    Storage::disk('local')->assertExists($media->path);
+    Storage::disk('public')->assertMissing($media->path);
+});

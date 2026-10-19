@@ -6,12 +6,14 @@ namespace Capell\MediaLibrary\Models;
 
 use Awcodes\Curator\Models\Media as BaseCuratorMedia;
 use Capell\Core\Contracts\Media\MediaContract;
+use Capell\MediaLibrary\Actions\RestrictMediaWriteAction;
 use Capell\MediaLibrary\Actions\SanitizeSvgUploadAction;
 use Capell\MediaLibrary\Jobs\CalculateMediaChecksumJob;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
 use Override;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -354,7 +356,14 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
 
             $sanitized = SanitizeSvgUploadAction::run($contents);
 
-            $storageDisk->put($path, $sanitized, $this->getAttribute('visibility') === 'private' ? 'private' : 'public');
+            $visibility = $this->getAttribute('visibility') === 'private' ? 'private' : 'public';
+            if ($visibility === 'private') {
+                throw_unless($storageDisk->setVisibility($path, 'private'), RuntimeException::class);
+            }
+
+            (new RestrictMediaWriteAction)->handle(
+                fn (): bool|string => $storageDisk->put($path, $sanitized, $visibility),
+            );
         } catch (Throwable) {
             // The blob could not be safely sanitized; remove it rather than
             // leave a potentially dangerous SVG in place.

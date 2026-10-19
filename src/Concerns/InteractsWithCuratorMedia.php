@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Concerns;
 
 use Capell\Core\Contracts\Media\MediaContract;
+use Capell\MediaLibrary\Actions\RestrictMediaWriteAction;
 use Capell\MediaLibrary\Actions\SanitizeSvgUploadAction;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Database\Eloquent\Model;
@@ -106,7 +107,9 @@ trait InteractsWithCuratorMedia
             $visibility = $this->resolveMediaVisibility($visibility);
             $disk = $visibility === 'private' ? 'local' : 'public';
 
-            $storedPath = $file->store('media', ['disk' => $disk, 'visibility' => $visibility]);
+            $storedPath = (new RestrictMediaWriteAction)->handle(
+                fn (): string|false => $file->store('media', ['disk' => $disk, 'visibility' => $visibility]),
+            );
 
             $originalName = $file->getClientOriginalName();
             $extension = $file->getClientOriginalExtension();
@@ -248,7 +251,6 @@ trait InteractsWithCuratorMedia
                 path: $temporaryPath,
                 originalName: $file->getClientOriginalName(),
                 mimeType: 'image/svg+xml',
-                error: null,
                 test: true,
             ),
             $temporaryPath,

@@ -11,9 +11,12 @@ use Capell\MediaLibrary\MediaLibraryServiceProvider;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\HostUploadForm;
 use Capell\MediaLibrary\Tests\Fixtures\LibraryUploadForm;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use League\Flysystem\Filesystem;
+use League\Flysystem\Local\LocalFilesystemAdapter;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Livewire;
 use Symfony\Component\Process\Process;
@@ -202,4 +205,65 @@ it('executes host uploader configureUsing save callbacks for real uploads', func
 
     expect($called)->toBeTrue();
     Storage::disk('public')->assertExists('host-storage/custom.png');
+});
+
+it('creates private local uploads restrictively before visibility is applied', function (string $extension): void {
+    $root = Storage::disk('public')->path('');
+    $observed = [];
+    $adapter = new class($root, $observed) extends LocalFilesystemAdapter
+    {
+        /** @param array<int, int> $observed */
+        public function __construct(private readonly string $rootPath, public array &$observed)
+        {
+            parent::__construct($rootPath);
+        }
+
+        #[Override]
+        public function setVisibility(string $path, string $visibility): void
+        {
+            clearstatcache(true, $this->rootPath . '/' . $path);
+            $this->observed[] = fileperms($this->rootPath . '/' . $path) & 0777;
+            parent::setVisibility($path, $visibility);
+        }
+    };
+    Storage::set('public', new FilesystemAdapter(
+        new Filesystem($adapter),
+        $adapter,
+        ['driver' => 'local', 'root' => $root],
+    ));
+    config()->set('capell.media_library.default_visibility', 'private');
+    $file = $extension === 'svg'
+        ? UploadedFile::fake()->createWithContent('private.svg', '<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>')
+        : UploadedFile::fake()->image('private.png');
+    $previous = umask(0022);
+    try {
+        Livewire::test(LibraryUploadForm::class)->set('data.file', [$file])->call('save')->assertHasNoErrors();
+        expect(umask())->toBe(0022);
+    } finally {
+        umask($previous);
+    }
+
+    expect($observed)->not->toBeEmpty();
+    foreach ($observed as $mode) {
+        expect($mode & 0077)->toBe(0);
+    }
+})->with(['png', 'svg']);
+
+it('preserves an explicit local Curator config in a fresh process without a Curator environment override', function (): void {
+    $process = new Process([
+        PHP_BINARY, '-d', 'memory_limit=1536M', 'vendor/bin/pest',
+        'packages/media-library/tests/Feature/CuratorPickerTest.php',
+        '--configuration=phpunit.xml', '--colors=never', '--compact',
+        '--filter=keeps an explicit local Curator config',
+    ], dirname(__DIR__, 4), [
+        'FILESYSTEM_DISK' => 'local',
+        'CURATOR_DEFAULT_DISK' => false,
+        'DB_CONNECTION' => 'sqlite',
+        'DB_DATABASE' => ':memory:',
+        'DB_URL' => '',
+    ]);
+    $process->setTimeout(120);
+    $process->run();
+
+    expect($process->getExitCode())->toBe(0, $process->getOutput() . $process->getErrorOutput());
 });

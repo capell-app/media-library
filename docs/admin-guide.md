@@ -92,8 +92,9 @@ visibility unless overridden through `capell.media_library.default_disk` and
 `capell.media_library.default_visibility`. Set these in the published
 `config/capell/media-library.php`; the application
 filesystem default may remain `local`. With `default_disk` left `null`, an explicit
-`CURATOR_DEFAULT_DISK` or a `curator.default_disk` override that differs from its
-inherited filesystem default wins; otherwise interactive uploads use `public`.
+`CURATOR_DEFAULT_DISK` or a `default_disk` entry in the host’s `config/curator.php`
+wins, including an explicit `local` matching `FILESYSTEM_DISK`. Without an explicit
+choice, interactive uploads use `public`.
 Explicit Curator facade configuration and field/panel settings take precedence. Private uploads retain private filesystem visibility.
 `addMediaFromUploadedFile()` continues to choose `public` or `local` from visibility.
 

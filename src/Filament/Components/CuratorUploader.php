@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Filament\Components;
 
 use Awcodes\Curator\Components\Forms\Uploader;
+use Capell\MediaLibrary\Actions\RestrictMediaWriteAction;
 use Capell\MediaLibrary\Support\VisibilityAwareTemporaryUpload;
 use Closure;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -30,9 +31,9 @@ final class CuratorUploader
                     return;
                 }
 
-                $uploader->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): mixed => $uploader->evaluate($save, [
+                $uploader->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): mixed => (new RestrictMediaWriteAction)->handle(fn (): mixed => $uploader->evaluate($save, [
                     'file' => new VisibilityAwareTemporaryUpload($file, $uploader->getVisibility()),
-                ]));
+                ])));
             },
             during: $during,
             isImportant: true,
