@@ -6,9 +6,11 @@ namespace Capell\MediaLibrary\Filament\Pages\Tables;
 
 use Capell\Admin\Filament\Components\Tables\Columns\DateColumn;
 use Capell\Admin\Filament\Contracts\TableConfigurator;
+use Capell\MediaLibrary\Actions\BuildMediaRepairPreviewAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthTotalsAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
+use Capell\MediaLibrary\Actions\UpdateMediaAltTextAction;
 use Capell\MediaLibrary\Data\MediaHealthIssuesData;
 use Capell\MediaLibrary\Data\MediaHealthTotalsData;
 use Capell\MediaLibrary\Enums\MediaHealthIssue;
@@ -25,6 +27,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
@@ -170,7 +173,7 @@ class MediaHealthTable implements TableConfigurator
      */
     public static function applyMetadataEdit(CuratorMedia $record, array $data): void
     {
-        $record->forceFill(['alt' => trim((string) ($data['alt'] ?? ''))])->save();
+        UpdateMediaAltTextAction::run(auth()->user(), $record, (string) ($data['alt'] ?? ''));
     }
 
     public static function applyGuardedDelete(CuratorMedia $record): int
@@ -285,7 +288,12 @@ class MediaHealthTable implements TableConfigurator
         return Action::make('edit_metadata')
             ->label(__('capell-media-library::package.media_health.row_actions.edit_metadata'))
             ->icon('heroicon-o-pencil-square')
-            ->visible(static fn (CuratorMedia $record): bool => self::rowPrimaryIssue($record) === MediaHealthIssue::MissingAlt)
+            ->authorize(static fn (): bool => MediaHealthAuthorization::canEditMetadata(auth()->user()))
+            ->visible(static fn (CuratorMedia $record): bool => self::rowPrimaryIssue($record) === MediaHealthIssue::MissingAlt
+                && MediaHealthAuthorization::canEditMetadata(auth()->user()))
+            ->modalContent(static fn (CuratorMedia $record): View => view('capell-media-library::admin.media-repair-preview', [
+                'preview' => BuildMediaRepairPreviewAction::run($record),
+            ]))
             ->schema([
                 TextInput::make('alt')
                     ->label(__('capell-media-library::package.media_health.row_actions.alt_field'))
@@ -351,7 +359,8 @@ class MediaHealthTable implements TableConfigurator
             ->visible(static function (CuratorMedia $record): bool {
                 $primaryIssue = self::rowPrimaryIssue($record);
 
-                return $primaryIssue === null
+                return ! $primaryIssue instanceof MediaHealthIssue
+                    || ($primaryIssue === MediaHealthIssue::MissingAlt && ! MediaHealthAuthorization::canEditMetadata(auth()->user()))
                     || ($primaryIssue === MediaHealthIssue::Unused && ! MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()));
             })
             ->modalSubmitAction(false)

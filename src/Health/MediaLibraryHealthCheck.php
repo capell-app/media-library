@@ -58,6 +58,7 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
             remediation: $backendRegistered
                 ? null
                 : $this->translation('backend.remediation'),
+            id: 'legacy.curator.media.backend.registered',
         );
     }
 
@@ -77,6 +78,7 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
             remediation: $tableExists
                 ? null
                 : $this->translation('curator_table.remediation'),
+            id: 'legacy.curator.media.table',
         );
     }
 
@@ -97,6 +99,7 @@ final class MediaLibraryHealthCheck implements ChecksExtensionHealth
             remediation: $configured
                 ? null
                 : $this->translation('owner_foreign_keys.remediation'),
+            id: 'legacy.media.usage.owner.foreign.keys',
         );
     }
 

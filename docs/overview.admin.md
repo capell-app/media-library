@@ -30,7 +30,7 @@ Go to **Media Library** in the admin, or open it from any image field while edit
 
 ## Media health and cleanup
 
-- **System > Media health** shows assets with missing alt text, an old `updated_at` timestamp, or no discovered owner reference. Every issue a record carries is reported: a record that is missing alt text, stale, and unused shows all three badges, and the header actions carry the per-issue totals. The timestamp column is labelled **Last updated** because that is exactly what it holds; no page-view or last-render signal is tracked.
+- **System > Media health** shows assets with missing alt text, an old `updated_at` timestamp, or no discovered owner reference. Every issue a record carries is reported: a record that is missing alt text, stale, and unused shows all three badges, and the header actions carry the per-issue totals. The timestamp column is labelled **Updated** because that is exactly what it holds; no page-view or last-render signal is tracked.
 - Report rows are cached for 60 seconds by default. A correction may therefore take up to the configured cache period to disappear from the report.
 - Media health is global rather than site-scoped. `View:MediaHealthPage` opens it; `Delete:MediaHealthPage` additionally reveals and authorises **Delete unused media**. Give destructive access only to operators who can assess usage across every site.
 - Cleanup rechecks current references inside the delete transaction. It retains a record that became attached after the report loaded and keeps a blob that another Curator row shares. If the configured disk is unavailable or file deletion fails, the database row is still removed and the blob can remain for a storage administrator to reconcile.

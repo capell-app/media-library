@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Capell\Admin\Support\CapellAdminManager;
 use Capell\Admin\Support\Extensions\ExtensionPageRegistry;
+use Capell\MediaLibrary\Actions\BuildMediaRepairPreviewAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthTotalsAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction;
@@ -17,11 +18,13 @@ use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\MediaHealthTestUser;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Dom\HTMLDocument;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -131,7 +134,7 @@ test('media health timestamp column is labelled as the field it renders', functi
     $columns = MediaHealthTable::configure(mediaHealthTableHarness())->getColumns();
 
     expect($columns)->toHaveKey('updated_at')
-        ->and($columns['updated_at']->getLabel())->toBe('Last updated')
+        ->and($columns['updated_at']->getLabel())->toBe(__('capell-media-library::package.media_health.last_updated'))
         ->and($columns['updated_at']->getLabel())->not->toBe(__('capell-admin::table.last_used'));
 });
 
@@ -176,7 +179,7 @@ test('each media health row exposes exactly one next action matching its primary
     TestCuratorOwner::query()->create(['name' => 'Missing Alt Owner', 'image_id' => $missingAltId]);
     TestCuratorOwner::query()->create(['name' => 'Stale Owner', 'image_id' => $staleId]);
 
-    $deleter = new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::DeleteOrphanMedia->value]);
+    $deleter = new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::DeleteOrphanMedia->value, MediaLibraryPermission::ViewMediaHealth->value, 'Update:Media']);
     auth()->setUser($deleter);
 
     $records = BuildMediaHealthQueryAction::run(null, false)->get()->keyBy('id');
@@ -214,6 +217,7 @@ test('an unused row falls back to inspect for an actor without destructive acces
 });
 
 test('the edit metadata row action corrects alt text', function (): void {
+    auth()->setUser(new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::ViewMediaHealth->value, 'Update:Media']));
     $mediaId = insertCuratorHealthMedia('row-edit-metadata', null, now());
     $record = CuratorMedia::query()->findOrFail($mediaId);
 
@@ -617,3 +621,64 @@ function mediaHealthSyntheticRecord(
 
     return $record;
 }
+
+test('alt repair previews identify the correct saved image and use a safe full size destination', function (): void {
+    Storage::fake('public');
+    auth()->setUser(new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::ViewMediaHealth->value, 'Update:Media']));
+    $urls = [];
+
+    foreach (['a7f19b', 'b20e4d'] as $name) {
+        $mediaId = insertCuratorHealthMedia($name, null, now());
+        Storage::disk('public')->put('media/' . $name . '.jpg', 'image fixture', 'public');
+        $record = CuratorMedia::query()->findOrFail($mediaId);
+        $preview = BuildMediaRepairPreviewAction::run($record);
+        $action = collect(MediaHealthTable::rowActions())->first(static fn (Action $action): bool => $action->getName() === 'edit_metadata');
+        throw_unless($action instanceof Action, RuntimeException::class, 'Expected metadata repair action.');
+        $content = $action->record($record)->getModalContent();
+        throw_unless($content instanceof View, RuntimeException::class, 'Expected an image preview in the repair modal.');
+        $dom = HTMLDocument::createFromString($content->render(), LIBXML_NOERROR, 'UTF-8');
+        expect($preview->url)->toBe($record->getUrl())
+            ->and($dom->querySelector('figure img')?->getAttribute('src'))->toBe($preview->url)
+            ->and($dom->querySelector('figcaption a')?->getAttribute('href'))->toBe($preview->url)
+            ->and($dom->querySelector('figcaption a')?->getAttribute('rel'))->toBe('noopener noreferrer')
+            ->and($dom->querySelector('figure img')?->getAttribute('alt'))->not->toBe('');
+        $urls[] = $preview->url;
+
+        expect(BuildMissingAltMediaQueryAction::run()->whereKey($mediaId)->exists())->toBeTrue();
+        MediaHealthTable::applyMetadataEdit($record, ['alt' => 'A useful description of this image']);
+        expect($record->refresh()->getAttribute('alt'))->toBe('A useful description of this image')
+            ->and(BuildMissingAltMediaQueryAction::run()->whereKey($mediaId)->exists())->toBeFalse();
+    }
+
+    expect($urls[0])->not->toBe($urls[1]);
+});
+
+test('alt repair fails closed for missing private and unsupported files without revealing paths', function (string $case): void {
+    Storage::fake('public');
+    auth()->setUser(new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::ViewMediaHealth->value, 'Update:Media']));
+    $id = insertCuratorHealthMedia('opaque-secret', null, now());
+    $record = CuratorMedia::query()->findOrFail($id);
+    if ($case !== 'missing') {
+        Storage::disk('public')->put('media/opaque-secret.jpg', 'fixture', $case === 'storage-private' ? 'private' : 'public');
+    }
+    if ($case === 'private') {
+        $record->setAttribute('visibility', 'private');
+    }
+    if ($case === 'unsupported') {
+        $record->setAttribute('type', 'image/svg+xml');
+    }
+    $preview = BuildMediaRepairPreviewAction::run($record);
+    $html = view('capell-media-library::admin.media-repair-preview', ['preview' => $preview])->render();
+    $dom = HTMLDocument::createFromString($html, LIBXML_NOERROR, 'UTF-8');
+    expect($preview->url)->toBeNull()
+        ->and($dom->querySelector('img'))->toBeNull()
+        ->and($dom->querySelector('a'))->toBeNull()
+        ->and($dom->querySelector('[role="status"]'))->not->toBeNull()
+        ->and($html)->not->toContain('opaque-secret', 'media/');
+})->with(['missing', 'private', 'storage-private', 'unsupported']);
+
+test('alt repair image access requires the metadata permission', function (): void {
+    auth()->setUser(new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::ViewMediaHealth->value]));
+    $record = CuratorMedia::query()->findOrFail(insertCuratorHealthMedia('denied-preview', null, now()));
+    expect(fn () => BuildMediaRepairPreviewAction::run($record))->toThrow(AuthorizationException::class);
+});

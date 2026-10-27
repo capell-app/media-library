@@ -11,6 +11,7 @@ use Capell\MediaLibrary\MediaLibraryServiceProvider;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\HostUploadForm;
 use Capell\MediaLibrary\Tests\Fixtures\LibraryUploadForm;
+use Capell\Tests\Support\Concerns\CreatesAdminUser;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
@@ -20,6 +21,8 @@ use League\Flysystem\Local\LocalFilesystemAdapter;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\Livewire;
 use Symfony\Component\Process\Process;
+
+uses(CreatesAdminUser::class);
 
 it('preserves configuration-only Curator storage choices', function (string $disk, string $visibility): void {
     config()->set('curator.default_disk', $disk);
@@ -97,6 +100,7 @@ it('writes replacement library uploads with configured visibility and retains un
 })->with(['private', 'public']);
 
 it('executes the real bulk upload action with configured visibility', function (string $visibility): void {
+    test()->actingAsAdmin();
     Gate::before(static fn (): bool => true);
     config()->set('capell.media_library.default_visibility', $visibility);
     Uploader::configureUsing(
@@ -126,6 +130,7 @@ it('executes the real bulk upload action with configured visibility', function (
 })->with(['private', 'public']);
 
 it('keeps explicit private storage from a host save callback in the bulk upload action', function (): void {
+    test()->actingAsAdmin();
     Gate::before(static fn (): bool => true);
     config()->set('capell.media_library.default_visibility', 'public');
     $stored = [];
@@ -159,6 +164,7 @@ it('keeps explicit private storage from a host save callback in the bulk upload 
 });
 
 it('mounts the bulk upload action when a host clears the save callback', function (): void {
+    test()->actingAsAdmin();
     Gate::before(static fn (): bool => true);
     Uploader::configureUsing(
         static fn (Uploader $uploader): Uploader => $uploader->saveUploadedFileUsing(null),

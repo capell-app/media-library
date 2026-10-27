@@ -59,9 +59,12 @@ Screenshot contract: `docs/screenshots.json`.
 
 ### Filament classes
 
+- `CuratorMultiUploadAction`
 - `CuratorMediaFieldFactory`
+- `CuratorUploader`
 - `MediaHealthPage`
 - `MediaHealthTable`
+- `CuratorMediaForm`
 
 ### Livewire components
 
@@ -73,6 +76,7 @@ Screenshot contract: `docs/screenshots.json`.
 
 ### Actions
 
+- `BuildMediaRepairPreviewAction`
 - `BuildDuplicateMediaQueryAction`
 - `BuildMediaHealthQueryAction`
 - `BuildMediaHealthTotalsAction`
@@ -86,13 +90,16 @@ Screenshot contract: `docs/screenshots.json`.
 - `DispatchMissingAltMediaSignalsAction`
 - `EnsureMediaLibraryPermissionsAction`
 - `MigrateSpatieMediaToCuratorAction`
+- `RestrictMediaWriteAction`
 - `SanitizeSvgUploadAction`
+- `UpdateMediaAltTextAction`
 
 ### Data objects
 
 - `MediaHealthIssuesData`
 - `MediaHealthTotalsData`
 - `MediaOwnerForeignKeyData`
+- `MediaRepairPreviewData`
 - `MediaUsageReferenceData`
 - `MigrateSpatieMediaInput`
 - `MigrateSpatieMediaResult`
@@ -128,6 +135,10 @@ Screenshot contract: `docs/screenshots.json`.
 ### Health checks
 
 - `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`
+
+### Blade views
+
+- `packages/media-library/resources/views/admin/media-repair-preview.blade.php`
 
 
 ## Media Handling Contract
@@ -181,6 +192,12 @@ Evidence and wording rules:
 
 1. Install the package: `composer require capell-app/media-library`.
 2. Open the package admin surface at `/admin/media-library/media-health` and confirm Media Library is available.
+
+## Upgrading
+
+No manual steps between minor versions.
+
+Read [CHANGELOG.md](CHANGELOG.md) before upgrading.
 
 ## Next Steps
 

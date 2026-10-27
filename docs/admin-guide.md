@@ -6,7 +6,7 @@ This guide is for editors who manage images and files and owners deciding how to
 
 ### How to upload and organise media
 
-1. Go to **Media Library**.
+1. Go to **Media**.
 2. Upload your images or files.
 3. Put them into a folder so they are easy to find later.
 4. Repeat for any related files you want grouped together.
@@ -14,12 +14,12 @@ This guide is for editors who manage images and files and owners deciding how to
 ### How to add alt text to an image
 
 1. Open the image in the library.
-2. Fill in its **alt text**: a short description of what the image shows.
+2. Fill in its **Alt text**: a short description of what the image shows.
 3. Save. Alt text helps visitors who use screen readers and improves search.
 
 ### How to find media instead of re-uploading
 
-1. In **Media Library**, use search to look for the file by name.
+1. In **Media**, use search to look for the file by name.
 2. If it already exists, reuse it rather than uploading a copy.
 
 ### How to replace a file
@@ -31,7 +31,7 @@ This guide is for editors who manage images and files and owners deciding how to
 ### How to pick media while editing a page
 
 1. While editing a page or widget, click an image field.
-2. The **media picker** opens.
+2. The media picker opens.
 3. Choose an existing image, or upload a new one, then save the page.
 
 ![An editor selects media through the picker embedded in a form.](screenshots/curator-media-field-inside-a-form.png)
@@ -47,7 +47,7 @@ This guide is for editors who manage images and files and owners deciding how to
 ### How to fix flagged media
 
 1. On **System > Media health**, filter the report to the issue you need to resolve.
-2. Use the main Media Library to update metadata or replace the relevant asset; the health report itself does not open or edit individual records.
+2. For missing alt text, use **Edit metadata** on the health row. This requires both global health-view access and the configured media-update permission; a global role alone does not grant this write. Read-only viewers can inspect the row and hand it to an authorised media editor. Use the main Media Library for other metadata or replacements.
 3. If you have destructive access, select confirmed unused records and use **Delete unused media**. That action only removes records that are unused by configured owner records.
 
 ![An administrator scans individual media health rows and their remediation state.](screenshots/media-health-table.png)
@@ -56,7 +56,7 @@ This guide is for editors who manage images and files and owners deciding how to
 
 ### Turn on first
 
-- **A simple folder structure and an alt-text habit.** Agree where things go and that every image gets alt text before the library grows large.
+- A simple folder structure and an alt-text habit. Agree where things go and that every image gets alt text before the library grows large.
 
 ### Add when needed
 
@@ -73,7 +73,7 @@ This guide is for editors who manage images and files and owners deciding how to
 
 | Role       | First useful screen                                                     |
 | ---------- | ----------------------------------------------------------------------- |
-| Editor     | **Media Library**: upload, organise, and add alt text                   |
+| Editor     | **Media**: upload, organise, and add alt text                           |
 | Site owner | **System > Media health**: review missing-alt, stale, and unused assets |
 
 ## Troubleshooting for editors
@@ -82,7 +82,7 @@ This guide is for editors who manage images and files and owners deciding how to
 | ---------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------- |
 | I have two copies of the same image      | A duplicate was uploaded instead of reused      | Search before uploading; review each asset's use before removing an unneeded copy |
 | An image looks wrong after I replaced it | The page is showing a cached version            | Wait a moment, or ask whoever manages caching to clear the page                   |
-| A screen reader skips my image           | It has no alt text                              | Open the image and add **alt text**                                               |
+| A screen reader skips my image           | It has no alt text                              | Open the image and add **Alt text**                                               |
 | I can't find an image I uploaded         | It is in a different folder, or named unclearly | Search by name, or rename it so it is easier to find                              |
 
 ## Upload storage
@@ -92,7 +92,7 @@ visibility unless overridden through `capell.media_library.default_disk` and
 `capell.media_library.default_visibility`. Set these in the published
 `config/capell/media-library.php`; the application
 filesystem default may remain `local`. With `default_disk` left `null`, an explicit
-`CURATOR_DEFAULT_DISK` or a `default_disk` entry in the host’s `config/curator.php`
+`CURATOR_DEFAULT_DISK` or a `default_disk` entry in the host's `config/curator.php`
 wins, including an explicit `local` matching `FILESYSTEM_DISK`. Without an explicit
 choice, interactive uploads use `public`.
 Explicit Curator facade configuration and field/panel settings take precedence. Private uploads retain private filesystem visibility.

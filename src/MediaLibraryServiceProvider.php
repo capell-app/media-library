@@ -22,6 +22,8 @@ use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
 use Capell\MediaLibrary\Filament\Schemas\CuratorMediaForm;
 use Capell\MediaLibrary\Livewire\CuratorPanel;
 use Capell\MediaLibrary\Models\CuratorMedia;
+use Capell\MediaLibrary\Policies\CuratorMediaPolicy;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Override;
@@ -52,6 +54,7 @@ final class MediaLibraryServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'capell-media-library');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'capell-media-library');
 
         if ($this->app->runningInConsole()) {
             $this->publishes([
@@ -66,6 +69,7 @@ final class MediaLibraryServiceProvider extends ServiceProvider
         $this->registerMediaBackend();
         $this->app->booted(static fn () => Livewire::component('curator-panel', CuratorPanel::class));
         CapellCore::registerModels([CuratorMedia::class]);
+        Gate::policy(CuratorMedia::class, CuratorMediaPolicy::class);
 
         if (class_exists(CapellAdmin::class)) {
             CapellAdmin::registerExtensionPage(self::$packageName, MediaHealthPage::class);
