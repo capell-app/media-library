@@ -70,6 +70,10 @@ Screenshot contract: `docs/screenshots.json`.
 
 - `CuratorPanel`
 
+### Policies
+
+- `CuratorMediaPolicy`
+
 ### Events
 
 - `MediaMissingAltDetected`
@@ -165,7 +169,7 @@ Evidence and wording rules:
 - Required packages: `capell-app/admin`, `capell-app/core`.
 - Admin navigation: declares `admin-page: MediaHealthPageContribution`; each Filament page or resource controls its own navigation visibility.
 - Admin/editor extensions: `configurator: MediaMigrationCommandContribution`.
-- Permissions: `View:MediaHealthPage`, `Delete:MediaHealthPage`.
+- Permissions: `View:MediaHealthPage`, `Delete:MediaHealthPage`; access also governed by package policies: `CuratorMediaPolicy`.
 - Public routes: none declared.
 - Database changes: package migrations are declared.
 - Config: `config/media-library.php`.
