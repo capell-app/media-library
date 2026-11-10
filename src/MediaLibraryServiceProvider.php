@@ -16,6 +16,7 @@ use Capell\Core\Support\Database\RuntimeSchemaState;
 use Capell\Core\Support\Packages\RegistersInstalledRuntime;
 use Capell\MediaLibrary\Actions\EnsureMediaLibraryPermissionsAction;
 use Capell\MediaLibrary\Console\MigrateSpatieToCuratorCommand;
+use Capell\MediaLibrary\Console\PurgeQuarantinedMediaCommand;
 use Capell\MediaLibrary\Filament\Actions\CuratorMultiUploadAction;
 use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
@@ -35,7 +36,7 @@ use RuntimeException;
  *   - capell.media.model  → CuratorMedia
  *   - capell.media.backend → 'curator'
  *   - MediaFieldFactory contract → CuratorMediaFieldFactory
- *   - MigrateSpatieToCuratorCommand (console only)
+ *   - MigrateSpatieToCuratorCommand, PurgeQuarantinedMediaCommand (console only)
  */
 final class MediaLibraryServiceProvider extends ServiceProvider
 {
@@ -76,7 +77,7 @@ final class MediaLibraryServiceProvider extends ServiceProvider
         }
 
         if ($this->app->runningInConsole()) {
-            $this->commands([MigrateSpatieToCuratorCommand::class]);
+            $this->commands([MigrateSpatieToCuratorCommand::class, PurgeQuarantinedMediaCommand::class]);
         }
     }
 

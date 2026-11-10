@@ -16,11 +16,13 @@ final class DiscoverOwnerForeignKeysAction
     use AsObject;
 
     /**
+     * @param  bool  $force  Discover even when auto-discovery is disabled. Destructive callers
+     *                       use this so an opt-out of reporting never hides a referencing column.
      * @return array<int, array{table: string, column: string}>
      */
-    public function handle(): array
+    public function handle(bool $force = false): array
     {
-        if (config('capell.media_library.auto_discover_owner_foreign_keys', true) !== true) {
+        if (! $force && config('capell.media_library.auto_discover_owner_foreign_keys', true) !== true) {
             return [];
         }
 

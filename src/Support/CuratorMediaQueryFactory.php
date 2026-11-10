@@ -103,6 +103,7 @@ final class CuratorMediaQueryFactory
             'null as curations',
             'null as created_at',
             'null as updated_at',
+            'null as deleted_at',
         ]);
     }
 

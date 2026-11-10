@@ -637,9 +637,9 @@ it('keeps media library docs and screenshots aligned with committed package asse
     $readme = (string) file_get_contents($packagePath . '/README.md');
 
     expect($readme)->toContain('does not generate responsive conversions')
-        ->and($readme)->toContain('The capture contract is [docs/screenshots.json](docs/screenshots.json)')
-        ->and($readme)->toContain('The committed screenshot captures show seeded media-health and Curator field workflows.')
-        ->and($readme)->toContain('Do not describe this package as generating responsive variants');
+        ->and($readme)->toContain('responsive variant generation must come from another package or host implementation')
+        ->and($readme)->toContain('docs/screenshots/media-health-page.png')
+        ->and($readme)->not->toContain('Evidence and wording rules');
 });
 
 /**

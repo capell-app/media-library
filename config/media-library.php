@@ -1,6 +1,9 @@
 <?php
 
 declare(strict_types=1);
+use Capell\MediaLibrary\Support\UsageResolvers\ContentGraphUsageResolver;
+use Capell\MediaLibrary\Support\UsageResolvers\OwnerForeignKeyUsageResolver;
+use Capell\MediaLibrary\Support\UsageResolvers\StructuredColumnUsageResolver;
 
 // Preserve host configuration provenance before Laravel merges Curator's
 // vendor defaults. This marker is stored in the compiled config as well.
@@ -73,6 +76,59 @@ return [
         'attachment_id',
         'document_id',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Usage reference resolvers
+    |--------------------------------------------------------------------------
+    |
+    | Classes implementing Capell\MediaLibrary\Contracts\MediaUsageReferenceResolver.
+    | Media is only quarantined or purged when none of them reports it as
+    | referenced. Add a resolver for any storage of media references that the
+    | built-in owner foreign key, content graph and structured column
+    | resolvers cannot see.
+    |
+    | @var list<class-string>
+    */
+    'usage_reference_resolvers' => [
+        OwnerForeignKeyUsageResolver::class,
+        ContentGraphUsageResolver::class,
+        StructuredColumnUsageResolver::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Structured reference columns
+    |--------------------------------------------------------------------------
+    |
+    | JSON, rich text and settings columns that may reference media by stored
+    | path, by id under a media-like key, or through a data-media-id attribute.
+    | Table names are base names and honour Capell's table prefix and aliases.
+    | Missing tables and columns are skipped.
+    |
+    | @var list<array{table: string, column: string}>
+    */
+    'structured_reference_columns' => [
+        ['table' => 'translations', 'column' => 'content'],
+        ['table' => 'translations', 'column' => 'meta'],
+        ['table' => 'pages', 'column' => 'meta'],
+        ['table' => 'sites', 'column' => 'meta'],
+        ['table' => 'layouts', 'column' => 'meta'],
+        ['table' => 'layouts', 'column' => 'containers'],
+        ['table' => 'layouts', 'column' => 'elements'],
+        ['table' => 'block_templates', 'column' => 'blocks'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quarantine retention
+    |--------------------------------------------------------------------------
+    |
+    | Unused media deleted from Media health is quarantined, not destroyed. The
+    | purge command removes it, and its files, once it has been quarantined for
+    | this many days and is still unreferenced.
+    */
+    'quarantine_retention_days' => 30,
 
     /*
     |--------------------------------------------------------------------------

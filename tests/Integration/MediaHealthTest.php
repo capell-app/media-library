@@ -244,7 +244,7 @@ test('the guarded delete row action removes only its own record and requires des
     auth()->setUser($deleter);
 
     expect(MediaHealthTable::applyGuardedDelete($record))->toBe(1)
-        ->and(DB::table('curator')->where('id', $unusedId)->exists())->toBeFalse();
+        ->and(DB::table('curator')->where('id', $unusedId)->whereNotNull('deleted_at')->exists())->toBeTrue();
 });
 
 test('review usage content is honest about missing owner-key configuration', function (): void {

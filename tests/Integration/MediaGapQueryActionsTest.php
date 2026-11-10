@@ -163,7 +163,7 @@ test('orphan media cleanup deletes only unused curator records', function (): vo
         ->and(DB::table('curator')->where('id', $usedMediaId)->exists())->toBeTrue()
         ->and(DB::table('curator')->where('id', $firstOrphanMediaId)->exists())->toBeBool()
         ->and(DB::table('curator')->where('id', $secondOrphanMediaId)->exists())->toBeBool()
-        ->and(DB::table('curator')->whereIn('id', [$firstOrphanMediaId, $secondOrphanMediaId])->count())->toBe(1);
+        ->and(DB::table('curator')->whereIn('id', [$firstOrphanMediaId, $secondOrphanMediaId])->whereNull('deleted_at')->count())->toBe(1);
 });
 
 test('orphan media cleanup bypasses cached report rows before deleting', function (): void {
@@ -202,10 +202,10 @@ test('orphan media cleanup accepts selected media ids but deletes only unused re
 
     expect($deleted)->toBe(1)
         ->and(DB::table('curator')->where('id', $usedMediaId)->exists())->toBeTrue()
-        ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse()
-        ->and(DB::table('curator')->where('id', $unselectedOrphanMediaId)->exists())->toBeTrue()
+        ->and(DB::table('curator')->where('id', $orphanMediaId)->whereNotNull('deleted_at')->exists())->toBeTrue()
+        ->and(DB::table('curator')->where('id', $unselectedOrphanMediaId)->whereNull('deleted_at')->exists())->toBeTrue()
         ->and(Storage::disk('public')->exists('media/selected-used.jpg'))->toBeTrue()
-        ->and(Storage::disk('public')->exists('media/selected-orphan.jpg'))->toBeFalse();
+        ->and(Storage::disk('public')->exists('media/selected-orphan.jpg'))->toBeTrue();
 });
 
 test('orphan media cleanup does nothing without known owner keys', function (): void {
@@ -215,7 +215,7 @@ test('orphan media cleanup does nothing without known owner keys', function (): 
         ->and(DB::table('curator')->count())->toBe(1);
 });
 
-test('orphan media cleanup deletes the underlying storage file', function (): void {
+test('orphan media cleanup quarantines the row and keeps the underlying storage file', function (): void {
     Storage::disk('public')->put('media/orphan-file.jpg', 'image-bytes');
 
     $orphanMediaId = insertCuratorGapMedia('orphan-with-file', 'media/orphan-file.jpg');
@@ -227,11 +227,11 @@ test('orphan media cleanup deletes the underlying storage file', function (): vo
     ]);
 
     expect($deleted)->toBe(1)
-        ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse()
-        ->and(Storage::disk('public')->exists('media/orphan-file.jpg'))->toBeFalse();
+        ->and(DB::table('curator')->where('id', $orphanMediaId)->whereNotNull('deleted_at')->exists())->toBeTrue()
+        ->and(Storage::disk('public')->exists('media/orphan-file.jpg'))->toBeTrue();
 });
 
-test('orphan media cleanup keeps files still referenced by another curator row', function (): void {
+test('orphan media cleanup quarantines a row that shares its file with a used row', function (): void {
     Storage::disk('public')->put('media/shared-file.jpg', 'image-bytes');
 
     $orphanMediaId = insertCuratorGapMedia('orphan-shared', 'media/shared-file.jpg');
@@ -244,12 +244,12 @@ test('orphan media cleanup keeps files still referenced by another curator row',
     ]);
 
     expect($deleted)->toBe(1)
-        ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse()
-        ->and(DB::table('curator')->where('id', $usedMediaId)->exists())->toBeTrue()
+        ->and(DB::table('curator')->where('id', $orphanMediaId)->whereNotNull('deleted_at')->exists())->toBeTrue()
+        ->and(DB::table('curator')->where('id', $usedMediaId)->whereNull('deleted_at')->exists())->toBeTrue()
         ->and(Storage::disk('public')->exists('media/shared-file.jpg'))->toBeTrue();
 });
 
-test('orphan media cleanup rolls back every row when the transaction fails', function (): void {
+test('orphan media cleanup rolls back every quarantine when the transaction fails', function (): void {
     Storage::disk('public')->put('media/rollback-first.jpg', 'first-image-bytes');
     Storage::disk('public')->put('media/rollback-second.jpg', 'second-image-bytes');
 
@@ -264,25 +264,21 @@ test('orphan media cleanup rolls back every row when the transaction fails', fun
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
     ]))->toThrow(RuntimeException::class);
 
-    expect(DB::table('curator')->whereIn('id', [$firstOrphanMediaId, $secondOrphanMediaId])->count())->toBe(2);
+    expect(DB::table('curator')->whereIn('id', [$firstOrphanMediaId, $secondOrphanMediaId])->whereNull('deleted_at')->count())->toBe(2);
 });
 
-test('orphan media cleanup still removes the database row when the storage disk is unavailable', function (): void {
+test('orphan media cleanup quarantines without touching the storage disk', function (): void {
     $orphanMediaId = insertCuratorGapMedia('storage-unavailable', 'media/storage-unavailable.jpg');
 
-    // The blob is never written, so Storage::disk('public') behaves the same
-    // way it would for a misconfigured or unreachable disk: every file
-    // operation fails. The row must still be removed; only the storage
-    // administrator's blob reconciliation is left undone (documented in
-    // docs/overview.md under "Media health and cleanup").
-    Storage::shouldReceive('disk')->with('public')->andThrow(new RuntimeException('Disk unavailable.'));
+    // Quarantine never contacts storage, so an unavailable disk cannot lose a file.
+    Storage::shouldReceive('disk')->never();
 
     $deleted = DeleteOrphanMediaRecordsAction::run(mediaGapDeleteActor(), [
         ['table' => 'test_curator_owners', 'column' => 'image_id'],
     ]);
 
     expect($deleted)->toBe(1)
-        ->and(DB::table('curator')->where('id', $orphanMediaId)->exists())->toBeFalse();
+        ->and(DB::table('curator')->where('id', $orphanMediaId)->whereNotNull('deleted_at')->exists())->toBeTrue();
 });
 
 function insertCuratorGapMedia(string $name, string $path): int

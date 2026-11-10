@@ -2,167 +2,52 @@
 
 <!-- prettier-ignore-start -->
 
-## What This Plugin Adds
-
-Media Library is an **Available**, **Schema-owning** Capell package in the **Capell Foundation** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
+## What It Does
 
 Media Library provides a Curator-backed asset library with shared picking, folders, search, alt text, rights metadata, and media health checks.
 
-Editors can upload, organize, find, describe, and reuse assets from one library. The media health page identifies missing alt text, stale assets, and unused records.
+- **Price and availability:** Check current availability and price on the [Capell Marketplace listing](https://capell.app/extensions/media-library).
+- **Licence:** Check the licence terms on the [Capell Marketplace listing](https://capell.app/extensions/media-library).
+- **Requires:** `PHP ^8.4`, `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.75`, `awcodes/filament-curator ^1.0|^5.0`.
+- **Install:** `composer require capell-app/media-library`.
 
-Status details:
+Editors can upload, organise, find, describe, and reuse assets from one library. The media health page identifies missing alt text, stale assets, and unused records.
 
-- Status: Available
-- Tier: free
-- Bundle: foundation
-- Composer package: `capell-app/media-library`
-- Namespace: `Capell\MediaLibrary`
-- Theme key: not applicable
-
-## Why It Matters
+## Who It Is For
 
 **For developers:** The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions. Package migrations create the Curator storage table on fresh installs and upgrades. Existing Curator tables, keys and media are preserved, including on rollback.
 
 **For teams:** Teams can reuse approved assets, improve alt-text coverage, and find media records that need cleanup from one admin workflow.
 
-## Screens And Workflow
+## Quick Start
 
-Screenshot contract: `docs/screenshots.json`.
+1. Install the package: `composer require capell-app/media-library`.
+2. Open the package admin surface at `/admin/media-library/media-health` and confirm Media Library is available.
+
+## Configure
+
+- **Configuration files:** `config/media-library.php`.
+
+## Limits And Pitfalls
+
+- Install the required Capell packages at the versions in `composer.json`: `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.75`.
+- Run migrations before opening package resources or public routes.
+
+## Screens And Workflow
 
 ![Media health page](docs/screenshots/media-health-page.png)
 
 ![Media health table](docs/screenshots/media-health-table.png)
 
-- Media health page (admin, required evidence).
-- Media health table (admin, required evidence).
-- Curator media field inside a form (admin, required evidence).
-- Migration command output or report (console, supplementary evidence).
-- Media health page with admin sidebar menu open (admin, supplementary evidence).
-
-## Technical Shape
-
-### Service providers
-
-- `Capell\MediaLibrary\MediaLibraryServiceProvider`
-
-### Config files
-
-- `packages/media-library/config/media-library.php`
-
-### Migrations
-
-- `packages/media-library/database/migrations/2026_10_15_000001_create_curator_table.php`
-
-### Models
-
-- `CuratorMedia`
-
-### Filament classes
-
-- `CuratorMultiUploadAction`
-- `CuratorMediaFieldFactory`
-- `CuratorUploader`
-- `MediaHealthPage`
-- `MediaHealthTable`
-- `CuratorMediaForm`
-
-### Livewire components
-
-- `CuratorPanel`
-
-### Policies
-
-- `CuratorMediaPolicy`
-
-### Events
-
-- `MediaMissingAltDetected`
-
-### Actions
-
-- `BuildMediaRepairPreviewAction`
-- `BuildDuplicateMediaQueryAction`
-- `BuildMediaHealthQueryAction`
-- `BuildMediaHealthTotalsAction`
-- `BuildMediaUsageDrilldownAction`
-- `BuildMissingAltMediaQueryAction`
-- `BuildMissingRightsMetadataQueryAction`
-- `BuildOrphanMediaQueryAction`
-- `DeleteOrphanMediaRecordsAction`
-- `DiscoverOwnerForeignKeysAction`
-- `ResolveOwnerForeignKeysAction`
-- `DispatchMissingAltMediaSignalsAction`
-- `EnsureMediaLibraryPermissionsAction`
-- `MigrateSpatieMediaToCuratorAction`
-- `RestrictMediaWriteAction`
-- `SanitizeSvgUploadAction`
-- `UpdateMediaAltTextAction`
-
-### Data objects
-
-- `MediaHealthIssuesData`
-- `MediaHealthTotalsData`
-- `MediaOwnerForeignKeyData`
-- `MediaRepairPreviewData`
-- `MediaUsageReferenceData`
-- `MigrateSpatieMediaInput`
-- `MigrateSpatieMediaResult`
-
-### Jobs
-
-- `CalculateMediaChecksumJob`
-
-### Manifest action API
-
-- `buildDuplicateMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction`
-- `buildMediaHealthQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction`
-- `buildMediaHealthTotals: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthTotalsAction`
-- `buildMediaUsageDrilldown: Capell\MediaLibrary\Actions\DashboardReports\BuildMediaUsageDrilldownAction`
-- `buildMissingAltMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMissingAltMediaQueryAction`
-- `buildMissingRightsMetadataQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction`
-- `buildOrphanMediaQuery: Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction`
-- `deleteOrphanMediaRecords: Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction`
-- `dispatchMissingAltMediaSignals: Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction`
-- `migrateSpatieMediaToCurator: Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction`
-
-### Console command classes
-
-- `MigrateSpatieToCuratorCommand`
-
-### Manifest contributions
-
-- `admin-page: Capell\MediaLibrary\Manifest\MediaHealthPageContribution`
-- `configurator: Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution`
-- `health-check: Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution`
-- `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`
-
-### Health checks
-
-- `Capell\MediaLibrary\Health\MediaLibraryHealthCheck`
-
-### Blade views
-
-- `packages/media-library/resources/views/admin/media-repair-preview.blade.php`
-
+- Media health page (admin).
+- Media health table (admin).
+- Curator media field inside a form (admin).
+- Migration command output or report (console).
+- Media health page with admin sidebar menu open (admin).
 
 ## Media Handling Contract
 
 Media Library wraps Awcodes Curator as the Capell media backend and does not generate responsive conversions. Curator-backed media exposes configured URLs and metadata; responsive variant generation must come from another package or host implementation.
-
-Evidence and wording rules:
-
-- The capture contract is [docs/screenshots.json](docs/screenshots.json).
-- The committed screenshot captures show seeded media-health and Curator field workflows.
-- Do not describe this package as generating responsive variants.
-- Keep migration and media-health claims tied to the Curator model, health page, table, field factory, and migration command.
-
-## Data Model
-
-- Required tables: `curator`.
-- Models: `CuratorMedia`.
-- Migration files: `2026_10_15_000001_create_curator_table.php`.
-- Migration impact: run host migrations through the package install flow before opening package surfaces.
-- Deletion/retention behaviour: Docs gap: migrations and manifest contributions do not prove a cascade, pruning command, or timed retention policy.
 
 ## Install Impact
 
@@ -176,13 +61,7 @@ Evidence and wording rules:
 - Settings: no package settings declared.
 - Queues or schedules: queue jobs `CalculateMediaChecksumJob`.
 - Cache tags: none declared.
-- Commands: console command classes detected: `MigrateSpatieToCuratorCommand`.
-
-## Common Pitfalls
-
-- Keep required Capell packages on compatible v4 releases: `capell-app/admin`, `capell-app/core`.
-- Run migrations before opening package resources or public routes.
-- Review package configuration before production-like verification: `config/media-library.php`.
+- Commands: console command classes detected: `MigrateSpatieToCuratorCommand`, `PurgeQuarantinedMediaCommand`.
 
 ## Troubleshooting
 
@@ -191,11 +70,6 @@ Evidence and wording rules:
 | Package surface is missing after install | Provider or manifest is not loaded | Confirm `capell.json`, package `composer.json`, and provider registration | Reinstall the package, refresh Composer autoload, and clear host caches |
 | Admin screen or command fails on missing table | Package migrations have not run | Check the tables listed in `Data Model` | Run host migrations and rerun the focused package test |
 | Background work does not run | Queue worker or declared schedule is not active | Check the jobs and scheduled commands listed in `Technical Shape` | Start the queue worker or host scheduler, then run the focused command or package test |
-
-## Quick Start
-
-1. Install the package: `composer require capell-app/media-library`.
-2. Open the package admin surface at `/admin/media-library/media-health` and confirm Media Library is available.
 
 ## Upgrading
 
@@ -211,11 +85,11 @@ Read [CHANGELOG.md](CHANGELOG.md) before upgrading.
 - [Admin guide](docs/admin-guide.md)
 - Configuration files: [`config/media-library.php`](config/media-library.php).
 - [Troubleshooting](#troubleshooting)
-- [Screenshot contract](docs/screenshots.json)
+- [Developer reference](docs/reference.md)
 - [Marketplace assets](docs/assets/marketplace/)
 - [Capell content language plan](../../docs/CONTENT_LANGUAGE_PLAN.md)
 - [Capell documentation design system](../../docs/DESIGN_SYSTEM.md)
 - [Capell and package ERD notes](../../docs/erd/capell-and-package-erds.md)
-- Related packages: [Media Ai](../media-ai/README.md), [Seo Suite](../seo-suite/README.md).
+- Related packages: [Media AI](../media-ai/README.md), [SEO Suite](../seo-suite/README.md).
 
 <!-- prettier-ignore-end -->

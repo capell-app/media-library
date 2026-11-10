@@ -92,7 +92,7 @@ class MediaHealthTable implements TableConfigurator
                     ->color('danger')
                     ->requiresConfirmation()
                     ->modalHeading(__('capell-media-library::package.media_health.delete_orphan_media_heading'))
-                    ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description'))
+                    ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description', ['days' => self::quarantineRetentionDays()]))
                     ->authorize(static fn (): bool => MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()))
                     ->visible(static fn (): bool => MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()))
                     ->action(function (EloquentCollection $records): void {
@@ -337,7 +337,7 @@ class MediaHealthTable implements TableConfigurator
             ->color('danger')
             ->requiresConfirmation()
             ->modalHeading(__('capell-media-library::package.media_health.delete_orphan_media_heading'))
-            ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description'))
+            ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description', ['days' => self::quarantineRetentionDays()]))
             ->authorize(static fn (): bool => MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()))
             ->visible(static fn (CuratorMedia $record): bool => self::rowPrimaryIssue($record) === MediaHealthIssue::Unused
                 && MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()))
@@ -486,7 +486,7 @@ class MediaHealthTable implements TableConfigurator
             ->color('danger')
             ->requiresConfirmation()
             ->modalHeading(__('capell-media-library::package.media_health.delete_orphan_media_heading'))
-            ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description'))
+            ->modalDescription(__('capell-media-library::package.media_health.delete_orphan_media_description', ['days' => self::quarantineRetentionDays()]))
             ->authorize(static fn (): bool => MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()))
             ->visible(static fn (): bool => $unusedTotal > 0 && MediaHealthAuthorization::canDeleteOrphanMedia(auth()->user()))
             ->action(static function () use ($unusedTotal): void {
@@ -499,11 +499,19 @@ class MediaHealthTable implements TableConfigurator
             });
     }
 
+    private static function quarantineRetentionDays(): int
+    {
+        $days = config('capell.media_library.quarantine_retention_days', 30);
+
+        return is_numeric($days) ? max(0, (int) $days) : 30;
+    }
+
     private static function notifyDeleted(int $deletedCount): void
     {
         Notification::make('capell-media-library-orphan-media-deleted')
             ->title(__('capell-media-library::package.media_health.orphan_media_deleted', [
                 'count' => $deletedCount,
+                'days' => self::quarantineRetentionDays(),
             ]))
             ->success()
             ->send();

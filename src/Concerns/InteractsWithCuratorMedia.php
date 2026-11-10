@@ -8,6 +8,7 @@ use Capell\Core\Contracts\Media\MediaContract;
 use Capell\MediaLibrary\Actions\RestrictMediaWriteAction;
 use Capell\MediaLibrary\Actions\SanitizeSvgUploadAction;
 use Capell\MediaLibrary\Models\CuratorMedia;
+use Capell\MediaLibrary\Support\SvgContentDetector;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Http\UploadedFile;
@@ -259,34 +260,14 @@ trait InteractsWithCuratorMedia
 
     private function isSvgUpload(UploadedFile $file): bool
     {
-        $sniffed = $this->sniffMimeType($file);
-
-        if ($sniffed !== null && str_contains($sniffed, 'svg')) {
-            return true;
-        }
-
-        // finfo frequently classifies SVG as text/plain or text/xml; fall back
-        // to a structural check on the stored bytes. Client extension/type are
-        // deliberately NOT trusted here (see M4) and used only as a last hint
-        // when the file content is genuinely XML.
-        $contents = $this->readUploadedFileContents($file);
-
-        if ($contents !== null) {
-            $prologue = ltrim(substr($contents, 0, 1024));
-
-            if (stripos($prologue, '<svg') !== false) {
-                return true;
-            }
-
-            $declaredSvg = strtolower($file->getClientOriginalExtension()) === 'svg'
-                || strtolower((string) $file->getMimeType()) === 'image/svg+xml';
-
-            if ($declaredSvg && stripos($contents, '<svg') !== false) {
-                return true;
-            }
-        }
-
-        return false;
+        // Any SVG signal routes the file through the sanitiser, which rejects
+        // anything it cannot clean. Sniffing only a leading window would let a
+        // long prologue carry unsanitised markup past this check.
+        return SvgContentDetector::isSvg(
+            $this->readUploadedFileContents($file) ?? '',
+            $file->getMimeType(),
+            $file->getClientOriginalExtension(),
+        );
     }
 
     /**
@@ -366,6 +347,7 @@ trait InteractsWithCuratorMedia
             return null;
         }
 
+        // capell-security-scan: local-stream reads an uploaded file's temporary path, checked with is_file() above
         $contents = @file_get_contents($path);
 
         return $contents === false ? null : $contents;

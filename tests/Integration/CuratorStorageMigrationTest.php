@@ -27,6 +27,9 @@ it('lists and assigns uploaded media to the configured tenant relationship on a 
     $migration = require __DIR__ . '/../../database/migrations/2026_10_15_000001_create_curator_table.php';
     throw_unless($migration instanceof Migration && method_exists($migration, 'up'), RuntimeException::class);
     $migration->up();
+    $quarantineMigration = require __DIR__ . '/../../database/migrations/2026_11_01_000001_add_deleted_at_to_curator_table.php';
+    throw_unless($quarantineMigration instanceof Migration && method_exists($quarantineMigration, 'up'), RuntimeException::class);
+    $quarantineMigration->up();
 
     $tenant = TestCuratorOwner::query()->create(['name' => 'Current team']);
     $otherTenant = TestCuratorOwner::query()->create(['name' => 'Other team']);

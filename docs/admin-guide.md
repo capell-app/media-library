@@ -48,7 +48,7 @@ This guide is for editors who manage images and files and owners deciding how to
 
 1. On **System > Media health**, filter the report to the issue you need to resolve.
 2. For missing alt text, use **Edit metadata** on the health row. This requires both global health-view access and the configured media-update permission; a global role alone does not grant this write. Read-only viewers can inspect the row and hand it to an authorised media editor. Use the main Media Library for other metadata or replacements.
-3. If you have destructive access, select confirmed unused records and use **Delete unused media**. That action only removes records that are unused by configured owner records.
+3. If you have destructive access, select confirmed unused records and use **Move unused media to quarantine**. That action hides records that nothing references (owner fields, content graph, rich text and widget settings) and keeps their files for the quarantine period. The scheduled `capell:media-purge-quarantined` command then deletes them for good, and restores any that became used again.
 
 ![An administrator scans individual media health rows and their remediation state.](screenshots/media-health-table.png)
 
