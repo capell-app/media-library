@@ -2,27 +2,25 @@
 
 <!-- prettier-ignore-start -->
 
-## What It Does
+Before you tidy up the media library, you want to know what is in it. The Media Health page lists files missing alt text, the short description a screen reader reads aloud, files nothing uses, and files not updated for 90 days. Each row shows the file's name, size and how many places use it.
 
-Media Library provides a Curator-backed asset library with shared picking, folders, search, alt text, rights metadata, and media health checks.
+You find the page in the Media part of the admin menu, and only the super admin role across all sites can open it. Media Library builds on Curator for uploads and the picker, and developers get a command that copies Spatie Media Library records into Curator and leaves the source files in place.
+
+From a row you can type alt text in Edit metadata, which needs permission to update media, or move the file to quarantine, which needs the delete permission. Quarantine hides a file from the library but keeps it stored, and after 30 days by default a daily clean-up deletes it for good if nothing uses it by then. That clean-up needs scheduled tasks running on your server. One button quarantines all the unused files at once, so missing descriptions and unused files can both be dealt with from the same list.
 
 - **Price and availability:** Check current availability and price on the [Capell Marketplace listing](https://capell.app/extensions/media-library).
 - **Licence:** Check the licence terms on the [Capell Marketplace listing](https://capell.app/extensions/media-library).
 - **Requires:** `PHP ^8.4`, `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.75`, `awcodes/filament-curator ^1.0|^5.0`.
 - **Install:** `composer require capell-app/media-library`.
 
-Editors can upload, organise, find, describe, and reuse assets from one library. The media health page identifies missing alt text, stale assets, and unused records.
-
-## Who It Is For
-
-**For developers:** The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions. Package migrations create the Curator storage table on fresh installs and upgrades. Existing Curator tables, keys and media are preserved, including on rollback.
-
-**For teams:** Teams can reuse approved assets, improve alt-text coverage, and find media records that need cleanup from one admin workflow.
-
 ## Quick Start
 
 1. Install the package: `composer require capell-app/media-library`.
 2. Open the package admin surface at `/admin/media-library/media-health` and confirm Media Library is available.
+
+## For Developers
+
+The Curator model and query factory give packages a shared media boundary, with migration and SVG sanitization handled by dedicated Actions. Package migrations create the Curator storage table on fresh installs and upgrades. Existing Curator tables, keys and media are preserved, including on rollback.
 
 ## Configure
 
@@ -32,6 +30,7 @@ Editors can upload, organise, find, describe, and reuse assets from one library.
 
 - Install the required Capell packages at the versions in `composer.json`: `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.75`.
 - Run migrations before opening package resources or public routes.
+- Keep the host Laravel scheduler running so package-registered schedules can execute: `capell:media-purge-quarantined (daily; manifest declared)`, `capell:media-rebuild-structured-usage (daily; manifest declared)`.
 
 ## Screens And Workflow
 
@@ -59,9 +58,9 @@ Media Library wraps Awcodes Curator as the Capell media backend and does not gen
 - Database changes: package migrations are declared.
 - Config: `config/media-library.php`.
 - Settings: no package settings declared.
-- Queues or schedules: queue jobs `CalculateMediaChecksumJob`.
+- Queues or schedules: scheduled commands `capell:media-purge-quarantined (daily; manifest declared)`, `capell:media-rebuild-structured-usage (daily; manifest declared)`; queue jobs `CalculateMediaChecksumJob`.
 - Cache tags: none declared.
-- Commands: console command classes detected: `MigrateSpatieToCuratorCommand`, `PurgeQuarantinedMediaCommand`.
+- Commands: console command classes detected: `BackfillMediaChecksumsCommand`, `MigrateSpatieToCuratorCommand`, `PurgeQuarantinedMediaCommand`, `RebuildStructuredMediaUsageCommand`.
 
 ## Troubleshooting
 
@@ -90,6 +89,6 @@ Read [CHANGELOG.md](CHANGELOG.md) before upgrading.
 - [Capell content language plan](../../docs/CONTENT_LANGUAGE_PLAN.md)
 - [Capell documentation design system](../../docs/DESIGN_SYSTEM.md)
 - [Capell and package ERD notes](../../docs/erd/capell-and-package-erds.md)
-- Related packages: [Media AI](../media-ai/README.md), [SEO Suite](../seo-suite/README.md).
+- Related packages: [Media AI](../media-ai/README.md), [SEO Checks](../seo-suite/README.md).
 
 <!-- prettier-ignore-end -->

@@ -6,6 +6,7 @@ namespace Capell\MediaLibrary\Filament\Pages;
 
 use BackedEnum;
 use Capell\Admin\Contracts\Diagnostics\SiteHealthSubpage;
+use Capell\Admin\Enums\NavigationGroupEnum;
 use Capell\Admin\Filament\Concerns\HasNavigationBadge;
 use Capell\Admin\Filament\Pages\SiteHealthPage;
 use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
@@ -55,9 +56,10 @@ class MediaHealthPage extends Page implements HasActions, HasTable, SiteHealthSu
     }
 
     #[Override]
-    public static function getNavigationGroup(): ?string
+    public static function getNavigationGroup(): NavigationGroupEnum
     {
-        return (string) (__('capell-admin::navigation.group_monitoring'));
+        // Site Health children must share its group to nest beneath it.
+        return SiteHealthPage::getNavigationGroup();
     }
 
     public static function table(Table $table): Table

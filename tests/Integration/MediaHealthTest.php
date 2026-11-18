@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 
 test('media_health_query_uses_curator_rows_and_known_owner_foreign_keys', function (): void {
     config()->set('capell.media_library.owner_foreign_keys', [
@@ -267,7 +268,7 @@ test('review usage content reports the configured owner references it can prove'
     $record = CuratorMedia::query()->findOrFail($mediaId);
 
     expect(MediaHealthTable::usageBreakdownContent($record)->toHtml())
-        ->toContain('test_curator_owners.image_id: 1');
+        ->toContain('test_curator_owners.image_id #1 (Usage Owner)');
 });
 
 test('inspect content honestly reports storage availability, including a disk that throws', function (): void {
@@ -681,4 +682,51 @@ test('alt repair image access requires the metadata permission', function (): vo
     auth()->setUser(new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::ViewMediaHealth->value]));
     $record = CuratorMedia::query()->findOrFail(insertCuratorHealthMedia('denied-preview', null, now()));
     expect(fn () => BuildMediaRepairPreviewAction::run($record))->toThrow(AuthorizationException::class);
+});
+
+test('the report filter lists duplicate files and files missing rights metadata in media health', function (): void {
+    Cache::flush();
+    Storage::fake('public');
+    auth()->setUser(new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::ViewMediaHealth->value]));
+    $firstCopy = insertCuratorHealthMedia('first-copy', 'Alt', now());
+    $secondCopy = insertCuratorHealthMedia('second-copy', 'Alt', now());
+    $unique = insertCuratorHealthMedia('unique', 'Alt', now());
+    DB::table('curator')->whereIn('id', [$firstCopy, $secondCopy])->update(['capell_checksum_sha256' => str_repeat('a', 64)]);
+    DB::table('curator')->where('id', $unique)->update([
+        'capell_checksum_sha256' => str_repeat('b', 64),
+        'exif' => json_encode(['copyright' => 'Example Studio']),
+    ]);
+
+    $duplicates = MediaHealthTable::applyReportFilter(BuildMediaHealthQueryAction::run(), 'duplicates')->pluck('curator.id')->map(static fn (mixed $id): int => is_numeric($id) ? (int) $id : 0)->all();
+    $missingRights = MediaHealthTable::applyReportFilter(BuildMediaHealthQueryAction::run(), 'missing_rights')->pluck('curator.id')->map(static fn (mixed $id): int => is_numeric($id) ? (int) $id : 0)->all();
+    $unfiltered = MediaHealthTable::applyReportFilter(BuildMediaHealthQueryAction::run(), null)->count();
+
+    expect($duplicates)->toEqualCanonicalizing([$firstCopy, $secondCopy])
+        ->and($missingRights)->toEqualCanonicalizing([$firstCopy, $secondCopy])
+        ->and($unfiltered)->toBe(3);
+});
+
+test('the usage review lists the records that reference the asset', function (): void {
+    config()->set('capell.media_library.owner_foreign_keys', [['table' => 'test_curator_owners', 'column' => 'image_id']]);
+    $mediaId = insertCuratorHealthMedia('referenced', 'Alt', now());
+    TestCuratorOwner::query()->create(['name' => 'Spring campaign', 'image_id' => $mediaId]);
+
+    $html = (string) MediaHealthTable::usageBreakdownContent(CuratorMedia::query()->findOrFail($mediaId));
+
+    expect($html)->toContain('test_curator_owners.image_id')->toContain('Spring campaign');
+});
+
+test('the media health page offers the duplicate files report as a table filter', function (): void {
+    Cache::flush();
+    auth()->setUser(new MediaHealthTestUser(global: true, permissions: [MediaLibraryPermission::ViewMediaHealth->value]));
+    $firstCopy = insertCuratorHealthMedia('first-copy', 'Alt', now());
+    $secondCopy = insertCuratorHealthMedia('second-copy', 'Alt', now());
+    $unique = insertCuratorHealthMedia('unique', 'Alt', now());
+    DB::table('curator')->whereIn('id', [$firstCopy, $secondCopy])->update(['capell_checksum_sha256' => str_repeat('a', 64)]);
+    DB::table('curator')->where('id', $unique)->update(['capell_checksum_sha256' => str_repeat('b', 64)]);
+
+    Livewire::test(MediaHealthPage::class)
+        ->filterTable('media_health_report', 'duplicates')
+        ->assertCanSeeTableRecords(CuratorMedia::query()->whereIn('id', [$firstCopy, $secondCopy])->get())
+        ->assertCanNotSeeTableRecords(CuratorMedia::query()->whereKey($unique)->get());
 });

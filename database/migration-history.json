@@ -1,4 +1,12 @@
 {
+    "create_curator_structured_usages_table": {
+        "names": [
+            "2026_11_14_000002_create_curator_structured_usages_table"
+        ],
+        "sha256": [
+            "31dff2304c9cdfd1c5f16b249bf5c0538b8fc61b846d62fb3b02d7373a7a0a08"
+        ]
+    },
     "create_curator_table": {
         "names": [
             "2026_10_15_000001_create_curator_table"

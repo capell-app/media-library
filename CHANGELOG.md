@@ -4,6 +4,8 @@ All notable changes to `capell-app/media-library` will be documented in this fil
 
 ## Unreleased
 
+- Changed the admin URL of the Media Library library resource from `/admin/curator-media` to `/admin/media-library/curator-media`, so every package route surface starts with the package segment. Bookmarks and Filament route names such as `filament.admin.resources.curator-media.index` become `filament.admin.resources.media-library.curator-media.index`. No redirects are provided from the old URLs.
+
 - Prepared package metadata and documentation for ongoing Capell 0.0.x package work.
 - Documented the `owner_foreign_keys` config shape and covered configured owner FK columns in both media health and orphan query tests.
 - Added configurable upload validation for `addMediaFromUploadedFile()` (`allowed_mime_types`, `allowed_extensions`, and `max_upload_kb`) so package callers cannot store unchecked executable or oversized uploads.

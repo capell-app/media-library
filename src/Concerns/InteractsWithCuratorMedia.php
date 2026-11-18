@@ -106,7 +106,7 @@ trait InteractsWithCuratorMedia
 
         try {
             $visibility = $this->resolveMediaVisibility($visibility);
-            $disk = $visibility === 'private' ? 'local' : 'public';
+            $disk = $this->resolveMediaDisk($visibility);
 
             $storedPath = (new RestrictMediaWriteAction)->handle(
                 fn (): string|false => $file->store('media', ['disk' => $disk, 'visibility' => $visibility]),
@@ -351,6 +351,24 @@ trait InteractsWithCuratorMedia
         $contents = @file_get_contents($path);
 
         return $contents === false ? null : $contents;
+    }
+
+    /**
+     * Public media goes to the configured upload disk when there is one. Private
+     * media always stays on the local disk: a configured disk is usually web
+     * served, where a private visibility flag does not keep a file unreadable.
+     *
+     * @param  'public'|'private'  $visibility
+     */
+    private function resolveMediaDisk(string $visibility): string
+    {
+        if ($visibility === 'private') {
+            return 'local';
+        }
+
+        $configured = config('capell.media_library.default_disk');
+
+        return is_string($configured) && $configured !== '' ? $configured : 'public';
     }
 
     /**

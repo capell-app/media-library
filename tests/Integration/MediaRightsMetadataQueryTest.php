@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction;
+use Capell\MediaLibrary\Filament\Schemas\CuratorMediaForm;
+use Capell\MediaLibrary\Models\CuratorMedia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -92,3 +94,18 @@ function insertCuratorRightsMetadataMedia(string $name, array|string|null $exif)
         'updated_at' => now(),
     ]);
 }
+
+test('the library form lets editors record the copyright holder and licence the report reads', function (): void {
+    $mediaId = insertCuratorRightsMetadataMedia('needs-rights', ['camera' => 'Test body']);
+    $fields = collect(CuratorMediaForm::getAdditionalInformationFormSchema())
+        ->map(static fn (object $field): string => method_exists($field, 'getName') ? (string) $field->getName() : '')
+        ->all();
+
+    expect($fields)->toContain('exif.copyright', 'exif.licence')
+        ->and(BuildMissingRightsMetadataQueryAction::run()->whereKey($mediaId)->exists())->toBeTrue();
+
+    $media = CuratorMedia::query()->findOrFail($mediaId);
+    $media->update(['exif' => [...($media->exif ?? []), 'copyright' => 'Example Studio', 'licence' => 'CC BY 4.0']]);
+
+    expect(BuildMissingRightsMetadataQueryAction::run()->whereKey($mediaId)->exists())->toBeFalse();
+});

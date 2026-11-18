@@ -54,7 +54,7 @@ final class OwnerForeignKeyUsageResolver implements MediaUsageReferenceResolver
      * @param  array<int, array{table: string, column: string}>|null  $passed
      * @return array<int, MediaOwnerForeignKeyData>
      */
-    private function ownerForeignKeys(?array $passed): array
+    public function ownerForeignKeys(?array $passed): array
     {
         $configured = config('capell.media_library.owner_foreign_keys', []);
 

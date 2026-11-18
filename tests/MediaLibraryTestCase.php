@@ -8,6 +8,7 @@ use Awcodes\Curator\CuratorServiceProvider;
 use Capell\Admin\Providers\AdminServiceProvider;
 use Capell\Admin\Providers\Filament\AdminPanelProvider;
 use Capell\Core\Facades\CapellCore;
+use Capell\MediaLibrary\Actions\DashboardReports\DiscoverOwnerForeignKeysAction;
 use Capell\MediaLibrary\MediaLibraryServiceProvider;
 use Capell\Tests\AbstractTestCase;
 use Illuminate\Contracts\Config\Repository;
@@ -29,6 +30,7 @@ class MediaLibraryTestCase extends AbstractTestCase
 
         parent::setUp();
 
+        DiscoverOwnerForeignKeysAction::flush();
         Storage::fake('public');
     }
 

@@ -7,14 +7,11 @@ namespace Capell\MediaLibrary\Actions\DashboardReports;
 use Capell\Core\Support\Database\RuntimeSchemaState;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Support\CuratorMediaQueryFactory;
-use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
-use Throwable;
 
 /**
  * @method static Builder<CuratorMedia> run(bool $useCache = true)
@@ -27,23 +24,17 @@ final class BuildDuplicateMediaQueryAction
     /**
      * Builds the duplicate-media report query.
      *
-     * Hashing reads each blob off disk, so the computed result is cached for
-     * the configured TTL rather than re-hashed on every request. Files are
-     * streamed (hashStorageFile) and processed in bounded chunks to keep
-     * memory flat on large libraries.
-     *
-     * NOTE: the durable fix is a persisted content_hash column on the curator
-     * table, populated on upload (and backfilled via a one-time command), so
-     * duplicates can be found with a single GROUP BY and no disk reads. That is
-     * a larger schema change; this action eliminates the unbounded synchronous
-     * full-library read on the request path in the meantime by chunking the
-     * scan and caching the result.
+     * Duplicates are found with one GROUP BY on the stored, indexed checksum, so
+     * no blob is read in the admin request. Rows without a checksum are not
+     * reported until `capell:media-backfill-checksums` has filled them in.
      *
      * @return Builder<CuratorMedia>
      */
     public function handle(bool $useCache = true): Builder
     {
-        if (! resolve(RuntimeSchemaState::class)->hasTable('curator')) {
+        $schemaState = resolve(RuntimeSchemaState::class);
+
+        if (! $schemaState->hasTable('curator') || ! $schemaState->hasColumn('curator', 'capell_checksum_sha256')) {
             return resolve(CuratorMediaQueryFactory::class)->emptyQuery($this->emptySelects());
         }
 
@@ -78,46 +69,37 @@ final class BuildDuplicateMediaQueryAction
      */
     private function computeDuplicateRows(): array
     {
-        /** @var Collection<int, array{id: int, duplicate_hash: string}> $candidates */
-        $candidates = new Collection;
+        $duplicateCounts = CuratorMedia::query()
+            ->whereNotNull('capell_checksum_sha256')
+            ->groupBy('capell_checksum_sha256')
+            ->havingRaw('count(*) > 1')
+            ->pluck(DB::raw('count(*)'), 'capell_checksum_sha256');
 
-        CuratorMedia::query()
-            ->select(['id', 'disk', 'path'])
-            ->whereNotNull('path')
-            ->where('path', '<>', '')
-            ->orderBy('id')
-            ->chunk(200, function (Collection $mediaChunk) use ($candidates): void {
-                foreach ($mediaChunk as $media) {
-                    $candidateRow = $this->duplicateCandidateRow($media);
+        if ($duplicateCounts->isEmpty()) {
+            return [];
+        }
 
-                    if ($candidateRow !== null) {
-                        $candidates->push($candidateRow);
-                    }
-                }
-            });
+        $rows = [];
 
-        return array_values($candidates
-            ->groupBy('duplicate_hash')
-            ->filter(static fn (Collection $duplicateRows): bool => $duplicateRows->count() > 1)
-            ->flatMap(static function (Collection $duplicateRows, string $duplicateHash): array {
-                $duplicateCount = $duplicateRows->count();
+        foreach ($duplicateCounts->keys()->chunk(500) as $hashes) {
+            CuratorMedia::query()
+                ->select(['id', 'capell_checksum_sha256'])
+                ->whereIn('capell_checksum_sha256', $hashes->all())
+                ->orderBy('capell_checksum_sha256')
+                ->orderBy('id')
+                ->each(function (CuratorMedia $media) use (&$rows, $duplicateCounts): void {
+                    $checksum = $media->getAttribute('capell_checksum_sha256');
+                    $hash = is_string($checksum) ? $checksum : '';
 
-                return $duplicateRows
-                    ->sortBy('id')
-                    ->map(static fn (array $row): array => [
-                        'id' => $row['id'],
-                        'duplicate_count' => $duplicateCount,
-                        'duplicate_hash' => $duplicateHash,
-                    ])
-                    ->values()
-                    ->all();
-            })
-            ->sortBy([
-                ['duplicate_hash', 'asc'],
-                ['id', 'asc'],
-            ])
-            ->values()
-            ->all());
+                    $rows[] = [
+                        'id' => $this->intValue($media->getKey()),
+                        'duplicate_count' => $this->intValue($duplicateCounts[$hash] ?? 0),
+                        'duplicate_hash' => $hash,
+                    ];
+                });
+        }
+
+        return $rows;
     }
 
     private function cacheTtlSeconds(): int
@@ -125,72 +107,6 @@ final class BuildDuplicateMediaQueryAction
         $ttlSeconds = config('capell.media_library.report_cache_ttl_seconds', 60);
 
         return is_numeric($ttlSeconds) ? max(0, (int) $ttlSeconds) : 60;
-    }
-
-    /**
-     * @return array{id: int, duplicate_hash: string}|null
-     */
-    private function duplicateCandidateRow(CuratorMedia $media): ?array
-    {
-        $hash = $this->contentHash($media);
-
-        if ($hash === null) {
-            return null;
-        }
-
-        return [
-            'id' => $this->intValue($media->getKey()),
-            'duplicate_hash' => $hash,
-        ];
-    }
-
-    private function contentHash(CuratorMedia $media): ?string
-    {
-        $disk = $media->getAttribute('disk');
-        $path = $media->getAttribute('path');
-
-        if (! is_string($disk) || $disk === '' || ! is_string($path) || $path === '') {
-            return null;
-        }
-
-        try {
-            $storageDisk = Storage::disk($disk);
-
-            if (! $storageDisk->exists($path)) {
-                return null;
-            }
-
-            return $this->hashStorageFile($storageDisk, $path);
-        } catch (Throwable) {
-            return null;
-        }
-    }
-
-    private function hashStorageFile(Filesystem $storageDisk, string $path): ?string
-    {
-        $stream = $storageDisk->readStream($path);
-
-        if (! is_resource($stream)) {
-            return null;
-        }
-
-        $hashContext = hash_init('sha256');
-
-        try {
-            while (! feof($stream)) {
-                $chunk = fread($stream, 1024 * 1024);
-
-                if ($chunk === false) {
-                    return null;
-                }
-
-                hash_update($hashContext, $chunk);
-            }
-
-            return hash_final($hashContext);
-        } finally {
-            fclose($stream);
-        }
     }
 
     /**

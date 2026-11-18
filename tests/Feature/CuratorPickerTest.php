@@ -7,13 +7,17 @@ use Awcodes\Curator\Facades\Curator;
 use Awcodes\Curator\Facades\Glide;
 use Awcodes\Curator\Resources\Media\Schemas\MediaForm;
 use Capell\Core\Models\Page;
+use Capell\Core\Support\TableName;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\PageMediaPickerForm;
+use Capell\MediaLibrary\Tests\Fixtures\SiteScopedMediaUser;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
 use Filament\Actions\Action;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -258,6 +262,39 @@ function pageMediaPickerSettings(CuratorPicker $picker): array
 
     return capell_string_keyed_array($settings);
 }
+
+it('keeps a saved reference and lists shared media once an accessible site uses it', function (): void {
+    $owner = TestCuratorOwner::query()->create(['name' => 'Uploader']);
+    $media = $owner->addMediaFromUploadedFile(UploadedFile::fake()->image('shared-with-b.jpg'), 'image');
+    throw_unless($media instanceof CuratorMedia, RuntimeException::class);
+    $otherPage = Page::factory()->create();
+    DB::table(TableName::resolve('content_graph_edges'))->insert([
+        'source_type' => 'page', 'source_id' => $otherPage->getKey(), 'target_type' => CuratorMedia::class, 'target_id' => $media->getKey(),
+        'kind' => 'uses_media', 'strength' => 'weak', 'source_package' => 'test', 'site_id' => $otherPage->site_id,
+        'created_at' => now(), 'updated_at' => now(),
+    ]);
+    $page = Page::factory()->create();
+    Relation::morphMap(['media-picker-user' => SiteScopedMediaUser::class]);
+    $this->actingAs(new SiteScopedMediaUser([$page->site_id]));
+
+    Livewire::test('curator-panel', ['settings' => ['diskName' => $media->disk]])
+        ->set('search', 'shared')
+        ->assertSet('files', []);
+
+    $page->update(['meta' => ['image_id' => $media->getKey()]]);
+
+    $form = Livewire::test(PageMediaPickerForm::class, ['record' => $page]);
+    $picker = pageMediaPickerField($form->instance());
+    $state = $picker->getState();
+    throw_unless(is_array($state), RuntimeException::class);
+    $form->call('save')->assertHasNoErrors();
+
+    Livewire::test('curator-panel', ['settings' => pageMediaPickerSettings($picker)])
+        ->set('search', 'shared')
+        ->assertSet('files', fn (array $files): bool => array_column($files, 'id') === [$media->getKey()]);
+    expect(array_column($state, 'id'))->toBe([$media->getKey()])
+        ->and(data_get($page->refresh()->meta, 'image_id'))->toBe($media->getKey());
+});
 
 it('stores picker uploads on the environment Curator disk', function (): void {
     $environmentDisk = getenv('CURATOR_DEFAULT_DISK');

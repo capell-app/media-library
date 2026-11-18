@@ -1,6 +1,6 @@
 {
     "name": "capell-app/media-library",
-    "description": "Curator-backed media foundation for Capell CMS: unified media field, media-health reporting, and Spatie-to-Curator migration.",
+    "description": "Media health report for Capell with alt text editing, unused media quarantine and Spatie Media Library migration, built on Curator.",
     "keywords": [
         "capell",
         "media",

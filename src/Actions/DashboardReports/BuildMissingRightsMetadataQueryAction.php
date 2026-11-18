@@ -28,15 +28,15 @@ final class BuildMissingRightsMetadataQueryAction
         }
 
         $normalizedMetadataKeys = $this->normalizeMetadataKeys($metadataKeys ?? $this->defaultMetadataKeys());
+        // Streamed in id order so only one chunk of exif payloads is in memory at a time; only ids are kept.
         $missingMediaIds = CuratorMedia::query()
             ->select(['id', 'exif'])
-            ->get()
+            ->lazyById(500)
             ->filter(fn (CuratorMedia $media): bool => $this->isMissingRightsMetadata(
                 $media->getAttribute('exif'),
                 $normalizedMetadataKeys,
             ))
-            ->pluck('id')
-            ->map(static fn (mixed $mediaId): int => is_numeric($mediaId) ? (int) $mediaId : 0)
+            ->map(static fn (CuratorMedia $media): int => is_numeric($media->getKey()) ? (int) $media->getKey() : 0)
             ->values()
             ->all();
 

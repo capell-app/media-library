@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Actions\DashboardReports;
 
 use Illuminate\Database\Schema\Builder;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Lorisleiva\Actions\Concerns\AsFake;
 use Lorisleiva\Actions\Concerns\AsObject;
@@ -14,6 +15,25 @@ final class DiscoverOwnerForeignKeysAction
 {
     use AsFake;
     use AsObject;
+
+    private const string CACHE_KEY = 'capell-media-library:owner-foreign-keys';
+
+    /**
+     * Discovery results for this process, keyed by the candidate column list.
+     *
+     * @var array<string, array<int, array{table: string, column: string}>>
+     */
+    private static array $resolved = [];
+
+    /**
+     * Drops the remembered discovery so the next call re-reads the schema. Called after
+     * migrations and by tests that change the schema or the candidate columns.
+     */
+    public static function flush(): void
+    {
+        self::$resolved = [];
+        Cache::forget(self::CACHE_KEY);
+    }
 
     /**
      * @param  bool  $force  Discover even when auto-discovery is disabled. Destructive callers
@@ -32,9 +52,30 @@ final class DiscoverOwnerForeignKeysAction
             return [];
         }
 
-        $schema = Schema::getConnection()->getSchemaBuilder();
+        $key = hash('xxh128', implode(',', $candidateColumns) . '|' . Schema::getConnection()->getDatabaseName());
 
-        return $this->discoverFromSchema($schema, $candidateColumns);
+        if (self::$resolved === []) {
+            $stored = Cache::get(self::CACHE_KEY);
+
+            if (is_array($stored)) {
+                /** @var array<string, array<int, array{table: string, column: string}>> $stored */
+                self::$resolved = $stored;
+            }
+        }
+
+        if (isset(self::$resolved[$key])) {
+            return self::$resolved[$key];
+        }
+
+        $discovered = $this->discoverFromSchema(Schema::getConnection()->getSchemaBuilder(), $candidateColumns);
+
+        // An unreadable schema returns [] and must be retried, so only a real discovery is remembered.
+        if ($discovered !== []) {
+            self::$resolved[$key] = $discovered;
+            Cache::forever(self::CACHE_KEY, self::$resolved);
+        }
+
+        return $discovered;
     }
 
     /**

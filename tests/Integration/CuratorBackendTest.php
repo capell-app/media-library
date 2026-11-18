@@ -209,3 +209,43 @@ test('upload rejects files larger than the configured media limit', function ():
     expect(CuratorMedia::query()->count())->toBe(0)
         ->and(Storage::disk('public')->allFiles())->toBe([]);
 });
+
+test('a public attachment is stored on the configured upload disk', function (): void {
+    Storage::fake('uploads-disk');
+    config()->set('capell.media_library.default_disk', 'uploads-disk');
+
+    $owner = TestCuratorOwner::query()->create(['name' => 'Configured Disk Owner']);
+    $owner->addMediaFromUploadedFile(UploadedFile::fake()->image('disk.jpg'), 'image');
+
+    $stored = CuratorMedia::query()->latest('id')->firstOrFail();
+
+    expect($stored->disk)->toBe('uploads-disk');
+
+    Storage::disk('uploads-disk')->assertExists((string) $stored->path);
+});
+
+test('a private attachment stays on the local disk whatever upload disk is configured', function (): void {
+    Storage::fake('uploads-disk');
+    Storage::fake('local');
+    config()->set('capell.media_library.default_disk', 'uploads-disk');
+
+    $owner = TestCuratorOwner::query()->create(['name' => 'Private Disk Owner']);
+    $owner->addMediaFromUploadedFile(UploadedFile::fake()->image('private.jpg'), 'image', 'private');
+
+    $stored = CuratorMedia::query()->latest('id')->firstOrFail();
+
+    expect($stored->disk)->toBe('local')
+        ->and(Storage::disk('uploads-disk')->allFiles())->toBe([]);
+
+    Storage::disk('local')->assertExists((string) $stored->path);
+});
+
+test('an attachment falls back to the public disk when no upload disk is configured', function (): void {
+    Storage::fake('public');
+    config()->set('capell.media_library.default_disk', null);
+
+    $owner = TestCuratorOwner::query()->create(['name' => 'Default Disk Owner']);
+    $owner->addMediaFromUploadedFile(UploadedFile::fake()->image('default.jpg'), 'image');
+
+    expect(CuratorMedia::query()->latest('id')->firstOrFail()->disk)->toBe('public');
+});

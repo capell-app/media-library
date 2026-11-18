@@ -1,0 +1,5 @@
+Before you tidy up the media library, you want to know what is in it. The Media Health page lists files missing alt text, the short description a screen reader reads aloud, files nothing uses, and files not updated for 90 days. Each row shows the file's name, size and how many places use it.
+
+You find the page in the Media part of the admin menu, and only the super admin role across all sites can open it. Media Library builds on Curator for uploads and the picker, and developers get a command that copies Spatie Media Library records into Curator and leaves the source files in place.
+
+From a row you can type alt text in Edit metadata, which needs permission to update media, or move the file to quarantine, which needs the delete permission. Quarantine hides a file from the library but keeps it stored, and after 30 days by default a daily clean-up deletes it for good if nothing uses it by then. That clean-up needs scheduled tasks running on your server. One button quarantines all the unused files at once, so missing descriptions and unused files can both be dealt with from the same list.

@@ -5,9 +5,10 @@
         "default": {
             "source": {
                 "ref": "HEAD",
-                "commit": "9af239219195dc78413190ea8ac182f8a11e1529",
+                "commit": "75da03a2f20f5e2d393264252f970af10765d77c",
                 "providers": {
-                    "MediaLibraryServiceProvider.php": "0ad1123d5c2e572774940e4f6410c3881b518f85b043e99fe2dca745cca174fe"
+                    "MediaLibraryServiceProvider.php": "c0a01f79d2a5c5cacf5da900076446ae2df85f212e0840519c0b2e9ff3d541f0",
+                    "Providers/MigrationMetadataServiceProvider.php": "a3acf58b7a8f5c4a398bbf37f0c99d0f4bd3c3172fef1e6a457faf7d46b610af"
                 },
                 "configure": null
             },
@@ -60,11 +61,46 @@
                             }
                         ],
                         "shared": false
+                    },
+                    "Capell\\MediaLibrary\\Listeners\\SyncStructuredMediaUsageOnModelWrite": {
+                        "concrete": [
+                            "<vendor>/laravel/framework/src/Illuminate/Container/Container.php",
+                            "Illuminate\\Container\\Container( $container,  $parameters): bound=Illuminate\\Foundation\\Application",
+                            {
+                                "abstract": "Capell\\MediaLibrary\\Listeners\\SyncStructuredMediaUsageOnModelWrite",
+                                "concrete": "Capell\\MediaLibrary\\Listeners\\SyncStructuredMediaUsageOnModelWrite"
+                            }
+                        ],
+                        "shared": true
+                    },
+                    "Capell\\MediaLibrary\\Support\\CuratorMediaListContext": {
+                        "concrete": [
+                            "<vendor>/laravel/framework/src/Illuminate/Container/Container.php",
+                            "Illuminate\\Container\\Container( $container,  $parameters): bound=Illuminate\\Foundation\\Application",
+                            {
+                                "abstract": "Capell\\MediaLibrary\\Support\\CuratorMediaListContext",
+                                "concrete": "Capell\\MediaLibrary\\Support\\CuratorMediaListContext"
+                            }
+                        ],
+                        "shared": true
+                    },
+                    "Capell\\MediaLibrary\\Support\\CuratorMediaSiteAccess": {
+                        "concrete": [
+                            "<vendor>/laravel/framework/src/Illuminate/Container/Container.php",
+                            "Illuminate\\Container\\Container( $container,  $parameters): bound=Illuminate\\Foundation\\Application",
+                            {
+                                "abstract": "Capell\\MediaLibrary\\Support\\CuratorMediaSiteAccess",
+                                "concrete": "Capell\\MediaLibrary\\Support\\CuratorMediaSiteAccess"
+                            }
+                        ],
+                        "shared": true
                     }
                 },
                 "commands": {
+                    "capell:media-backfill-checksums": "Capell\\MediaLibrary\\Console\\BackfillMediaChecksumsCommand",
                     "capell:media-migrate-to-curator": "Capell\\MediaLibrary\\Console\\MigrateSpatieToCuratorCommand",
-                    "capell:media-purge-quarantined": "Capell\\MediaLibrary\\Console\\PurgeQuarantinedMediaCommand"
+                    "capell:media-purge-quarantined": "Capell\\MediaLibrary\\Console\\PurgeQuarantinedMediaCommand",
+                    "capell:media-rebuild-structured-usage": "Capell\\MediaLibrary\\Console\\RebuildStructuredMediaUsageCommand"
                 },
                 "config-defaults": {
                     "media-library.php": {
@@ -228,12 +264,20 @@
                 ],
                 "config-values": {
                     "app.providers": [
-                        "Capell\\MediaLibrary\\MediaLibraryServiceProvider"
+                        "Capell\\MediaLibrary\\MediaLibraryServiceProvider",
+                        "Capell\\MediaLibrary\\Providers\\MigrationMetadataServiceProvider"
                     ],
                     "capell.media.backend": "curator",
                     "capell.media.model": "Capell\\MediaLibrary\\Models\\CuratorMedia"
                 },
                 "listeners": {
+                    "Illuminate\\Database\\Events\\MigrationsEnded": [
+                        [
+                            "<package>/src/Actions/DashboardReports/DiscoverOwnerForeignKeysAction.php",
+                            "static Capell\\MediaLibrary\\Actions\\DashboardReports\\DiscoverOwnerForeignKeysAction::flush():void source=d762223992ba40ce0602a8f80ff1fd5d",
+                            []
+                        ]
+                    ],
                     "eloquent.created: Capell\\MediaLibrary\\Models\\CuratorMedia": [
                         [
                             "<package>/src/Models/CuratorMedia.php",
@@ -256,6 +300,23 @@
                     ],
                     "eloquent.updating: Capell\\MediaLibrary\\Models\\CuratorMedia": [
                         "Awcodes\\Curator\\Observers\\MediaObserver@updating"
+                    ]
+                },
+                "listeners-positions": {
+                    "Illuminate\\Database\\Events\\MigrationsEnded": [
+                        {
+                            "after": [
+                                "<package:installer>/src/Providers/InstallerServiceProvider.php",
+                                "static Capell\\Installer\\Providers\\InstallerServiceProvider():void",
+                                []
+                            ],
+                            "before": null,
+                            "entry": [
+                                "<package>/src/Actions/DashboardReports/DiscoverOwnerForeignKeysAction.php",
+                                "static Capell\\MediaLibrary\\Actions\\DashboardReports\\DiscoverOwnerForeignKeysAction::flush():void source=d762223992ba40ce0602a8f80ff1fd5d",
+                                []
+                            ]
+                        }
                     ]
                 },
                 "livewire": {
@@ -351,10 +412,38 @@
                         "models": {
                             "CuratorMedia": "Capell\\MediaLibrary\\Models\\CuratorMedia"
                         }
+                    },
+                    "Capell\\Core\\Support\\Migration\\MigrationRootRegistry": {
+                        "roots": {
+                            "capell-app/media-library": [
+                                {
+                                    "root": "<package>/src/Providers/../../database/migrations",
+                                    "tables": {
+                                        "2026_11_14_000002_create_curator_structured_usages_table": "curator_structured_usages"
+                                    }
+                                }
+                            ]
+                        }
                     }
                 },
+                "schedule": [
+                    [
+                        "'<php>' 'artisan' capell:media-purge-quarantined",
+                        "15 3 * * *",
+                        null,
+                        true,
+                        null
+                    ],
+                    [
+                        "'<php>' 'artisan' capell:media-rebuild-structured-usage",
+                        "45 3 * * *",
+                        null,
+                        true,
+                        null
+                    ]
+                ],
                 "views": {
-                    "capell-media-library": ["<package>/src/../resources/views"]
+                    "capell-media-library": ["<package>/resources/views"]
                 }
             },
             "uninstalledSurfaces": {
@@ -520,11 +609,26 @@
                 ],
                 "config-values": {
                     "app.providers": [
-                        "Capell\\MediaLibrary\\MediaLibraryServiceProvider"
+                        "Capell\\MediaLibrary\\MediaLibraryServiceProvider",
+                        "Capell\\MediaLibrary\\Providers\\MigrationMetadataServiceProvider"
                     ]
                 },
+                "registries": {
+                    "Capell\\Core\\Support\\Migration\\MigrationRootRegistry": {
+                        "roots": {
+                            "capell-app/media-library": [
+                                {
+                                    "root": "<package>/src/Providers/../../database/migrations",
+                                    "tables": {
+                                        "2026_11_14_000002_create_curator_structured_usages_table": "curator_structured_usages"
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                },
                 "views": {
-                    "capell-media-library": ["<package>/src/../resources/views"]
+                    "capell-media-library": ["<package>/resources/views"]
                 }
             },
             "removableUninstalledSurfaces": [],

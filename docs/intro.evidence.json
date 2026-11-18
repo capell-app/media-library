@@ -1,0 +1,76 @@
+[
+    {
+        "claim": "Before you tidy up the media library, you want to know what is in it.",
+        "evidence": [
+            "src/Filament/Pages/MediaHealthPage.php",
+            "src/Filament/Pages/Tables/MediaHealthTable.php"
+        ]
+    },
+    {
+        "claim": "The Media Health page lists files missing alt text, the short description a screen reader reads aloud, files nothing uses, and files not updated for 90 days.",
+        "evidence": [
+            "src/Filament/Pages/MediaHealthPage.php",
+            "src/Manifest/MediaHealthPageContribution.php",
+            "src/Actions/DashboardReports/BuildMediaHealthQueryAction.php",
+            "src/Actions/DashboardReports/BuildMissingAltMediaQueryAction.php",
+            "src/Actions/DashboardReports/BuildOrphanMediaQueryAction.php",
+            "src/Enums/MediaHealthIssue.php",
+            "src/Filament/Pages/Tables/MediaHealthTable.php"
+        ]
+    },
+    {
+        "claim": "Each row shows the file's name, size and how many places use it.",
+        "evidence": ["src/Filament/Pages/Tables/MediaHealthTable.php"]
+    },
+    {
+        "claim": "You find the page in the Media part of the admin menu, and only the super admin role across all sites can open it.",
+        "evidence": [
+            "src/Filament/Pages/MediaHealthPage.php",
+            "src/Support/MediaHealthAuthorization.php"
+        ]
+    },
+    {
+        "claim": "Media Library builds on Curator for uploads and the picker, and developers get a command that copies Spatie Media Library records into Curator and leaves the source files in place.",
+        "evidence": [
+            "composer.json",
+            "src/Models/CuratorMedia.php",
+            "src/Filament/Components/CuratorUploader.php"
+        ]
+    },
+    {
+        "claim": "From a row you can type alt text in Edit metadata, which needs permission to update media, or move the file to quarantine, which needs the delete permission.",
+        "evidence": [
+            "src/Filament/Pages/Tables/MediaHealthTable.php",
+            "src/Support/MediaHealthAuthorization.php",
+            "src/Actions/UpdateMediaAltTextAction.php",
+            "resources/lang/en/package.php"
+        ]
+    },
+    {
+        "claim": "Quarantine hides a file from the library but keeps it stored, and after 30 days by default a daily clean-up deletes it for good if nothing uses it by then.",
+        "evidence": [
+            "src/Models/CuratorMedia.php",
+            "src/Actions/DashboardReports/DeleteOrphanMediaRecordsAction.php",
+            "database/migrations/2026_11_01_000001_add_deleted_at_to_curator_table.php",
+            "src/MediaLibraryServiceProvider.php",
+            "config/media-library.php",
+            "src/Console/PurgeQuarantinedMediaCommand.php",
+            "src/Actions/PurgeQuarantinedMediaAction.php"
+        ]
+    },
+    {
+        "claim": "That clean-up needs scheduled tasks running on your server.",
+        "evidence": [
+            "src/MediaLibraryServiceProvider.php",
+            "src/Console/PurgeQuarantinedMediaCommand.php"
+        ]
+    },
+    {
+        "claim": "One button quarantines all the unused files at once, so missing descriptions and unused files can both be dealt with from the same list.",
+        "evidence": [
+            "src/Filament/Pages/Tables/MediaHealthTable.php",
+            "resources/lang/en/package.php",
+            "src/Actions/DashboardReports/DeleteOrphanMediaRecordsAction.php"
+        ]
+    }
+]

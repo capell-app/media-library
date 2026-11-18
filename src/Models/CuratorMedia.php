@@ -9,6 +9,7 @@ use Capell\Core\Contracts\Media\MediaContract;
 use Capell\MediaLibrary\Actions\RestrictMediaWriteAction;
 use Capell\MediaLibrary\Actions\SanitizeSvgUploadAction;
 use Capell\MediaLibrary\Jobs\CalculateMediaChecksumJob;
+use Capell\MediaLibrary\Support\CuratorMediaSiteListScope;
 use Capell\MediaLibrary\Support\SvgContentDetector;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -320,6 +321,8 @@ final class CuratorMedia extends BaseCuratorMedia implements MediaContract
     #[Override]
     protected static function booted(): void
     {
+        self::addGlobalScope(new CuratorMediaSiteListScope);
+
         self::created(static function (self $media): void {
             $media->sanitizeStoredSvgInPlace();
             $mediaKey = $media->getKey();

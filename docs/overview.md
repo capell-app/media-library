@@ -2,6 +2,12 @@
 
 <!-- prettier-ignore-start -->
 
+Before you tidy up the media library, you want to know what is in it. The Media Health page lists files missing alt text, the short description a screen reader reads aloud, files nothing uses, and files not updated for 90 days. Each row shows the file's name, size and how many places use it.
+
+You find the page in the Media part of the admin menu, and only the super admin role across all sites can open it. Media Library builds on Curator for uploads and the picker, and developers get a command that copies Spatie Media Library records into Curator and leaves the source files in place.
+
+From a row you can type alt text in Edit metadata, which needs permission to update media, or move the file to quarantine, which needs the delete permission. Quarantine hides a file from the library but keeps it stored, and after 30 days by default a daily clean-up deletes it for good if nothing uses it by then. That clean-up needs scheduled tasks running on your server. One button quarantines all the unused files at once, so missing descriptions and unused files can both be dealt with from the same list.
+
 ## What it does for you
 
 Media Library is where you keep your images and files in one place and reuse them anywhere on your site. You upload media, organise it into folders, search instead of re-uploading, add alt text for accessibility, and pick media when filling in a page or widget.
@@ -18,6 +24,8 @@ Media Library is where you keep your images and files in one place and reuse the
 - Search the library to find media quickly.
 - Add alt text to an image.
 - Replace a file while keeping it in the same place.
+- Record the copyright holder and licence on an image, so it stops appearing in the missing rights report.
+- See only the media used on the sites you can work on, in the library and in the picker.
 - Pick existing media when editing a page.
 
 ## Where to find it
@@ -30,7 +38,10 @@ Go to **Media Library** in the admin, or open it from any image field while edit
 - SVG uploads are sanitised before use. Scriptable elements, event handlers, unsafe URLs, and external image references are removed. If an SVG stored through Curator cannot be sanitised, its blob is deleted; remove the resulting broken media record before trying a corrected file.
 - Do not treat the library as private storage by default. Package-managed uploads default to public visibility, and neither the file nor its Curator metadata is encrypted by this package. Configure private visibility and a private disk before accepting sensitive assets.
 - Private media is rendered through a five-minute temporary URL and does not expose a responsive `srcset`. If its disk cannot create temporary URLs, the package returns no public URL instead of falling back to the storage path. Verify the chosen disk before relying on private assets in a page.
-- Creating a record through the Curator model queues SHA-256 checksum metadata outside the upload request. Keep a queue worker running if an integration depends on that metadata. A missing record or unreadable blob is skipped without failing the upload, and there is no operator retry control.
+- Creating a record through the Curator model queues SHA-256 checksum metadata outside the upload request and retries a failed attempt. Media Health reads the stored checksum to list duplicate files, so run `capell:media-backfill-checksums` once for files uploaded before that and keep a queue worker running. A missing record or unreadable blob is skipped without failing the upload.
+- Media referenced only from layout, block or settings JSON counts as usage on the site that owns the record, so the media list and picker show it only to editors of that site. Saving or deleting the record updates the index; `capell:media-rebuild-structured-usage` runs daily, and once when the migration installs the index, to catch writes that skipped model events.
+- Folders are the directory a file was uploaded to: the library shows the directory and the picker can browse it. There is no screen for creating or moving folders.
+- Each file stores a focal point that renderers can read, but the library has no control for setting it yet, and the package does not generate responsive image variants.
 
 ## Media health and cleanup
 

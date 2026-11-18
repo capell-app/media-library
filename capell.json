@@ -6,7 +6,7 @@
     "kind": "package",
     "capellApiVersion": "^1.0",
     "version": "1.0.0",
-    "description": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
+    "description": "A Media Health page for finding images without alt text and unused files, with quarantine and a Spatie Media Library migration command.",
     "product": {
         "group": "Capell Essentials",
         "tier": "free",
@@ -20,7 +20,9 @@
         "conflicts": []
     },
     "providers": {
-        "metadata": [],
+        "metadata": [
+            "Capell\\MediaLibrary\\Providers\\MigrationMetadataServiceProvider"
+        ],
         "install": [],
         "runtime": ["Capell\\MediaLibrary\\MediaLibraryServiceProvider"],
         "admin": [],
@@ -49,12 +51,26 @@
             "type": "health-check",
             "class": "Capell\\MediaLibrary\\Manifest\\MediaLibraryHealthContribution",
             "checkClass": "Capell\\MediaLibrary\\Health\\MediaLibraryHealthCheck"
+        },
+        {
+            "type": "scheduled-job",
+            "class": "Capell\\MediaLibrary\\Manifest\\MediaLibraryScheduleContribution",
+            "command": "capell:media-purge-quarantined",
+            "name": "capell-media-purge-quarantined",
+            "frequency": "daily"
+        },
+        {
+            "type": "scheduled-job",
+            "class": "Capell\\MediaLibrary\\Manifest\\MediaLibraryScheduleContribution",
+            "command": "capell:media-rebuild-structured-usage",
+            "name": "capell-media-rebuild-structured-usage",
+            "frequency": "daily"
         }
     ],
     "database": {
         "migrations": true,
         "settings": false,
-        "requiredTables": ["curator"]
+        "requiredTables": ["curator", "curator_structured_usages"]
     },
     "commands": {
         "install": null,
@@ -76,18 +92,7 @@
     },
     "settings": [],
     "permissions": ["View:MediaHealthPage", "Delete:MediaHealthPage"],
-    "capabilities": [
-        "media-library",
-        "media-library-curator-backend",
-        "media-library-focal-points",
-        "media-library-missing-alt-signal",
-        "media-library-responsive-metadata",
-        "media-library-rights-metadata",
-        "media-library-duplicate-detection",
-        "media-library-usage-drilldown",
-        "media-library-usage-reports",
-        "media-library-orphan-cleanup"
-    ],
+    "capabilities": [],
     "security": {
         "riskTier": "standard",
         "publicSurface": {
@@ -163,33 +168,34 @@
         "privateDocsRequested": false
     },
     "marketplace": {
-        "summary": "Make Curator the media backbone of your Capell site. One consistent media field everywhere, a media-health dashboard that surfaces missing alt text and unused assets, and a safe, idempotent migration from Spatie Media Library.",
-        "problem": "Editors lose time finding the right asset when uploads are scattered across workflows.",
-        "outcome": "A site has a shared library where editors can find and reuse media.",
+        "summary": "See which images need alt text and which files nothing uses, and set unused ones aside before anything is deleted.",
+        "description": "The Media Health page lists files missing alt text, files nothing uses and files not updated for 90 days, with each one's name, size and use count. From a row you can edit the alt text or quarantine an unused file, and one button quarantines all unused media. A command moves a Spatie Media Library install onto Curator. Builds on Curator.",
+        "problem": "I don't know which images are missing alt text or never used, and I'm wary of deleting files without knowing.",
+        "outcome": "One list shows what needs alt text and what nothing uses, and unused files go to quarantine before they are deleted.",
         "faq": [
             {
-                "question": "Can assets be reused across content?",
-                "answer": "Yes. Editors can find and reuse assets from the shared library."
+                "question": "Who can open the Media Health page?",
+                "answer": "Only the super admin role across all sites. Editing alt text from a row needs permission to update media, and quarantining a file needs the delete permission."
             },
             {
-                "question": "How can editors organise media?",
-                "answer": "The library supports folders and search alongside asset descriptions."
+                "question": "Does quarantine delete a file?",
+                "answer": "Not straight away. Quarantine hides a file from the library and keeps it stored for 30 days by default. After that a daily background job deletes it for good if nothing has started using it."
             },
             {
-                "question": "Which issues does media health flag?",
-                "answer": "The health page identifies missing alt text, stale assets and unused records."
+                "question": "Can I bring in files from Spatie Media Library?",
+                "answer": "Yes. Developers get a command that copies Spatie Media Library records into Curator and leaves the source files where they are."
             }
         ],
         "screenshots": [
             {
                 "path": "docs/screenshots/media-health-page.png",
-                "alt": "Media Library health page listing images with missing alt text, stale files and unused assets",
-                "caption": "See which images lack alt text, which files are stale and which are unused, with where each one is used."
+                "alt": "Media health page listing three images with size, usage count and issue tags such as Missing alt text and Unused asset.",
+                "caption": "Each row names what is wrong with a file and offers a next step such as editing its metadata."
             },
             {
                 "path": "docs/screenshots/curator-media-field-inside-a-form.png",
-                "alt": "Choose media field inside the site edit form",
-                "caption": "Pick images from the shared media library inside ordinary editor forms."
+                "alt": "Site edit form with a Media section offering Add media buttons for image, logo and inverted logo, and an icon upload area.",
+                "caption": "Media fields in forms open the shared library, so editors pick a file instead of uploading it again."
             }
         ],
         "categories": ["admin", "foundation"]

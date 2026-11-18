@@ -7,8 +7,11 @@ namespace Capell\MediaLibrary\Filament\Pages\Tables;
 use Capell\Admin\Filament\Components\Tables\Columns\DateColumn;
 use Capell\Admin\Filament\Contracts\TableConfigurator;
 use Capell\MediaLibrary\Actions\BuildMediaRepairPreviewAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildDuplicateMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaHealthTotalsAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMediaUsageDrilldownAction;
+use Capell\MediaLibrary\Actions\DashboardReports\BuildMissingRightsMetadataQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Actions\UpdateMediaAltTextAction;
 use Capell\MediaLibrary\Data\MediaHealthIssuesData;
@@ -31,7 +34,6 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 use Throwable;
@@ -80,6 +82,10 @@ class MediaHealthTable implements TableConfigurator
                     ->label(__('capell-media-library::package.media_health.issue'))
                     ->options(self::issueOptions())
                     ->query(fn (Builder $query, array $data): Builder => self::applyIssueFilter($query, $data['value'] ?? null)),
+                SelectFilter::make('media_health_report')
+                    ->label(__('capell-media-library::package.media_health.report'))
+                    ->options(self::reportOptions())
+                    ->query(fn (Builder $query, array $data): Builder => self::applyReportFilter($query, $data['value'] ?? null)),
             ])
             ->headerActions(self::nextActions())
             ->recordActions(self::rowActions())
@@ -204,14 +210,21 @@ class MediaHealthTable implements TableConfigurator
         }
 
         $recordId = $record->getKey();
+
+        if (! is_int($recordId) && ! (is_string($recordId) && ctype_digit($recordId))) {
+            return self::htmlParagraph(__('capell-media-library::package.media_health.row_actions.usage_none_found'));
+        }
+
         $lines = [];
 
-        foreach ($knownOwnerForeignKeys as $ownerForeignKey) {
-            $count = DB::table($ownerForeignKey->table)->where($ownerForeignKey->column, $recordId)->count();
-
-            if ($count > 0) {
-                $lines[] = sprintf('%s.%s: %d', $ownerForeignKey->table, $ownerForeignKey->column, $count);
-            }
+        foreach (BuildMediaUsageDrilldownAction::run((int) $recordId) as $reference) {
+            $lines[] = sprintf(
+                '%s.%s #%s%s',
+                $reference->table,
+                $reference->column,
+                $reference->recordId,
+                $reference->label !== null ? ' (' . $reference->label . ')' : '',
+            );
         }
 
         if ($lines === []) {
@@ -263,6 +276,28 @@ class MediaHealthTable implements TableConfigurator
         }
 
         return null;
+    }
+
+    /**
+     * Narrows the list to the media a report names: identical files by stored checksum, or files carrying no
+     * copyright or licence metadata.
+     *
+     * @param  Builder<CuratorMedia>  $query
+     * @return Builder<CuratorMedia>
+     */
+    public static function applyReportFilter(Builder $query, mixed $report): Builder
+    {
+        $reportQuery = match ($report) {
+            'duplicates' => BuildDuplicateMediaQueryAction::run(),
+            'missing_rights' => BuildMissingRightsMetadataQueryAction::run(),
+            default => null,
+        };
+
+        if (! $reportQuery instanceof Builder) {
+            return $query;
+        }
+
+        return $query->whereIn($query->getModel()->getQualifiedKeyName(), $reportQuery->pluck('id')->all());
     }
 
     /**
@@ -515,6 +550,17 @@ class MediaHealthTable implements TableConfigurator
             ]))
             ->success()
             ->send();
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function reportOptions(): array
+    {
+        return [
+            'duplicates' => __('capell-media-library::package.media_health.reports.duplicates'),
+            'missing_rights' => __('capell-media-library::package.media_health.reports.missing_rights'),
+        ];
     }
 
     /**

@@ -46,6 +46,6 @@ it('persists a sha256 checksum without reading the blob in the upload request', 
     throw_unless(is_int($mediaKey) || is_string($mediaKey), RuntimeException::class, 'Expected a media key.');
     (new CalculateMediaChecksumJob($mediaKey))->handle();
 
-    expect(data_get($media->fresh()?->getAttribute('exif'), 'capell_checksum_sha256'))
+    expect($media->fresh()?->getAttribute('capell_checksum_sha256'))
         ->toBe(hash('sha256', 'checksum payload'));
 });

@@ -51,7 +51,7 @@ test('H2: field max size falls back to a sane default when config is non-numeric
 
 /*
  * H3 — the SVG sanitizer must handle <use> and <image>. Same-document
- * fragment references are kept; external/data references are stripped.
+ * fragment references on <use> are kept; every other reference is stripped.
  */
 test('H3: sanitizer strips external use/image references but keeps fragment refs', function (): void {
     $svg = <<<'SVG'
@@ -69,16 +69,17 @@ test('H3: sanitizer strips external use/image references but keeps fragment refs
 
     expect($sanitized)
         ->toContain('href="#safe-symbol"')
-        ->toContain('xlink:href="#allowed-image"')
+        // Core keeps fragment references on <use> only: an <image> fragment points at nothing it can render.
+        ->not->toContain('#allowed-image')
         ->not->toContain('evil.example.com')
         ->not->toContain('evil.svg')
         ->not->toContain('data:image')
         ->not->toContain('external.svg');
 
-    // The elements themselves remain; only the unsafe references are removed.
+    // <use> stays with its safe reference; Core's SVG policy does not allow <image> at all.
     expect($sanitized)
         ->toContain('<use')
-        ->toContain('<image');
+        ->not->toContain('<image');
 });
 
 test('H3: sanitizer still removes script tags and event handlers', function (): void {
@@ -95,6 +96,19 @@ test('H3: sanitizer still removes script tags and event handlers', function (): 
         ->not->toContain('<script')
         ->not->toContain('onload')
         ->toContain('href="#ok"');
+});
+
+test('H3: sanitizer removes comments, processing instructions and CDATA sections', function (): void {
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg"><!-- hidden --><?x payload?><text><![CDATA[<img src=x onerror=alert(1)>]]></text><rect width="1" height="1"/></svg>';
+
+    $sanitized = SanitizeSvgUploadAction::run($svg);
+
+    expect($sanitized)
+        ->not->toContain('<!--')
+        ->not->toContain('<?x')
+        ->not->toContain('CDATA')
+        ->not->toContain('onerror')
+        ->toContain('<rect');
 });
 
 /*

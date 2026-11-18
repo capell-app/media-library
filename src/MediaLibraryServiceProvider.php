@@ -8,22 +8,33 @@ use Awcodes\Curator\Actions\MultiUploadAction;
 use Awcodes\Curator\Config\CuratorManager;
 use Awcodes\Curator\Facades\Curator;
 use Awcodes\Curator\Models\Media as BaseCuratorMedia;
+use Awcodes\Curator\Resources\Media\MediaResource as BaseCuratorResource;
 use Awcodes\Curator\Resources\Media\Schemas\MediaForm;
 use Capell\Admin\Facades\CapellAdmin;
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\Core\Facades\CapellCore;
 use Capell\Core\Support\Database\RuntimeSchemaState;
 use Capell\Core\Support\Packages\RegistersInstalledRuntime;
+use Capell\MediaLibrary\Actions\DashboardReports\DiscoverOwnerForeignKeysAction;
 use Capell\MediaLibrary\Actions\EnsureMediaLibraryPermissionsAction;
+use Capell\MediaLibrary\Console\BackfillMediaChecksumsCommand;
 use Capell\MediaLibrary\Console\MigrateSpatieToCuratorCommand;
 use Capell\MediaLibrary\Console\PurgeQuarantinedMediaCommand;
+use Capell\MediaLibrary\Console\RebuildStructuredMediaUsageCommand;
 use Capell\MediaLibrary\Filament\Actions\CuratorMultiUploadAction;
 use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 use Capell\MediaLibrary\Filament\Pages\MediaHealthPage;
+use Capell\MediaLibrary\Filament\Resources\CuratorMediaResource;
 use Capell\MediaLibrary\Filament\Schemas\CuratorMediaForm;
+use Capell\MediaLibrary\Listeners\SyncStructuredMediaUsageOnModelWrite;
 use Capell\MediaLibrary\Livewire\CuratorPanel;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Policies\CuratorMediaPolicy;
+use Capell\MediaLibrary\Support\CuratorMediaListContext;
+use Capell\MediaLibrary\Support\CuratorMediaSiteAccess;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\Events\MigrationsEnded;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -70,6 +81,8 @@ final class MediaLibraryServiceProvider extends ServiceProvider
         $this->registerMediaBackend();
         $this->app->booted(static fn () => Livewire::component('curator-panel', CuratorPanel::class));
         CapellCore::registerModels([CuratorMedia::class]);
+        $this->app->scoped(CuratorMediaSiteAccess::class);
+        $this->app->scoped(CuratorMediaListContext::class);
         Gate::policy(CuratorMedia::class, CuratorMediaPolicy::class);
 
         if (class_exists(CapellAdmin::class)) {
@@ -77,8 +90,32 @@ final class MediaLibraryServiceProvider extends ServiceProvider
         }
 
         if ($this->app->runningInConsole()) {
-            $this->commands([MigrateSpatieToCuratorCommand::class, PurgeQuarantinedMediaCommand::class]);
+            $this->commands([
+                MigrateSpatieToCuratorCommand::class,
+                PurgeQuarantinedMediaCommand::class,
+                BackfillMediaChecksumsCommand::class,
+                RebuildStructuredMediaUsageCommand::class,
+            ]);
         }
+
+        // Owner foreign keys are discovered from the schema, so a migration invalidates the remembered result.
+        Event::listen(MigrationsEnded::class, DiscoverOwnerForeignKeysAction::flush(...));
+        $this->app->scoped(SyncStructuredMediaUsageOnModelWrite::class);
+        Event::listen(['eloquent.saved: *', 'eloquent.deleted: *'], static function (string $event, array $payload): void {
+            resolve(SyncStructuredMediaUsageOnModelWrite::class)->handle($event, $payload);
+        });
+
+        $this->callAfterResolving(Schedule::class, static function (Schedule $schedule): void {
+            $schedule->command('capell:media-purge-quarantined')
+                ->dailyAt('03:15')
+                ->withoutOverlapping()
+                ->onOneServer();
+
+            $schedule->command('capell:media-rebuild-structured-usage')
+                ->dailyAt('03:45')
+                ->withoutOverlapping()
+                ->onOneServer();
+        });
     }
 
     private function configPath(): string
@@ -126,6 +163,10 @@ final class MediaLibraryServiceProvider extends ServiceProvider
 
                 return $visibility === 'private' ? 'private' : 'public';
             });
+        }
+
+        if (config('curator.resource.resource') === BaseCuratorResource::class) {
+            config()->set('curator.resource.resource', CuratorMediaResource::class);
         }
 
         if (config('curator.resource.schemas.form') === MediaForm::class) {

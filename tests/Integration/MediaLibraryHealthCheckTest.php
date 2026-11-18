@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Capell\Core\Contracts\Media\MediaFieldFactory;
 use Capell\Core\Data\Diagnostics\DoctorCheckResultData;
+use Capell\MediaLibrary\Data\MediaOwnerForeignKeyData;
 use Capell\MediaLibrary\Filament\Components\CuratorMediaFieldFactory;
 use Capell\MediaLibrary\Health\MediaLibraryHealthCheck;
 use Capell\MediaLibrary\Models\CuratorMedia;
@@ -43,7 +44,13 @@ test('passes the owner foreign keys check when conventional columns are discover
 
     $check = new MediaLibraryHealthCheck;
 
-    expect($check->validOwnerForeignKeys())->toHaveCount(4)
+    // Core and other packages add their own media columns, so assert the fixture's
+    // conventional columns are found rather than pinning the total.
+    $discovered = collect($check->validOwnerForeignKeys())
+        ->map(static fn (MediaOwnerForeignKeyData $key): string => $key->table . '.' . $key->column)
+        ->all();
+
+    expect($discovered)->toContain('test_curator_owners.image_id', 'test_curator_owners.thumbnail_id')
         ->and($check->hasOwnerForeignKeysConfigured())->toBeTrue()
         ->and($check->ownerForeignKeysConfiguredCheck()->passed)->toBeTrue();
 });

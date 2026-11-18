@@ -6,7 +6,7 @@ Developer reference for `capell-app/media-library`. Start with the [README](../R
 
 ## Package Details
 
-Media Library is an **Available**, **Schema-owning** Capell package in the **Capell Essentials** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
+Media Library is an **Available** Capell package in the **Capell Essentials** product group. It ships as `capell-app/media-library` and extends these surfaces: admin.
 
 - Status: Available
 - Tier: free
@@ -19,6 +19,7 @@ Media Library is an **Available**, **Schema-owning** Capell package in the **Cap
 
 ### Service providers
 
+- `Capell\MediaLibrary\Providers\MigrationMetadataServiceProvider`
 - `Capell\MediaLibrary\MediaLibraryServiceProvider`
 
 ### Config files
@@ -29,6 +30,8 @@ Media Library is an **Available**, **Schema-owning** Capell package in the **Cap
 
 - `packages/media-library/database/migrations/2026_10_15_000001_create_curator_table.php`
 - `packages/media-library/database/migrations/2026_11_01_000001_add_deleted_at_to_curator_table.php`
+- `packages/media-library/database/migrations/2026_11_14_000001_add_checksum_to_curator_table.php`
+- `packages/media-library/database/migrations/2026_11_14_000002_create_curator_structured_usages_table.php`
 
 ### Models
 
@@ -41,6 +44,7 @@ Media Library is an **Available**, **Schema-owning** Capell package in the **Cap
 - `CuratorUploader`
 - `MediaHealthPage`
 - `MediaHealthTable`
+- `CuratorMediaResource`
 - `CuratorMediaForm`
 
 ### Livewire components
@@ -58,6 +62,10 @@ Media Library is an **Available**, **Schema-owning** Capell package in the **Cap
 ### Events
 
 - `MediaMissingAltDetected`
+
+### Listeners
+
+- `SyncStructuredMediaUsageOnModelWrite`
 
 ### Actions
 
@@ -79,6 +87,8 @@ Media Library is an **Available**, **Schema-owning** Capell package in the **Cap
 - `RestrictMediaWriteAction`
 - `SanitizeSvgUploadAction`
 - `UpdateMediaAltTextAction`
+- `RebuildStructuredMediaUsageAction`
+- `SyncStructuredMediaUsageAction`
 
 ### Data objects
 
@@ -108,10 +118,17 @@ Media Library is an **Available**, **Schema-owning** Capell package in the **Cap
 - `dispatchMissingAltMediaSignals: Capell\MediaLibrary\Actions\DispatchMissingAltMediaSignalsAction`
 - `migrateSpatieMediaToCurator: Capell\MediaLibrary\Actions\MigrateSpatieMediaToCuratorAction`
 
+### Scheduled commands
+
+- `capell:media-purge-quarantined (daily; manifest declared)`
+- `capell:media-rebuild-structured-usage (daily; manifest declared)`
+
 ### Console command classes
 
+- `BackfillMediaChecksumsCommand`
 - `MigrateSpatieToCuratorCommand`
 - `PurgeQuarantinedMediaCommand`
+- `RebuildStructuredMediaUsageCommand`
 
 ### Manifest contributions
 
@@ -119,6 +136,7 @@ Media Library is an **Available**, **Schema-owning** Capell package in the **Cap
 - `configurator: Capell\MediaLibrary\Manifest\MediaMigrationCommandContribution`
 - `health-check: Capell\MediaLibrary\Manifest\MediaLibraryHealthContribution`
 - `model: Capell\MediaLibrary\Manifest\CuratorMediaModelContribution`
+- `scheduled-job: Capell\MediaLibrary\Manifest\MediaLibraryScheduleContribution`
 
 ### Health checks
 
@@ -131,10 +149,11 @@ Media Library is an **Available**, **Schema-owning** Capell package in the **Cap
 
 ## Data Model
 
-- Required tables: `curator`.
+- Required tables: `curator`, `curator_structured_usages`.
 - Models: `CuratorMedia`.
-- Migration files: `2026_10_15_000001_create_curator_table.php`, `2026_11_01_000001_add_deleted_at_to_curator_table.php`.
+- Core record references in migrations: `sites via site_id`, `media via media_id`.
+- Migration files: `2026_10_15_000001_create_curator_table.php`, `2026_11_01_000001_add_deleted_at_to_curator_table.php`, `2026_11_14_000001_add_checksum_to_curator_table.php`, `2026_11_14_000002_create_curator_structured_usages_table.php`.
 - Migration impact: run host migrations through the package install flow before opening package surfaces.
-- Deletion/retention behaviour: Docs gap: migrations and manifest contributions do not prove a cascade, pruning command, or timed retention policy.
+- Deletion/retention behaviour: retention is scheduled through `capell:media-purge-quarantined` (daily; declared in the manifest).
 
 <!-- prettier-ignore-end -->

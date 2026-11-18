@@ -8,6 +8,7 @@ use Capell\MediaLibrary\Actions\DashboardReports\BuildOrphanMediaQueryAction;
 use Capell\MediaLibrary\Actions\DashboardReports\DeleteOrphanMediaRecordsAction;
 use Capell\MediaLibrary\Data\MediaUsageReferenceData;
 use Capell\MediaLibrary\Enums\MediaLibraryPermission;
+use Capell\MediaLibrary\Jobs\CalculateMediaChecksumJob;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\MediaHealthTestUser;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
@@ -283,7 +284,7 @@ test('orphan media cleanup quarantines without touching the storage disk', funct
 
 function insertCuratorGapMedia(string $name, string $path): int
 {
-    return DB::table('curator')->insertGetId([
+    $id = DB::table('curator')->insertGetId([
         'disk' => 'public',
         'directory' => 'media',
         'visibility' => 'public',
@@ -303,6 +304,11 @@ function insertCuratorGapMedia(string $name, string $path): int
         'created_at' => now(),
         'updated_at' => now(),
     ]);
+
+    // Duplicate detection reads the stored checksum, which the upload job computes.
+    (new CalculateMediaChecksumJob($id))->handle();
+
+    return $id;
 }
 
 function mediaGapDeleteActor(): MediaHealthTestUser

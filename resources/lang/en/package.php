@@ -19,6 +19,9 @@ return [
         'warning_message' => 'Message',
         'purged' => 'Media rows purged',
         'restored' => 'Media rows restored (still in use)',
+        'checksum_column_missing' => 'The curator table has no checksum column yet. Run the migrations first.',
+        'structured_usage_rebuilt' => '{0} No layout, block or settings records reference media.|{1} Indexed media usage for 1 record.|[2,*] Indexed media usage for :count records.',
+        'checksums_queued' => '{0} Every media file already has a checksum.|{1} Calculating the checksum for 1 media file.|[2,*] Calculating checksums for :count media files.',
         'failed_blob_deletes' => 'Files that could not be deleted',
         'failed_blob_deletes_heading' => 'These files could not be deleted. Their media rows are already purged, so remove the files from storage by hand:',
     ],
@@ -42,9 +45,20 @@ return [
             'remediation' => 'Set capell.media_library.owner_foreign_keys with each [table, column] referencing Curator media, and ensure each configured table and column exists.',
         ],
     ],
+    'curator_resource' => [
+        'model_label' => 'Media file',
+        'plural_model_label' => 'Media files',
+        'navigation_label' => 'Media library',
+    ],
     'permission_levels' => [
         'delete' => 'Destructive access',
         'read' => 'Read access',
+    ],
+    'fields' => [
+        'copyright' => 'Copyright holder',
+        'copyright_help' => 'Who owns this file, for example the photographer or agency. Media Health lists files with no copyright or licence recorded.',
+        'licence' => 'Licence',
+        'licence_help' => 'The terms it may be used under, for example CC BY 4.0 or licensed for this site.',
     ],
     'media_health' => [
         'repair_preview_image' => 'Image being described',
@@ -62,6 +76,11 @@ return [
             'unused' => 'Review unused assets (:count)',
         ],
         'last_updated' => 'Updated',
+        'report' => 'Report',
+        'reports' => [
+            'duplicates' => 'Duplicate files',
+            'missing_rights' => 'Missing copyright or licence',
+        ],
         'issue' => 'Issue',
         'issues_column' => 'Issues',
         'issues' => [
