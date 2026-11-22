@@ -8,9 +8,9 @@ You find the page in the Media part of the admin menu, and only the super admin 
 
 From a row you can type alt text in Edit metadata, which needs permission to update media, or move the file to quarantine, which needs the delete permission. Quarantine hides a file from the library but keeps it stored, and after 30 days by default a daily clean-up deletes it for good if nothing uses it by then. That clean-up needs scheduled tasks running on your server. One button quarantines all the unused files at once, so missing descriptions and unused files can both be dealt with from the same list.
 
-- **Price and availability:** Check current availability and price on the [Capell Marketplace listing](https://capell.app/extensions/media-library).
-- **Licence:** Check the licence terms on the [Capell Marketplace listing](https://capell.app/extensions/media-library).
-- **Requires:** `PHP ^8.4`, `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.75`, `awcodes/filament-curator ^1.0|^5.0`.
+- **Price and availability:** Check current availability and price on the [Capell Marketplace listing](https://capell.app/marketplace/extensions/media-library).
+- **Licence:** Check the licence terms on the [Capell Marketplace listing](https://capell.app/marketplace/extensions/media-library).
+- **Requires:** `PHP ^8.4`, `capell-app/admin ^1.0.78`, `capell-app/core ^1.0.79`, `awcodes/filament-curator ^1.0|^5.0`.
 - **Install:** `composer require capell-app/media-library`.
 
 ## Quick Start
@@ -28,7 +28,7 @@ The Curator model and query factory give packages a shared media boundary, with 
 
 ## Limits And Pitfalls
 
-- Install the required Capell packages at the versions in `composer.json`: `capell-app/admin ^1.0.71`, `capell-app/core ^1.0.75`.
+- Install the required Capell packages at the versions in `composer.json`: `capell-app/admin ^1.0.78`, `capell-app/core ^1.0.79`.
 - Run migrations before opening package resources or public routes.
 - Keep the host Laravel scheduler running so package-registered schedules can execute: `capell:media-purge-quarantined (daily; manifest declared)`, `capell:media-rebuild-structured-usage (daily; manifest declared)`.
 

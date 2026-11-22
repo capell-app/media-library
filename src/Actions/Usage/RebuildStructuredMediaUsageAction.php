@@ -24,7 +24,9 @@ final class RebuildStructuredMediaUsageAction
     /** @return int The number of source records indexed. */
     public function handle(): int
     {
-        if (! resolve(RuntimeSchemaState::class)->hasTable(SyncStructuredMediaUsageAction::TABLE)) {
+        $usageTable = SyncStructuredMediaUsageAction::table();
+
+        if (! resolve(RuntimeSchemaState::class)->hasTable($usageTable)) {
             return 0;
         }
 
@@ -34,13 +36,13 @@ final class RebuildStructuredMediaUsageAction
             $tables[$table][] = $column;
         }
 
-        DB::table(SyncStructuredMediaUsageAction::TABLE)->whereNotIn('source_table', array_keys($tables))->delete();
+        DB::table($usageTable)->whereNotIn('source_table', array_keys($tables))->delete();
         $count = 0;
 
         foreach ($tables as $table => $columns) {
-            DB::table(SyncStructuredMediaUsageAction::TABLE)
+            DB::table($usageTable)
                 ->where('source_table', $table)
-                ->whereNotExists(static fn ($source) => $source->select(DB::raw('1'))->from($table)->whereColumn($table . '.id', SyncStructuredMediaUsageAction::TABLE . '.source_id'))
+                ->whereNotExists(static fn ($source) => $source->select(DB::raw('1'))->from($table)->whereColumn($table . '.id', $usageTable . '.source_id'))
                 ->delete();
 
             DB::table($table)->select('id')->where(static function ($query) use ($columns): void {

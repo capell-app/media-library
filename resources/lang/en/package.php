@@ -65,7 +65,7 @@ return [
         'repair_preview_full_size' => 'Open full-size image (new tab)',
         'repair_preview_unavailable' => 'Image preview unavailable. The file may be missing, private or unsupported.',
         'delete_orphan_media' => 'Move unused media to quarantine',
-        'delete_orphan_media_description' => 'Selected media that nothing references is hidden from the library and kept in quarantine for :days days, then deleted for good by the scheduled purge. Anything still used by a page, layout, rich text or other content is kept. Restore it from quarantine before the purge if you change your mind.',
+        'delete_orphan_media_description' => 'Selected media that nothing references is hidden from the library and kept in quarantine for :days days, then deleted for good by the scheduled purge. Anything still used by a page, layout, rich text or other content is kept. There is no restore screen, so only move media you are sure you no longer need.',
         'delete_orphan_media_heading' => 'Move selected unused media to quarantine?',
         'read_only_prompt' => 'You can review media health, but deleting unused media requires destructive access.',
         'delete_all_unused_media' => 'Move all unused media to quarantine (:count)',

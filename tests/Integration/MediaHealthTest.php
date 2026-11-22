@@ -18,15 +18,19 @@ use Capell\MediaLibrary\Filament\Pages\Tables\MediaHealthTable;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Tests\Fixtures\MediaHealthTestUser;
 use Capell\MediaLibrary\Tests\Fixtures\TestCuratorOwner;
+use Carbon\CarbonImmutable;
 use Dom\HTMLDocument;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Filters\BaseFilter;
 use Filament\Tables\Table;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
@@ -87,6 +91,26 @@ test('media health query reports every issue a single record carries', function 
         ->toBe(['missing_alt', 'stale'])
         ->and(mediaHealthIssueValues(mediaHealthRecord($records, $usedStaleMediaId)))
         ->toBe(['stale']);
+});
+
+test('media health stale filter works when the app resolves now() as immutable', function (): void {
+    // The production app calls Date::use(CarbonImmutable::class), so now() is immutable there.
+    Date::use(CarbonImmutable::class);
+
+    try {
+        config()->set('capell.media_library.stale_after_days', 30);
+
+        $staleMediaId = insertCuratorHealthMedia('immutable-stale', 'Stale alt text', now()->subDays(31));
+        insertCuratorHealthMedia('immutable-fresh', 'Fresh alt text', now());
+
+        $filter = MediaHealthTable::configure(mediaHealthTableHarness())->getFilter('media_health_issue');
+        assert($filter instanceof BaseFilter);
+        $query = $filter->apply(CuratorMedia::query(), ['value' => MediaHealthIssue::Stale->value]);
+
+        expect($query->pluck('id')->all())->toBe([$staleMediaId]);
+    } finally {
+        Date::use(Carbon::class);
+    }
 });
 
 test('media health issue totals count every issue on overlapping records', function (): void {

@@ -21,7 +21,6 @@ function hardeningPngBytes(): string
     ob_start();
     imagepng($image);
     $bytes = (string) ob_get_clean();
-    imagedestroy($image);
 
     return $bytes;
 }

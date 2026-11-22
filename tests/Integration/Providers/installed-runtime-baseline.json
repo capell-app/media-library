@@ -5,9 +5,9 @@
         "default": {
             "source": {
                 "ref": "HEAD",
-                "commit": "75da03a2f20f5e2d393264252f970af10765d77c",
+                "commit": "5f5007838b0b9cef43f039729ff1bc69715e018c",
                 "providers": {
-                    "MediaLibraryServiceProvider.php": "c0a01f79d2a5c5cacf5da900076446ae2df85f212e0840519c0b2e9ff3d541f0",
+                    "MediaLibraryServiceProvider.php": "66139126ec3e260c01d55c3155555319efb76a870f234cf762d0972ab43313ad",
                     "Providers/MigrationMetadataServiceProvider.php": "a3acf58b7a8f5c4a398bbf37f0c99d0f4bd3c3172fef1e6a457faf7d46b610af"
                 },
                 "configure": null
@@ -271,6 +271,15 @@
                     "capell.media.model": "Capell\\MediaLibrary\\Models\\CuratorMedia"
                 },
                 "listeners": {
+                    "Illuminate\\Auth\\Events\\Authenticated": [
+                        [
+                            "<package>/src/MediaLibraryServiceProvider.php",
+                            "static Capell\\MediaLibrary\\MediaLibraryServiceProvider():void source=49aa860aa6bf7cbfd4e2ac604e16615a",
+                            {
+                                "synced": false
+                            }
+                        ]
+                    ],
                     "Illuminate\\Database\\Events\\MigrationsEnded": [
                         [
                             "<package>/src/Actions/DashboardReports/DiscoverOwnerForeignKeysAction.php",

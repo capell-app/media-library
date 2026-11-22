@@ -77,7 +77,7 @@ it('indexes block content written without model events when the index is rebuilt
     $this->artisan('capell:media-rebuild-structured-usage')->assertSuccessful();
 
     expect(structuredUsageListedNames())->toBe([])
-        ->and(DB::table(SyncStructuredMediaUsageAction::TABLE)->where('source_id', $translationId)->value('site_id'))->toBe($siteB->getKey());
+        ->and(DB::table(SyncStructuredMediaUsageAction::table())->where('source_id', $translationId)->value('site_id'))->toBe($siteB->getKey());
 
     DB::table(TableName::resolve('translations'))->where('id', $translationId)->delete();
     $this->artisan('capell:media-rebuild-structured-usage')->assertSuccessful();

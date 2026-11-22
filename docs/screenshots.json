@@ -1,7 +1,8 @@
 {
     "package": "media-library",
     "composerName": "capell-app/media-library",
-    "generatedFor": "deployment-screenshot-runner",
+    "generatedFor": "shared-capell-screenshot-runner",
+    "provenancePolicy": "runner-only-v1",
     "requiresInstalledPackage": true,
     "requiredEvidencePolicy": "distinct-required-surfaces",
     "colorSchemes": ["light"],

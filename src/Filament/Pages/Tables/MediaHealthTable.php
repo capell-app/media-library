@@ -20,6 +20,7 @@ use Capell\MediaLibrary\Enums\MediaHealthIssue;
 use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Support\MediaHealthAuthorization;
 use Capell\MediaLibrary\Support\MediaUsageQueryExpressions;
+use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Actions\ActionGroup;
 use Filament\Actions\BulkAction;
@@ -33,7 +34,6 @@ use Filament\Tables\Table;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 use Throwable;
@@ -614,7 +614,7 @@ class MediaHealthTable implements TableConfigurator
         return $query->whereRaw('(' . $usageCountExpression . ') = 0');
     }
 
-    private static function staleThreshold(): Carbon
+    private static function staleThreshold(): CarbonInterface
     {
         return now()->subDays(self::staleAfterDays());
     }

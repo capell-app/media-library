@@ -94,7 +94,7 @@ final class CuratorMediaSiteAccess
             $sources[] = ['table' => $graphTable, 'column' => 'target_id', 'types' => $this->curatorTargetTypes()];
         }
 
-        $structuredTable = SyncStructuredMediaUsageAction::TABLE;
+        $structuredTable = SyncStructuredMediaUsageAction::table();
 
         if (resolve(RuntimeSchemaState::class)->hasTable($structuredTable)) {
             $sources[] = ['table' => $structuredTable, 'column' => 'media_id', 'types' => null];

@@ -4,7 +4,8 @@
             "2026_11_14_000002_create_curator_structured_usages_table"
         ],
         "sha256": [
-            "31dff2304c9cdfd1c5f16b249bf5c0538b8fc61b846d62fb3b02d7373a7a0a08"
+            "31dff2304c9cdfd1c5f16b249bf5c0538b8fc61b846d62fb3b02d7373a7a0a08",
+            "5d013bd01f331cebc48380699f5123ecdacacc0e7bcd6c8c574179dafcf2d101"
         ]
     },
     "create_curator_table": {

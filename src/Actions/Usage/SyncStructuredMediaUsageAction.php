@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Capell\MediaLibrary\Actions\Usage;
 
 use Capell\Core\Support\Database\RuntimeSchemaState;
+use Capell\Core\Support\TableName;
 use Capell\MediaLibrary\Support\UsageResolvers\StructuredColumnUsageResolver;
 use Illuminate\Support\Facades\DB;
 use Lorisleiva\Actions\Concerns\AsFake;
@@ -26,11 +27,16 @@ final class SyncStructuredMediaUsageAction
 
     public function __construct(private readonly StructuredColumnUsageResolver $resolver) {}
 
+    public static function table(): string
+    {
+        return TableName::resolve(self::TABLE);
+    }
+
     public function handle(string $table, int $id): void
     {
         $schema = resolve(RuntimeSchemaState::class);
 
-        if (! $schema->hasTable(self::TABLE)) {
+        if (! $schema->hasTable(self::table())) {
             return;
         }
 
@@ -65,13 +71,13 @@ final class SyncStructuredMediaUsageAction
         $now = now();
 
         DB::transaction(static function () use ($table, $id, $mediaIds, $siteId, $now): void {
-            DB::table(self::TABLE)->where('source_table', $table)->where('source_id', $id)->delete();
+            DB::table(self::table())->where('source_table', $table)->where('source_id', $id)->delete();
 
             if ($mediaIds === []) {
                 return;
             }
 
-            DB::table(self::TABLE)->insert(array_map(static fn (int $mediaId): array => [
+            DB::table(self::table())->insert(array_map(static fn (int $mediaId): array => [
                 'media_id' => $mediaId,
                 'site_id' => $siteId,
                 'source_table' => $table,

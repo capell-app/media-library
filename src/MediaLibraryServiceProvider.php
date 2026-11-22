@@ -32,6 +32,7 @@ use Capell\MediaLibrary\Models\CuratorMedia;
 use Capell\MediaLibrary\Policies\CuratorMediaPolicy;
 use Capell\MediaLibrary\Support\CuratorMediaListContext;
 use Capell\MediaLibrary\Support\CuratorMediaSiteAccess;
+use Illuminate\Auth\Events\Authenticated;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Events\MigrationsEnded;
 use Illuminate\Support\Facades\Event;
@@ -125,11 +126,22 @@ final class MediaLibraryServiceProvider extends ServiceProvider
 
     private function ensurePermissions(): void
     {
-        $table = config('permission.table_names.permissions', 'permissions');
+        // The permission rows are only read once someone is signed in, so the sync waits for
+        // the first authenticated user instead of probing the schema while the app boots.
+        $synced = false;
 
-        if (is_string($table) && resolve(RuntimeSchemaState::class)->hasTable($table)) {
-            EnsureMediaLibraryPermissionsAction::run();
-        }
+        Event::listen(Authenticated::class, static function () use (&$synced): void {
+            if ($synced) {
+                return;
+            }
+
+            $synced = true;
+            $table = config('permission.table_names.permissions', 'permissions');
+
+            if (is_string($table) && resolve(RuntimeSchemaState::class)->hasTable($table)) {
+                EnsureMediaLibraryPermissionsAction::run();
+            }
+        });
     }
 
     private function registerMediaBackend(): void

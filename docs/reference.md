@@ -32,6 +32,7 @@ Media Library is an **Available** Capell package in the **Capell Essentials** pr
 - `packages/media-library/database/migrations/2026_11_01_000001_add_deleted_at_to_curator_table.php`
 - `packages/media-library/database/migrations/2026_11_14_000001_add_checksum_to_curator_table.php`
 - `packages/media-library/database/migrations/2026_11_14_000002_create_curator_structured_usages_table.php`
+- `packages/media-library/database/migrations/2026_11_19_000001_rename_unprefixed_curator_structured_usages_table.php`
 
 ### Models
 
@@ -152,7 +153,7 @@ Media Library is an **Available** Capell package in the **Capell Essentials** pr
 - Required tables: `curator`, `curator_structured_usages`.
 - Models: `CuratorMedia`.
 - Core record references in migrations: `sites via site_id`, `media via media_id`.
-- Migration files: `2026_10_15_000001_create_curator_table.php`, `2026_11_01_000001_add_deleted_at_to_curator_table.php`, `2026_11_14_000001_add_checksum_to_curator_table.php`, `2026_11_14_000002_create_curator_structured_usages_table.php`.
+- Migration files: `2026_10_15_000001_create_curator_table.php`, `2026_11_01_000001_add_deleted_at_to_curator_table.php`, `2026_11_14_000001_add_checksum_to_curator_table.php`, `2026_11_14_000002_create_curator_structured_usages_table.php`, `2026_11_19_000001_rename_unprefixed_curator_structured_usages_table.php`.
 - Migration impact: run host migrations through the package install flow before opening package surfaces.
 - Deletion/retention behaviour: retention is scheduled through `capell:media-purge-quarantined` (daily; declared in the manifest).
 
