@@ -6,6 +6,7 @@
     "kind": "package",
     "capellApiVersion": "^1.0",
     "version": "1.0.0",
+    "launchStatus": "shipped",
     "description": "A Media Health page for finding images without alt text and unused files, with quarantine and a Spatie Media Library migration command.",
     "product": {
         "group": "Capell Essentials",
